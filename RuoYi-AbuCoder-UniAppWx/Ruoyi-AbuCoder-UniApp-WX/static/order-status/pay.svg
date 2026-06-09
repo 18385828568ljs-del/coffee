@@ -1,0 +1,28 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#F5F0E9" />
+    </linearGradient>
+    <linearGradient id="grad1_dark" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#D8C7B8" />
+      <stop offset="100%" stop-color="#B69A83" />
+    </linearGradient>
+  </defs>
+  <ellipse cx="50" cy="85" rx="24" ry="3" fill="#EFEAE3" />
+  <rect x="20" y="42" width="60" height="34" rx="6" fill="url(#grad1)" stroke="#8A6448" stroke-width="2" />
+  <g transform="translate(0, -5)">
+    <rect x="32" y="36" width="36" height="22" rx="3" fill="#F8FAFC" />
+    <rect x="32" y="40" width="36" height="4" fill="#D8CEC4" />
+    <rect x="36" y="48" width="8" height="6" rx="1" fill="#E9D7C7" />
+  </g>
+  <rect x="20" y="48" width="60" height="28" rx="6" fill="url(#grad1)" stroke="#8A6448" stroke-width="2" />
+  <path d="M 20 54 A 6 6 0 0 1 26 48 L 74 48 A 6 6 0 0 1 80 54 L 80 62 Q 50 68 20 62 Z" fill="white" fill-opacity="0.25" />
+  <path d="M 42 48 L 58 48 L 56 60 L 44 60 Z" fill="#8A6448" opacity="0.08" />
+  <rect x="42" y="46" width="16" height="14" rx="4" fill="#FFFFFF" stroke="#8A6448" stroke-width="1.6" />
+  <circle cx="50" cy="53" r="3" fill="#A27A5C" />
+  <circle cx="68" cy="30" r="11" fill="#FFFFFF" stroke="#8A6448" stroke-width="2" />
+  <text x="68" y="35" font-size="14" font-weight="bold" fill="#8A6448" text-anchor="middle" font-family="Arial, sans-serif">¥</text>
+  <circle cx="77" cy="22" r="4.5" fill="#8A6448" />
+  <text x="77" y="25.5" font-size="9" font-weight="bold" fill="white" text-anchor="middle" font-family="Arial, sans-serif">!</text>
+</svg>

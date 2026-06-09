@@ -1,0 +1,28 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad18" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#F5F0E9" />
+    </linearGradient>
+    <linearGradient id="grad18_dark" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#D8C7B8" />
+      <stop offset="100%" stop-color="#8A6448" />
+    </linearGradient>
+  </defs>
+  <!-- 底部阴影 -->
+  <ellipse cx="50" cy="85" rx="24" ry="3" fill="#EFEAE3" />
+  <!-- 提手 -->
+  <path d="M 36 40 C 36 24 64 24 64 40" fill="none" stroke="url(#grad18_dark)" stroke-width="4" stroke-linecap="round" />
+  <!-- 购物袋主体 -->
+  <path d="M 26 40 L 74 40 L 70 78 C 70 80 68 82 66 82 L 34 82 C 32 82 30 80 30 78 Z" fill="url(#grad18)" stroke="#8A6448" stroke-width="2" />
+  <!-- 顶部高光 -->
+  <path d="M 26 40 L 74 40 L 73 48 Q 50 54 27 48 Z" fill="rgba(255,255,255,0.25)" />
+  <!-- 袋子折痕/立体感 -->
+  <path d="M 36 40 L 34 82 M 64 40 L 66 82" stroke="#5A3F2C" stroke-width="1.5" opacity="0.14" fill="none" />
+  <!-- 中心对勾底座与对勾 -->
+  <circle cx="50" cy="60" r="12" fill="#F8FAFC" />
+  <path d="M 46 60 L 49 63 L 55 56" fill="none" stroke="#8A6448" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+  <!-- 悬浮角标: 勾勾 (代表完成) -->
+  <circle cx="76" cy="24" r="11" fill="white" stroke="#8A6448" stroke-width="2" />
+  <path d="M 72 24 L 75 27 L 80 21" fill="none" stroke="#8A6448" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

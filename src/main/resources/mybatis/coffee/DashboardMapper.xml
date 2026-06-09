@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.coffee.dashboard.mapper.DashboardMapper">
+
+    <resultMap id="TrendPointResult" type="com.ruoyi.project.coffee.dashboard.domain.TrendPointVO">
+        <result property="dateLabel" column="date_label" />
+        <result property="amount" column="amount" />
+        <result property="count" column="count" />
+    </resultMap>
+
+    <resultMap id="StatusCountResult" type="com.ruoyi.project.coffee.dashboard.domain.StatusCountVO">
+        <result property="status" column="status" />
+        <result property="count" column="count" />
+    </resultMap>
+
+    <resultMap id="RankItemResult" type="com.ruoyi.project.coffee.dashboard.domain.RankItemVO">
+        <result property="productId" column="product_id" />
+        <result property="name" column="name" />
+        <result property="amount" column="amount" />
+        <result property="quantity" column="quantity" />
+    </resultMap>
+
+    <resultMap id="PieItemResult" type="com.ruoyi.project.coffee.dashboard.domain.PieItemVO">
+        <result property="name" column="name" />
+        <result property="value" column="value" />
+        <result property="count" column="count" />
+    </resultMap>
+
+    <resultMap id="StockWarningResult" type="com.ruoyi.project.coffee.dashboard.domain.StockWarningVO">
+        <result property="productId" column="product_id" />
+        <result property="productName" column="product_name" />
+        <result property="stock" column="stock" />
+        <result property="imageUrl" column="image_url" />
+    </resultMap>
+
+    <resultMap id="ActivityWarningResult" type="com.ruoyi.project.coffee.dashboard.domain.ActivityWarningVO">
+        <result property="activityId" column="activity_id" />
+        <result property="title" column="title" />
+        <result property="type" column="type" />
+        <result property="endTime" column="end_time" />
+        <result property="remainingDays" column="remaining_days" />
+    </resultMap>
+
+    <resultMap id="DiscountOrderSummaryResult" type="com.ruoyi.project.coffee.dashboard.domain.DiscountOrderSummaryVO">
+        <result property="orderCount" column="order_count" />
+        <result property="discountAmount" column="discount_amount" />
+    </resultMap>
+
+    <select id="sumSalesAmount" parameterType="com.ruoyi.project.coffee.dashboard.domain.DashboardQueryDTO" resultType="java.math.BigDecimal">
+        select ifnull(sum(pay_amount), 0)
+        from t_order
+        where status in (1, 2, 3)
+          and pay_time is not null
+          and pay_time <![CDATA[>=]]> #{startTime}
+          and pay_time <![CDATA[<]]> #{endTimeExclusive}
+    </select>
+
+    <select id="countOrders" parameterType="com.ruoyi.project.coffee.dashboard.domain.DashboardQueryDTO" resultType="java.lang.Long">
+        select count(1)
+        from t_order
+        where create_time <![CDATA[>=]]> #{startTime}
+          and create_time <![CDATA[<]]> #{endTimeExclusive}
+    </select>
+
+    <select id="countPaidOrders" parameterType="com.ruoyi.project.coffee.dashboard.domain.DashboardQueryDTO" resultType="java.lang.Long">
+        select count(1)
+        from t_order
+        where status in (1, 2, 3)
+          and pay_time is not null
+          and pay_time <![CDATA[>=]]> #{startTime}
+          and pay_time <![CDATA[<]]> #{endTimeExclusive}
+    </select>
+
+    <select id="countNewUsers" parameterType="com.ruoyi.project.coffee.dashboard.domain.DashboardQueryDTO" resultType="java.lang.Long">
+        select count(1)
+        from t_wxuser
+        where create_time <![CDATA[>=]]> #{startTime}
+          and create_time <![CDATA[<]]> #{endTimeExclusive}
+    </select>
+
+    <select id="countPendingShipment" resultType="java.lang.Long">
+        select count(1)
+        from t_order
+        where status = 1
+    </select>
+
+    <select id="countLowStockProducts" parameterType="com.ruoyi.project.coffee.dashboard.domain.DashboardQueryDTO" resultType="java.lang.Long">
+        select count(1)
+        from t_product
+        where status = 1
+          and stock <![CDATA[<]]> #{lowStockThreshold}
+    </select>
+
+    <select id="countEndingActivities" parameterType="com.ruoyi.project.coffee.dashboard.domain.DashboardQueryDTO" resultType="java.lang.Long">
+        select count(1)
+        from t_marketing_activity
+        where status = 1
+          and end_time is not null
+          and end_time <![CDATA[>=]]> #{nowTime}
+          and end_time <![CDATA[<]]> #{endingSoonTime}
+    </select>
+
+    <select id="countActiveActivities" parameterType="com.ruoyi.project.coffee.dashboard.domain.DashboardQueryDTO" resultType="java.lang.Long">
+        select count(1)
+        from t_marketing_activity
+        where status = 1
+          and (start_time is null or start_time <![CDATA[<=]]> #{nowTime})
+          and (end_time is null or end_time <![CDATA[>=]]> #{nowTime})
+    </select>
+
+    <select id="selectDiscountOrderSummary" parameterType="com.ruoyi.project.coffee.dashboard.domain.DashboardQueryDTO" resultMap="DiscountOrderSummaryResult">
+        select count(1) as order_count,
+               ifnull(sum(ifnull(discount_amount, 0)), 0) as discount_amount
+        from t_order
+        where status in (1, 2, 3)
+          and pay_time is not null
+          and pay_time <![CDATA[>=]]> #{startTime}
+          and pay_time <![CDATA[<]]> #{endTimeExclusive}
+          and (ifnull(discount_amount, 0) > 0 or (activity_summary is not null and activity_summary != ''))
+    </select>
+
+    <select id="selectSalesTrend" parameterType="com.ruoyi.project.coffee.dashboard.domain.DashboardQueryDTO" resultMap="TrendPointResult">
+        select date_format(pay_time, '%Y-%m-%d') as date_label,
+               ifnull(sum(pay_amount), 0) as amount
+        from t_order
+        where status in (1, 2, 3)
+          and pay_time is not null
+          and pay_time <![CDATA[>=]]> #{startTime}
+          and pay_time <![CDATA[<]]> #{endTimeExclusive}
+        group by date_format(pay_time, '%Y-%m-%d')
+        order by date_label asc
+    </select>
+
+    <select id="selectOrderStatusDistribution" parameterType="com.ruoyi.project.coffee.dashboard.domain.DashboardQueryDTO" resultMap="StatusCountResult">
+        select status,
+               count(1) as count
+        from t_order
+        where create_time <![CDATA[>=]]> #{startTime}
+          and create_time <![CDATA[<]]> #{endTimeExclusive}
+        group by status
+        order by status asc
+    </select>
+
+    <select id="selectTopProducts" parameterType="com.ruoyi.project.coffee.dashboard.domain.DashboardQueryDTO" resultMap="RankItemResult">
+        select oi.product_id,
+               max(oi.product_name) as name,
+               ifnull(sum(oi.total_price), 0) as amount,
+               ifnull(sum(oi.quantity), 0) as quantity
+        from t_order_item oi
+        inner join t_order o on oi.order_id = o.order_id
+        where o.status in (1, 2, 3)
+          and o.pay_time is not null
+          and o.pay_time <![CDATA[>=]]> #{startTime}
+          and o.pay_time <![CDATA[<]]> #{endTimeExclusive}
+        group by oi.product_id
+        order by amount desc, quantity desc
+        limit 10
+    </select>
+
+    <select id="selectCategorySalesShare" parameterType="com.ruoyi.project.coffee.dashboard.domain.DashboardQueryDTO" resultMap="PieItemResult">
+        select ifnull(c.category_name, '未分类') as name,
+               ifnull(sum(oi.total_price), 0) as value,
+               count(1) as count
+        from t_order_item oi
+        inner join t_order o on oi.order_id = o.order_id
+        left join t_product p on oi.product_id = p.product_id
+        left join t_category c on p.category_id = c.category_id
+        where o.status in (1, 2, 3)
+          and o.pay_time is not null
+          and o.pay_time <![CDATA[>=]]> #{startTime}
+          and o.pay_time <![CDATA[<]]> #{endTimeExclusive}
+        group by ifnull(c.category_name, '未分类')
+        order by value desc
+    </select>
+
+    <select id="selectUserTrend" parameterType="com.ruoyi.project.coffee.dashboard.domain.DashboardQueryDTO" resultMap="TrendPointResult">
+        select date_format(create_time, '%Y-%m-%d') as date_label,
+               count(1) as count
+        from t_wxuser
+        where create_time <![CDATA[>=]]> #{startTime}
+          and create_time <![CDATA[<]]> #{endTimeExclusive}
+        group by date_format(create_time, '%Y-%m-%d')
+        order by date_label asc
+    </select>
+
+    <select id="selectLowStockProducts" parameterType="com.ruoyi.project.coffee.dashboard.domain.DashboardQueryDTO" resultMap="StockWarningResult">
+        select product_id,
+               product_name,
+               stock,
+               image_url
+        from t_product
+        where status = 1
+          and stock <![CDATA[<]]> #{lowStockThreshold}
+        order by stock asc, product_id asc
+        limit 8
+    </select>
+
+    <select id="selectEndingActivities" parameterType="com.ruoyi.project.coffee.dashboard.domain.DashboardQueryDTO" resultMap="ActivityWarningResult">
+        select activity_id,
+               title,
+               type,
+               end_time,
+               datediff(end_time, #{nowTime}) as remaining_days
+        from t_marketing_activity
+        where status = 1
+          and end_time is not null
+          and end_time <![CDATA[>=]]> #{nowTime}
+          and end_time <![CDATA[<]]> #{endingSoonTime}
+        order by end_time asc
+        limit 8
+    </select>
+
+</mapper>

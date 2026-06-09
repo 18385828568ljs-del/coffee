@@ -1,0 +1,252 @@
+- generic [ref=e695]:
+  - banner [ref=e696]:
+    - generic [ref=e697]:
+      - generic [ref=e701]:
+        - link "OpenClaw" [ref=e702] [cursor=pointer]:
+          - /url: /overview
+        - generic [ref=e703]: ›
+        - generic [ref=e704]: 聊天
+      - generic [ref=e705]:
+        - button "打开命令面板" [ref=e706] [cursor=pointer]:
+          - generic [ref=e707]: 搜索
+          - generic [ref=e708]: ⌘K
+        - group "颜色模式" [ref=e710]:
+          - button "颜色模式：系统" [pressed] [ref=e711] [cursor=pointer]:
+            - img [ref=e712]
+          - button "颜色模式：浅睡" [ref=e714] [cursor=pointer]:
+            - img [ref=e715]
+          - button "颜色模式：深色" [ref=e721] [cursor=pointer]:
+            - img [ref=e722]
+  - complementary [ref=e725]:
+    - generic [ref=e726]:
+      - generic [ref=e727]:
+        - generic [ref=e728]:
+          - img "OpenClaw" [ref=e729]
+          - generic [ref=e730]:
+            - generic [ref=e731]: 控制
+            - generic [ref=e732]: OpenClaw
+        - button "折叠侧边栏" [ref=e733] [cursor=pointer]:
+          - img [ref=e735]
+      - navigation [ref=e739]:
+        - generic [ref=e740]:
+          - button "聊天" [expanded] [ref=e741] [cursor=pointer]:
+            - generic [ref=e742]: 聊天
+            - img [ref=e744]
+          - link "聊天" [ref=e747] [cursor=pointer]:
+            - /url: /chat
+            - img [ref=e749]
+            - generic [ref=e751]: 聊天
+        - generic [ref=e752]:
+          - button "控制" [expanded] [ref=e753] [cursor=pointer]:
+            - generic [ref=e754]: 控制
+            - img [ref=e756]
+          - generic [ref=e758]:
+            - link "概览" [ref=e759] [cursor=pointer]:
+              - /url: /overview
+              - img [ref=e761]
+              - generic [ref=e762]: 概览
+            - link "频道" [ref=e763] [cursor=pointer]:
+              - /url: /channels
+              - img [ref=e765]
+              - generic [ref=e768]: 频道
+            - link "实例" [ref=e769] [cursor=pointer]:
+              - /url: /instances
+              - img [ref=e771]
+              - generic [ref=e774]: 实例
+            - link "会话" [ref=e775] [cursor=pointer]:
+              - /url: /sessions
+              - img [ref=e777]
+              - generic [ref=e780]: 会话
+            - link "使用情况" [ref=e781] [cursor=pointer]:
+              - /url: /usage
+              - img [ref=e783]
+              - generic [ref=e784]: 使用情况
+            - link "定时任务" [ref=e785] [cursor=pointer]:
+              - /url: /cron
+              - img [ref=e787]
+              - generic [ref=e792]: 定时任务
+        - generic [ref=e793]:
+          - button "代理" [expanded] [ref=e794] [cursor=pointer]:
+            - generic [ref=e795]: 代理
+            - img [ref=e797]
+          - generic [ref=e799]:
+            - link "代理" [ref=e800] [cursor=pointer]:
+              - /url: /agents
+              - img [ref=e802]
+              - generic [ref=e804]: 代理
+            - link "Skills" [ref=e805] [cursor=pointer]:
+              - /url: /skills
+              - img [ref=e807]
+              - generic [ref=e809]: Skills
+            - link "节点" [ref=e810] [cursor=pointer]:
+              - /url: /nodes
+              - img [ref=e812]
+              - generic [ref=e814]: 节点
+            - link "梦境" [ref=e815] [cursor=pointer]:
+              - /url: /dreaming
+              - img [ref=e817]
+              - generic [ref=e819]: 梦境
+        - generic [ref=e820]:
+          - button "设置" [expanded] [ref=e821] [cursor=pointer]:
+            - generic [ref=e822]: 设置
+            - img [ref=e824]
+          - generic [ref=e826]:
+            - link "配置" [ref=e827] [cursor=pointer]:
+              - /url: /config
+              - img [ref=e829]
+              - generic [ref=e832]: 配置
+            - link "通信" [ref=e833] [cursor=pointer]:
+              - /url: /communications
+              - img [ref=e835]
+              - generic [ref=e838]: 通信
+            - link "外观与设置" [ref=e839] [cursor=pointer]:
+              - /url: /appearance
+              - img [ref=e841]
+              - generic [ref=e843]: 外观与设置
+            - link "自动化" [ref=e844] [cursor=pointer]:
+              - /url: /automation
+              - img [ref=e846]
+              - generic [ref=e848]: 自动化
+            - link "基础设施" [ref=e849] [cursor=pointer]:
+              - /url: /infrastructure
+              - img [ref=e851]
+              - generic [ref=e854]: 基础设施
+            - link "AI 与代理" [ref=e855] [cursor=pointer]:
+              - /url: /ai-agents
+              - img [ref=e857]
+              - generic [ref=e867]: AI 与代理
+            - link "调试" [ref=e868] [cursor=pointer]:
+              - /url: /debug
+              - img [ref=e870]
+              - generic [ref=e879]: 调试
+            - link "日志" [ref=e880] [cursor=pointer]:
+              - /url: /logs
+              - img [ref=e882]
+              - generic [ref=e885]: 日志
+      - generic [ref=e887]:
+        - link "文档" [ref=e888] [cursor=pointer]:
+          - /url: https://docs.openclaw.ai
+          - img [ref=e890]
+          - generic [ref=e892]: 文档
+          - img [ref=e894]
+        - generic "v2026.5.2" [ref=e897]:
+          - generic [ref=e898]: 版本
+          - generic [ref=e899]: v2026.5.2
+          - img "Gateway 状态：在线" [ref=e900]
+  - main [ref=e901]:
+    - alert [ref=e902]:
+      - strong [ref=e903]: 有可用更新：
+      - text: v2026.5.7 (正在运行 v2026.5.2).
+      - button "立即更新" [ref=e904] [cursor=pointer]
+      - button "关闭更新横幅" [ref=e905] [cursor=pointer]:
+        - img [ref=e906]
+    - generic [ref=e909]:
+      - generic [ref=e911]:
+        - combobox [ref=e913] [cursor=pointer]:
+          - option "dashboard:cb4f7d44-63fa-4535-ba4d-59627a0b4249" [selected]
+          - option "main"
+          - option "dashboard:2e6eda83-a712-4871-94ff-021bd07bf948"
+          - option "dashboard:56237ffb-ffbc-4f6b-b48f-a301ac00a7e9"
+          - option "feishu:g-agent-main-feishu-direct-ou_7e3512a6528787c4239ce9566d9acfea"
+          - option "dashboard:72bb4ccc-4213-4163-9c88-63244f6d2cac"
+          - option "dashboard:571a3cc2-994a-4a20-a850-efe79925be19"
+        - combobox "Chat model" [disabled] [ref=e915] [cursor=pointer]:
+          - option "Default (gpt-5.4 (Custom Provider))"
+          - option "gpt-5.4 (Custom Provider)"
+          - option "GLM-4.5 (Zhipu)" [selected]
+        - combobox "Chat thinking level" [disabled] [ref=e917] [cursor=pointer]:
+          - option "Default (off)" [selected]
+          - option "off"
+          - option "minimal"
+          - option "low"
+          - option "medium"
+          - option "high"
+      - generic [ref=e919]:
+        - button "刷新聊天数据" [disabled] [ref=e920]:
+          - img [ref=e921]
+          - text: 刷新聊天数据
+        - generic [ref=e924]: "|"
+        - button "切换助手思考/工作输出" [pressed] [ref=e925] [cursor=pointer]:
+          - img [ref=e926]
+          - text: 切换助手思考/工作输出
+        - button "切换工具调用和工具结果" [pressed] [ref=e936] [cursor=pointer]:
+          - img [ref=e937]
+          - text: 切换工具调用和工具结果
+        - button "切换专注模式 (隐藏侧边栏 + 页面页眉)" [ref=e939] [cursor=pointer]:
+          - img [ref=e940]
+          - text: 切换专注模式 (隐藏侧边栏 + 页面页眉)
+        - button "显示定时任务会话" [pressed] [ref=e946] [cursor=pointer]:
+          - img [ref=e948]
+          - text: 显示定时任务会话
+    - generic [ref=e951]:
+      - log [ref=e954]:
+        - generic [ref=e955]:
+          - generic [ref=e1172]:
+            - img [ref=e1174]
+            - generic [ref=e1177]:
+              - paragraph [ref=e1180]: 帮我查一下“儿童保温杯”这个品类最近的中文公开评测、新闻和消费趋势，只看中文公开网页，不要查电商商品页
+              - generic [ref=e1181]:
+                - generic [ref=e1182]: You
+                - time [ref=e1183]: 2026年5月10日 21:44
+                - generic [ref=e1184]:
+                  - button "Delete message":
+                    - img
+          - generic [ref=e1200]:
+            - img "阿布" [ref=e1201]
+            - generic [ref=e1202]:
+              - generic [ref=e1203]:
+                - generic:
+                  - button "Open in canvas":
+                    - generic:
+                      - img
+                  - button "Copy as markdown":
+                    - generic:
+                      - generic:
+                        - img
+                      - generic:
+                        - img
+                - paragraph [ref=e1205]: 我来帮您搜索"儿童保温杯"相关的中文公开评测、新闻和消费趋势信息。
+              - generic [ref=e1206]:
+                - generic [ref=e1207]: 阿布
+                - time [ref=e1208]: 2026年5月10日 21:44
+          - generic [ref=e1209]:
+            - img [ref=e1211]
+            - generic [ref=e1213]:
+              - button "▸ Tool call zhipu-web-search__web_search_prime" [ref=e1216] [cursor=pointer]:
+                - text: ▸
+                - img [ref=e1218]
+                - generic [ref=e1220]: Tool call
+                - generic [ref=e1221]: zhipu-web-search__web_search_prime
+              - button "▸ Tool call zhipu-web-reader__webreader" [ref=e1224] [cursor=pointer]:
+                - text: ▸
+                - img [ref=e1226]
+                - generic [ref=e1228]: Tool call
+                - generic [ref=e1229]: zhipu-web-reader__webreader
+              - button "▸ Tool call zhipu-web-reader__webreader" [ref=e1232] [cursor=pointer]:
+                - text: ▸
+                - img [ref=e1234]
+                - generic [ref=e1236]: Tool call
+                - generic [ref=e1237]: zhipu-web-reader__webreader
+              - generic [ref=e1238]:
+                - generic [ref=e1239]: Tool
+                - time [ref=e1240]: 2026年5月10日 21:44
+                - generic [ref=e1241]:
+                  - button "Delete message":
+                    - img
+      - generic [ref=e1135]:
+        - generic [ref=e1136]:
+          - textbox "Message 阿布 (Enter to send)" [active] [ref=e1137]
+          - status [ref=e1138]
+        - generic [ref=e1139]:
+          - generic [ref=e1140]:
+            - button "Attach file" [ref=e1141] [cursor=pointer]:
+              - img [ref=e1142]
+            - button "Start Talk" [ref=e1144] [cursor=pointer]:
+              - img [ref=e1145]
+          - generic [ref=e1148]:
+            - button "Export chat" [ref=e1151] [cursor=pointer]:
+              - img [ref=e1152]
+            - button "Queue message" [ref=e1193] [cursor=pointer]:
+              - img [ref=e1194]
+            - button "Stop generating" [ref=e1197] [cursor=pointer]:
+              - img [ref=e1198]

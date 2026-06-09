@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('经营数据看板')" />
+    <style>
+        .dashboard-page {
+            background: #f4f7fb;
+            color: #1f2937;
+        }
+
+        .dashboard-shell {
+            padding: 20px 10px 10px;
+        }
+
+        .hero-card,
+        .panel-card,
+        .metric-card,
+        .alert-card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+        }
+
+        .hero-card {
+            padding: 28px 32px;
+            margin-bottom: 18px;
+            background: linear-gradient(135deg, #ffffff 0%, #f7fbff 100%);
+        }
+
+        .hero-title {
+            margin: 0;
+            font-size: 30px;
+            font-weight: 700;
+            color: #132238;
+        }
+
+        .hero-subtitle {
+            margin-top: 8px;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .hero-meta {
+            text-align: right;
+            margin-top: 8px;
+            color: #6b7280;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .alert-row {
+            margin-bottom: 18px;
+        }
+
+        .alert-card {
+            padding: 18px 20px;
+            min-height: 126px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .alert-card:before {
+            content: "";
+            position: absolute;
+            right: -28px;
+            top: -28px;
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            opacity: 0.08;
+        }
+
+        .alert-card.alert-danger-soft:before {
+            background: #ef4444;
+        }
+
+        .alert-card.alert-warning-soft:before {
+            background: #f59e0b;
+        }
+
+        .alert-card.alert-orange-soft:before {
+            background: #f97316;
+        }
+
+        .alert-label {
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .alert-value {
+            margin-top: 12px;
+            font-size: 34px;
+            line-height: 1;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .alert-tip {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .filter-card {
+            padding: 18px 22px;
+            margin-bottom: 18px;
+        }
+
+        .filter-title {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 12px;
+        }
+
+        .period-btn-group .btn {
+            border-radius: 999px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            padding: 8px 16px;
+            border: 1px solid #d8e1ec;
+            background: #fff;
+            color: #334155;
+            font-weight: 600;
+        }
+
+        .period-btn-group .btn.active,
+        .period-btn-group .btn:focus,
+        .period-btn-group .btn:hover {
+            background: #173b63;
+            border-color: #173b63;
+            color: #fff;
+        }
+
+        .custom-range {
+            display: none;
+            margin-top: 10px;
+        }
+
+        .custom-range .form-control {
+            border-radius: 10px;
+            height: 36px;
+        }
+
+        .metric-row {
+            margin-bottom: 18px;
+        }
+
+        .metric-card {
+            padding: 18px 20px;
+            min-height: 122px;
+        }
+
+        .metric-label {
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .metric-value {
+            margin-top: 12px;
+            font-size: 28px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .metric-desc {
+            margin-top: 12px;
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .panel-card {
+            padding: 18px 20px;
+            margin-bottom: 18px;
+        }
+
+        .panel-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #172554;
+            margin: 0 0 16px;
+        }
+
+        .chart-box {
+            height: 320px;
+        }
+
+        .summary-grid {
+            display: flex;
+            flex-wrap: wrap;
+            margin: -8px;
+        }
+
+        .summary-item {
+            width: 50%;
+            padding: 8px;
+        }
+
+        .summary-inner {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px;
+            min-height: 104px;
+        }
+
+        .summary-inner .label-text {
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .summary-inner .value-text {
+            margin-top: 12px;
+            font-size: 24px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .summary-inner .sub-text {
+            margin-top: 8px;
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        .list-box {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid #eef2f7;
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .list-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .list-title {
+            display: block;
+            color: #0f172a;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .list-subtitle {
+            display: block;
+            margin-top: 6px;
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .list-tag {
+            margin-left: 12px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            background: #fff7ed;
+            color: #c2410c;
+        }
+
+        .empty-text {
+            color: #94a3b8;
+            font-size: 13px;
+            padding: 20px 0 4px;
+            text-align: center;
+        }
+
+        @media (max-width: 992px) {
+            .hero-meta {
+                text-align: left;
+            }
+
+            .summary-item {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="gray-bg dashboard-page">
+    <div class="wrapper wrapper-content dashboard-shell">
+        <div class="hero-card">
+            <div class="row">
+                <div class="col-sm-8">
+                    <h1 class="hero-title">经营数据看板</h1>
+                    <div class="hero-subtitle">首页只看经营结果、风险预警和近期待处理事项，默认统计口径为 <span id="periodLabelText">本月累计</span>。</div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="hero-meta">
+                        <div>统计周期：<span id="periodLabelTextSide">本月累计</span></div>
+                        <div id="lastUpdatedText">更新时间：-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row alert-row">
+            <div class="col-md-4 col-sm-6">
+                <div class="alert-card alert-danger-soft">
+                    <div class="alert-label">待发货订单数</div>
+                    <div class="alert-value" id="pendingShipmentAlert">0</div>
+                    <div class="alert-tip">商家需要优先处理的订单数量</div>
+                </div>
+            </div>
+            <div class="col-md-4 col-sm-6">
+                <div class="alert-card alert-warning-soft">
+                    <div class="alert-label">低库存商品数</div>
+                    <div class="alert-value" id="lowStockAlert">0</div>
+                    <div class="alert-tip">库存低于 10 的上架商品数量</div>
+                </div>
+            </div>
+            <div class="col-md-4 col-sm-12">
+                <div class="alert-card alert-orange-soft">
+                    <div class="alert-label">即将结束活动数</div>
+                    <div class="alert-value" id="endingActivityAlert">0</div>
+                    <div class="alert-tip">未来 3 天内到期的启用活动数量</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-card filter-card">
+            <div class="filter-title">统计周期</div>
+            <div class="period-btn-group">
+                <button class="btn period-btn" data-period="today" type="button">今日</button>
+                <button class="btn period-btn" data-period="7d" type="button">近7天</button>
+                <button class="btn period-btn" data-period="30d" type="button">近30天</button>
+                <button class="btn period-btn active" data-period="month" type="button">本月累计</button>
+                <button class="btn period-btn" data-period="custom" type="button">自定义</button>
+            </div>
+            <div class="row custom-range" id="customRangePanel">
+                <div class="col-sm-3">
+                    <input id="customStartDate" class="form-control" type="date">
+                </div>
+                <div class="col-sm-3">
+                    <input id="customEndDate" class="form-control" type="date">
+                </div>
+                <div class="col-sm-2">
+                    <button class="btn btn-primary btn-block" id="customQueryBtn" type="button">查询</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row metric-row">
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="metric-card">
+                    <div class="metric-label">本期销售额</div>
+                    <div class="metric-value" id="salesAmountValue">¥0.00</div>
+                    <div class="metric-desc">按实付金额统计有效支付订单</div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="metric-card">
+                    <div class="metric-label">本期下单数</div>
+                    <div class="metric-value" id="orderCountValue">0</div>
+                    <div class="metric-desc">按订单创建时间统计</div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="metric-card">
+                    <div class="metric-label">本期支付订单数</div>
+                    <div class="metric-value" id="paidOrderCountValue">0</div>
+                    <div class="metric-desc">仅统计待发货/已发货/已完成</div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="metric-card">
+                    <div class="metric-label">客单价</div>
+                    <div class="metric-value" id="averageOrderValue">¥0.00</div>
+                    <div class="metric-desc">销售额 / 支付订单数</div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="metric-card">
+                    <div class="metric-label">本期新增用户数</div>
+                    <div class="metric-value" id="newUserCountValue">0</div>
+                    <div class="metric-desc">按微信用户创建时间统计</div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="metric-card">
+                    <div class="metric-label">当前待发货数</div>
+                    <div class="metric-value" id="pendingShipmentValue">0</div>
+                    <div class="metric-desc">实时订单履约压力</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="panel-card">
+                    <h3 class="panel-title">每日销售趋势</h3>
+                    <div class="chart-box" id="salesTrendChart"></div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="panel-card">
+                    <h3 class="panel-title">订单状态分布</h3>
+                    <div class="chart-box" id="orderStatusChart"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="panel-card">
+                    <h3 class="panel-title">热销商品 TOP10</h3>
+                    <div class="chart-box" id="topProductChart"></div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="panel-card">
+                    <h3 class="panel-title">商品分类销售占比</h3>
+                    <div class="chart-box" id="categoryChart"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="panel-card">
+                    <h3 class="panel-title">新增用户趋势</h3>
+                    <div class="chart-box" id="userTrendChart"></div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="panel-card">
+                    <h3 class="panel-title">营销活动概况</h3>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <div class="summary-inner">
+                                <div class="label-text">当前启用活动数</div>
+                                <div class="value-text" id="activeActivityCountValue">0</div>
+                                <div class="sub-text">当前处于启用且生效状态</div>
+                            </div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-inner">
+                                <div class="label-text">即将结束活动数</div>
+                                <div class="value-text" id="endingSoonCountValue">0</div>
+                                <div class="sub-text">未来 3 天内结束</div>
+                            </div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-inner">
+                                <div class="label-text">优惠订单数</div>
+                                <div class="value-text" id="discountedOrderCountValue">0</div>
+                                <div class="sub-text">命中过优惠规则的有效支付订单</div>
+                            </div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-inner">
+                                <div class="label-text">优惠总金额</div>
+                                <div class="value-text" id="discountAmountValue">¥0.00</div>
+                                <div class="sub-text">按订单优惠金额字段汇总</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <h3 class="panel-title">低库存商品</h3>
+                    <ul class="list-box" id="lowStockList"></ul>
+                </div>
+
+                <div class="panel-card">
+                    <h3 class="panel-title">即将结束活动</h3>
+                    <ul class="list-box" id="endingActivityList"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block th:include="include :: footer" />
+    <th:block th:include="include :: echarts-js" />
+    <script th:inline="javascript">
+        var overviewUrl = ctx + "coffee/dashboard/overview";
+        var currentPeriod = "month";
+        var salesTrendChart;
+        var orderStatusChart;
+        var topProductChart;
+        var categoryChart;
+        var userTrendChart;
+
+        $(function() {
+            initCharts();
+            initCustomDates();
+            bindEvents();
+            loadOverview();
+            $(window).on('resize', resizeCharts);
+            $(window).on('load', scheduleResizeCharts);
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    scheduleResizeCharts();
+                }
+            });
+        });
+
+        function bindEvents() {
+            $('.period-btn').on('click', function() {
+                var period = $(this).data('period');
+                setActivePeriod(period);
+                if (period !== 'custom') {
+                    loadOverview();
+                }
+            });
+
+            $('#customQueryBtn').on('click', function() {
+                loadOverview();
+            });
+        }
+
+        function setActivePeriod(period) {
+            currentPeriod = period;
+            $('.period-btn').removeClass('active');
+            $('.period-btn[data-period="' + period + '"]').addClass('active');
+            if (period === 'custom') {
+                $('#customRangePanel').slideDown(120);
+            } else {
+                $('#customRangePanel').slideUp(120);
+            }
+        }
+
+        function initCustomDates() {
+            var today = new Date();
+            var firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            $('#customStartDate').val(formatInputDate(firstDay));
+            $('#customEndDate').val(formatInputDate(today));
+        }
+
+        function initCharts() {
+            salesTrendChart = echarts.init(document.getElementById('salesTrendChart'));
+            orderStatusChart = echarts.init(document.getElementById('orderStatusChart'));
+            topProductChart = echarts.init(document.getElementById('topProductChart'));
+            categoryChart = echarts.init(document.getElementById('categoryChart'));
+            userTrendChart = echarts.init(document.getElementById('userTrendChart'));
+        }
+
+        function resizeCharts() {
+            if (salesTrendChart) {
+                salesTrendChart.resize();
+            }
+            if (orderStatusChart) {
+                orderStatusChart.resize();
+            }
+            if (topProductChart) {
+                topProductChart.resize();
+            }
+            if (categoryChart) {
+                categoryChart.resize();
+            }
+            if (userTrendChart) {
+                userTrendChart.resize();
+            }
+        }
+
+        function scheduleResizeCharts() {
+            setTimeout(resizeCharts, 0);
+            setTimeout(resizeCharts, 160);
+            setTimeout(resizeCharts, 420);
+        }
+
+        function loadOverview() {
+            var params = { period: currentPeriod };
+            if (currentPeriod === 'custom') {
+                var startDate = $.trim($('#customStartDate').val());
+                var endDate = $.trim($('#customEndDate').val());
+                if ($.common.isEmpty(startDate) || $.common.isEmpty(endDate)) {
+                    $.modal.msgError('请选择完整的自定义日期范围');
+                    return;
+                }
+                if (startDate > endDate) {
+                    $.modal.msgError('开始日期不能晚于结束日期');
+                    return;
+                }
+                params.startDate = startDate;
+                params.endDate = endDate;
+            }
+
+            var loadingIndex = null;
+            if (window.layer) {
+                loadingIndex = layer.load(0, { shade: [0.12, '#ffffff'] });
+            }
+
+            $.ajax({
+                url: overviewUrl,
+                type: 'get',
+                data: params,
+                success: function(res) {
+                    if (!res || res.code !== 0) {
+                        $.modal.msgError(res && res.msg ? res.msg : '加载经营看板数据失败');
+                        return;
+                    }
+                    renderOverview(res.data || {});
+                    scheduleResizeCharts();
+                },
+                error: function() {
+                    $.modal.msgError('经营看板接口请求失败');
+                },
+                complete: function() {
+                    if (loadingIndex !== null) {
+                        layer.close(loadingIndex);
+                    }
+                }
+            });
+        }
+
+        function renderOverview(data) {
+            var alerts = data.alerts || {};
+            var kpis = data.kpis || {};
+            var marketingSummary = data.marketingSummary || {};
+
+            $('#periodLabelText').text(data.periodLabel || '本月累计');
+            $('#periodLabelTextSide').text(data.periodLabel || '本月累计');
+            $('#lastUpdatedText').text('更新时间：' + $.common.dateFormat(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+
+            $('#pendingShipmentAlert').text(formatNumber(alerts.pendingShipmentCount));
+            $('#lowStockAlert').text(formatNumber(alerts.lowStockCount));
+            $('#endingActivityAlert').text(formatNumber(alerts.endingActivityCount));
+
+            $('#salesAmountValue').text('¥' + formatMoney(kpis.salesAmount));
+            $('#orderCountValue').text(formatNumber(kpis.orderCount));
+            $('#paidOrderCountValue').text(formatNumber(kpis.paidOrderCount));
+            $('#averageOrderValue').text('¥' + formatMoney(kpis.averageOrderValue));
+            $('#newUserCountValue').text(formatNumber(kpis.newUserCount));
+            $('#pendingShipmentValue').text(formatNumber(kpis.pendingShipmentCount));
+
+            $('#activeActivityCountValue').text(formatNumber(marketingSummary.activeActivityCount));
+            $('#endingSoonCountValue').text(formatNumber(marketingSummary.endingSoonCount));
+            $('#discountedOrderCountValue').text(formatNumber(marketingSummary.discountedOrderCount));
+            $('#discountAmountValue').text('¥' + formatMoney(marketingSummary.discountAmount));
+
+            renderSalesTrend(data.salesTrend || []);
+            renderOrderStatus(data.orderStatusDistribution || []);
+            renderTopProducts(data.topProducts || []);
+            renderCategoryShare(data.categorySalesShare || []);
+            renderUserTrend(data.userTrend || []);
+            renderLowStockList(data.lowStockProducts || []);
+            renderEndingActivities(data.endingActivities || []);
+        }
+
+        function renderSalesTrend(data) {
+            if (!data.length) {
+                renderEmptyChart(salesTrendChart, '暂无销售数据');
+                return;
+            }
+            var labels = [];
+            var values = [];
+            $.each(data, function(index, item) {
+                labels.push(shortDate(item.dateLabel));
+                values.push(toNumber(item.amount));
+            });
+
+            salesTrendChart.setOption({
+                tooltip: { trigger: 'axis' },
+                grid: { left: 45, right: 20, top: 40, bottom: 35 },
+                xAxis: [{ type: 'category', boundaryGap: false, data: labels, axisLine: { lineStyle: { color: '#cbd5e1' } } }],
+                yAxis: [{ type: 'value', axisLine: { show: false }, splitLine: { lineStyle: { color: '#e2e8f0' } } }],
+                series: [{
+                    name: '销售额',
+                    type: 'line',
+                    smooth: true,
+                    symbol: 'circle',
+                    symbolSize: 8,
+                    data: values,
+                    itemStyle: { normal: { color: '#1d4ed8' } },
+                    areaStyle: { normal: { color: 'rgba(59,130,246,0.18)' } }
+                }]
+            }, true);
+        }
+
+        function renderOrderStatus(data) {
+            var chartData = [];
+            $.each(data, function(index, item) {
+                chartData.push({ name: item.name, value: toNumber(item.value) });
+            });
+            if (!chartData.length || totalValue(chartData) === 0) {
+                renderEmptyChart(orderStatusChart, '暂无订单状态数据');
+                return;
+            }
+            orderStatusChart.setOption({
+                tooltip: { trigger: 'item', formatter: '{b}：{c}' },
+                legend: { orient: 'vertical', left: 'left', data: extractNames(chartData) },
+                series: [{
+                    name: '订单状态',
+                    type: 'pie',
+                    radius: ['35%', '68%'],
+                    center: ['62%', '54%'],
+                    data: chartData
+                }]
+            }, true);
+        }
+
+        function renderTopProducts(data) {
+            if (!data.length) {
+                renderEmptyChart(topProductChart, '暂无热销商品数据');
+                return;
+            }
+            var names = [];
+            var amounts = [];
+            $.each(data, function(index, item) {
+                names.push(item.name);
+                amounts.push(toNumber(item.amount));
+            });
+            topProductChart.setOption({
+                tooltip: { trigger: 'axis' },
+                grid: { left: 120, right: 20, top: 20, bottom: 30 },
+                xAxis: [{ type: 'value', splitLine: { lineStyle: { color: '#e2e8f0' } } }],
+                yAxis: [{ type: 'category', data: names, axisTick: { show: false } }],
+                series: [{
+                    type: 'bar',
+                    data: amounts,
+                    barWidth: 18,
+                    itemStyle: { normal: { color: '#0f766e' } }
+                }]
+            }, true);
+        }
+
+        function renderCategoryShare(data) {
+            var chartData = [];
+            $.each(data, function(index, item) {
+                chartData.push({ name: item.name, value: toNumber(item.value) });
+            });
+            if (!chartData.length || totalValue(chartData) === 0) {
+                renderEmptyChart(categoryChart, '暂无分类销售数据');
+                return;
+            }
+            categoryChart.setOption({
+                tooltip: { trigger: 'item', formatter: '{b}：¥{c}' },
+                legend: { bottom: 0, data: extractNames(chartData) },
+                series: [{
+                    type: 'pie',
+                    radius: '65%',
+                    center: ['50%', '45%'],
+                    data: chartData
+                }]
+            }, true);
+        }
+
+        function renderUserTrend(data) {
+            if (!data.length) {
+                renderEmptyChart(userTrendChart, '暂无新增用户数据');
+                return;
+            }
+            var labels = [];
+            var values = [];
+            $.each(data, function(index, item) {
+                labels.push(shortDate(item.dateLabel));
+                values.push(toNumber(item.count));
+            });
+            userTrendChart.setOption({
+                tooltip: { trigger: 'axis' },
+                grid: { left: 45, right: 20, top: 40, bottom: 35 },
+                xAxis: [{ type: 'category', data: labels, axisLine: { lineStyle: { color: '#cbd5e1' } } }],
+                yAxis: [{ type: 'value', axisLine: { show: false }, splitLine: { lineStyle: { color: '#e2e8f0' } } }],
+                series: [{
+                    name: '新增用户',
+                    type: 'bar',
+                    barWidth: 18,
+                    data: values,
+                    itemStyle: { normal: { color: '#7c3aed' } }
+                }]
+            }, true);
+        }
+
+        function renderLowStockList(data) {
+            var container = $('#lowStockList');
+            container.empty();
+            if (!data.length) {
+                container.html('<div class="empty-text">暂无低库存商品</div>');
+                return;
+            }
+            $.each(data, function(index, item) {
+                container.append(
+                    '<li class="list-item">' +
+                        '<div class="list-main">' +
+                            '<span class="list-title">' + escapeHtml(item.productName) + '</span>' +
+                            '<span class="list-subtitle">商品ID：' + formatNumber(item.productId) + '</span>' +
+                        '</div>' +
+                        '<span class="list-tag">库存 ' + formatNumber(item.stock) + '</span>' +
+                    '</li>'
+                );
+            });
+        }
+
+        function renderEndingActivities(data) {
+            var container = $('#endingActivityList');
+            container.empty();
+            if (!data.length) {
+                container.html('<div class="empty-text">暂无即将结束的活动</div>');
+                return;
+            }
+            $.each(data, function(index, item) {
+                var remainText = item.remainingDays <= 0 ? '今天截止' : '剩余 ' + formatNumber(item.remainingDays) + ' 天';
+                container.append(
+                    '<li class="list-item">' +
+                        '<div class="list-main">' +
+                            '<span class="list-title">' + escapeHtml(item.title) + '</span>' +
+                            '<span class="list-subtitle">' + escapeHtml(item.typeLabel || '活动') + ' · 截止日期 ' + escapeHtml(item.endDate || '-') + '</span>' +
+                        '</div>' +
+                        '<span class="list-tag">' + remainText + '</span>' +
+                    '</li>'
+                );
+            });
+        }
+
+        function renderEmptyChart(chart, text) {
+            chart.clear();
+            chart.setOption({
+                title: {
+                    text: text,
+                    left: 'center',
+                    top: 'middle',
+                    textStyle: { color: '#94a3b8', fontSize: 14, fontWeight: 'normal' }
+                },
+                xAxis: [{ show: false, type: 'category', data: [] }],
+                yAxis: [{ show: false, type: 'value' }],
+                series: []
+            }, true);
+        }
+
+        function extractNames(data) {
+            var names = [];
+            $.each(data, function(index, item) {
+                names.push(item.name);
+            });
+            return names;
+        }
+
+        function totalValue(data) {
+            var total = 0;
+            $.each(data, function(index, item) {
+                total += toNumber(item.value);
+            });
+            return total;
+        }
+
+        function shortDate(text) {
+            if ($.common.isEmpty(text) || text.length < 10) {
+                return text || '-';
+            }
+            return text.substring(5);
+        }
+
+        function formatMoney(value) {
+            return toNumber(value).toFixed(2);
+        }
+
+        function formatNumber(value) {
+            return String(parseInt(toNumber(value), 10) || 0);
+        }
+
+        function toNumber(value) {
+            if ($.common.isEmpty(value)) {
+                return 0;
+            }
+            var numberValue = Number(value);
+            return isNaN(numberValue) ? 0 : numberValue;
+        }
+
+        function formatInputDate(date) {
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var day = date.getDate();
+            return year + '-' + padNumber(month) + '-' + padNumber(day);
+        }
+
+        function padNumber(num) {
+            return num < 10 ? '0' + num : '' + num;
+        }
+
+        function escapeHtml(text) {
+            if ($.common.isEmpty(text)) {
+                return '';
+            }
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+    </script>
+</body>
+</html>

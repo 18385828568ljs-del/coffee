@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.coffee.scanOrder.mapper.ScanProductSpecMapper">
+
+    <resultMap type="ScanProductSpec" id="ScanProductSpecResult">
+        <result property="specId"     column="spec_id"     />
+        <result property="productId"  column="product_id"  />
+        <result property="specName"   column="spec_name"   />
+        <result property="specType"   column="spec_type"   />
+        <result property="required"   column="required"    />
+        <result property="sortOrder"  column="sort_order"  />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <sql id="selectScanProductSpecVo">
+        select spec_id, product_id, spec_name, spec_type, required, sort_order,
+               create_time, update_time
+        from t_scan_product_spec
+    </sql>
+
+    <select id="selectSpecListByProductId" parameterType="Long" resultMap="ScanProductSpecResult">
+        <include refid="selectScanProductSpecVo"/>
+        where product_id = #{productId}
+        order by
+        case when sort_order is null then 1 else 0 end,
+        sort_order asc,
+        spec_id asc
+    </select>
+
+    <delete id="deleteSpecByProductIds" parameterType="String">
+        delete from t_scan_product_spec where product_id in
+        <foreach collection="array" item="productId" open="(" separator="," close=")">
+            #{productId}
+        </foreach>
+    </delete>
+
+</mapper>

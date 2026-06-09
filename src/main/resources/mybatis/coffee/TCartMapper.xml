@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.coffee.cart.mapper.TCartMapper">
+    
+    <resultMap type="TCart" id="TCartResult">
+        <result property="cartId"    column="cart_id"    />
+        <result property="userId"    column="user_id"    />
+        <result property="productId"    column="product_id"    />
+        <result property="quantity"    column="quantity"    />
+        <result property="spec"    column="spec"    />
+        <result property="productName"    column="product_name"    />
+        <result property="productImage"    column="product_image"    />
+        <result property="price"    column="price"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectTCartVo">
+        select c.cart_id,
+               c.user_id,
+               c.product_id,
+               c.quantity,
+               c.spec,
+               c.create_time,
+               c.update_time,
+               p.product_name,
+               p.image_url as product_image,
+               p.price
+        from t_cart c
+        left join t_product p on c.product_id = p.product_id
+    </sql>
+
+    <select id="selectTCartList" parameterType="TCart" resultMap="TCartResult">
+        <include refid="selectTCartVo"/>
+        <where>  
+            <if test="userId != null "> and c.user_id = #{userId}</if>
+            <if test="productId != null "> and c.product_id = #{productId}</if>
+            <if test="quantity != null "> and c.quantity = #{quantity}</if>
+            <if test="spec != null and spec != ''"> and c.spec = #{spec}</if>
+        </where>
+        order by
+        case when c.create_time is null then 1 else 0 end,
+        c.create_time desc,
+        c.cart_id desc
+    </select>
+    
+    <select id="selectTCartByCartId" parameterType="Long" resultMap="TCartResult">
+        <include refid="selectTCartVo"/>
+        where c.cart_id = #{cartId}
+    </select>
+
+    <delete id="deleteInvalidTCartByUserId" parameterType="Long">
+        delete c
+        from t_cart c
+        left join t_product p on c.product_id = p.product_id
+        where c.user_id = #{userId}
+          and p.product_id is null
+    </delete>
+        
+    <insert id="insertTCart" parameterType="TCart" useGeneratedKeys="true" keyProperty="cartId">
+        insert into t_cart
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="productId != null">product_id,</if>
+            <if test="quantity != null">quantity,</if>
+            <if test="spec != null and spec != ''">spec,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="productId != null">#{productId},</if>
+            <if test="quantity != null">#{quantity},</if>
+            <if test="spec != null and spec != ''">#{spec},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateTCart" parameterType="TCart">
+        update t_cart
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="productId != null">product_id = #{productId},</if>
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="spec != null and spec != ''">spec = #{spec},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where cart_id = #{cartId}
+    </update>
+
+    <delete id="deleteTCartByCartId" parameterType="Long">
+        delete from t_cart where cart_id = #{cartId}
+    </delete>
+
+    <delete id="deleteTCartByCartIds" parameterType="String">
+        delete from t_cart where cart_id in 
+        <foreach item="cartId" collection="array" open="(" separator="," close=")">
+            #{cartId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteTCartByProductIds">
+        delete from t_cart where product_id in
+        <foreach item="productId" collection="array" open="(" separator="," close=")">
+            #{productId}
+        </foreach>
+    </delete>
+
+</mapper>

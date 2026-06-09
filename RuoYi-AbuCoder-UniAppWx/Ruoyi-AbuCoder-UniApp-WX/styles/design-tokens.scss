@@ -1,0 +1,262 @@
+$accent-primary: #6F4E37;
+$accent-primary-deep: #201A17;
+$accent-primary-soft: #F6EEE6;
+$accent-surface: #FBF7F2;
+$accent-warm: #9A6C45;
+$accent-danger: #C86E60;
+$accent-success: #7C8F81;
+
+$text-primary: #201A17;
+$text-secondary: #6E655E;
+$text-tertiary: #9A9188;
+
+$bg-page-start: #FFFFFF;
+$bg-page-end: #FFFFFF;
+$bg-page: #FFFFFF;
+$bg-card: #FFFFFF;
+$bg-surface: #FFFFFF;
+$bg-muted: #FAF8F5;
+$bg-bottom: rgba(255, 255, 255, 0.96);
+$bg-hero: #FFFFFF;
+
+$border-subtle: #E8E0D7;
+$border-light: #F4EEE8;
+$border-strong: #D7CCBF;
+
+$font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
+
+$radius-xs: 10rpx;
+$radius-sm: 16rpx;
+$radius-md: 24rpx;
+
+$shadow-card: 0 8rpx 24rpx rgba(32, 26, 23, 0.05);
+$shadow-soft: 0 12rpx 32rpx rgba(32, 26, 23, 0.06);
+
+$space-page: 32rpx;
+$space-card: 24rpx;
+$space-gap: 20rpx;
+
+$top-nav-height: 60rpx;
+$top-nav-side-width: 120rpx;
+$top-nav-content-gap: 16rpx;
+
+$bottom-nav-height: 96rpx;
+$bottom-nav-shell-height: 112rpx;
+$bottom-action-height: 132rpx;
+
+@mixin page-shell($withNav: false) {
+	min-height: 100vh;
+	background: $bg-page;
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+
+	@if $withNav {
+		padding-bottom: calc(#{$bottom-nav-shell-height} + env(safe-area-inset-bottom));
+	}
+}
+
+@mixin card($padding: $space-card, $radius: $radius-sm) {
+	padding: $padding;
+	border-radius: $radius;
+	background: $bg-card;
+	border: 2rpx solid $border-subtle;
+	box-shadow: $shadow-card;
+	box-sizing: border-box;
+}
+
+@mixin hero-card($padding: 28rpx) {
+	padding: $padding;
+	border-radius: $radius-md;
+	background: $bg-hero;
+	border: 2rpx solid rgba(232, 224, 215, 0.9);
+	box-shadow: $shadow-soft;
+	box-sizing: border-box;
+}
+
+@mixin scan-page-shell($withBottomBar: false) {
+	min-height: 100vh;
+	background:
+		radial-gradient(circle at top right, rgba(162, 122, 92, 0.16), transparent 36%),
+		linear-gradient(180deg, #f7f0e8 0%, #f5eee6 28%, #fbf7f2 100%);
+	box-sizing: border-box;
+
+	@if $withBottomBar {
+		padding-bottom: 220rpx;
+	}
+}
+
+@mixin scan-surface-card($padding: 24rpx, $radius: 28rpx) {
+	padding: $padding;
+	border-radius: $radius;
+	background: rgba(255, 255, 255, 0.96);
+	border: 2rpx solid rgba(232, 224, 215, 0.92);
+	box-shadow: 0 14rpx 34rpx rgba(32, 26, 23, 0.08);
+	box-sizing: border-box;
+}
+
+@mixin scan-pill($bg: rgba(255, 255, 255, 0.18), $color: #fff) {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 10rpx 22rpx;
+	border-radius: 999rpx;
+	background: $bg;
+	color: $color;
+	font-size: 22rpx;
+	font-weight: 600;
+	line-height: 1;
+	box-sizing: border-box;
+}
+
+@mixin scan-primary-button($height: 92rpx) {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: $height;
+	padding: 0 32rpx;
+	border-radius: 999rpx;
+	background: linear-gradient(135deg, #a27a5c 0%, #6f4e37 100%);
+	color: #fff;
+	font-size: 28rpx;
+	font-weight: 700;
+	box-shadow: 0 12rpx 28rpx rgba(111, 78, 55, 0.2);
+	box-sizing: border-box;
+}
+
+@mixin scan-ghost-button($height: 92rpx) {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: $height;
+	padding: 0 32rpx;
+	border-radius: 999rpx;
+	background: rgba(255, 255, 255, 0.96);
+	color: $accent-primary;
+	font-size: 28rpx;
+	font-weight: 700;
+	border: 2rpx solid rgba(111, 78, 55, 0.2);
+	box-sizing: border-box;
+}
+
+@mixin active-press {
+	transition: transform 0.15s ease-out, opacity 0.15s ease-out, box-shadow 0.18s ease-out;
+
+	&:active {
+		transform: scale(0.98);
+		opacity: 0.92;
+	}
+}
+
+@mixin touch-target {
+	min-width: 88rpx;
+	min-height: 88rpx;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+@mixin disabled-state {
+	opacity: 0.45;
+	pointer-events: none;
+	transform: none !important;
+}
+
+@mixin page-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12rpx $space-page 24rpx;
+}
+
+@mixin back-pill {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8rpx;
+	min-width: 96rpx;
+	height: 64rpx;
+	padding: 0 18rpx;
+	border-radius: $radius-sm;
+	background: rgba(255, 255, 255, 0.96);
+	border: 2rpx solid $border-subtle;
+	box-sizing: border-box;
+}
+
+@mixin page-title {
+	font-family: $font-family;
+	font-size: 36rpx;
+	font-weight: 600;
+	color: $text-primary;
+}
+
+@mixin top-nav-shell {
+	padding: 0 $space-page 20rpx;
+	background: transparent;
+	box-sizing: border-box;
+}
+
+@mixin top-nav-row {
+	height: $top-nav-height;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16rpx;
+}
+
+@mixin top-nav-side {
+	width: $top-nav-side-width;
+	height: 64rpx;
+	display: flex;
+	align-items: center;
+	box-sizing: border-box;
+}
+
+@mixin top-nav-title {
+	flex: 1;
+	min-width: 0;
+	text-align: center;
+	font-family: $font-family;
+	font-size: 36rpx;
+	font-weight: 600;
+	color: $text-primary;
+}
+
+@mixin bottom-tab-shell {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 8rpx $space-page 8rpx;
+	background: $bg-bottom;
+	backdrop-filter: blur(24rpx);
+	-webkit-backdrop-filter: blur(24rpx);
+	border-top: 2rpx solid rgba(232, 224, 215, 0.8);
+	box-sizing: border-box;
+}
+
+@mixin bottom-tab-bar {
+	display: flex;
+	gap: 12rpx;
+	width: 100%;
+	height: $bottom-nav-height;
+	padding: 8rpx;
+	border-radius: $radius-md;
+	background: rgba(255, 255, 255, 0.98);
+	border: 2rpx solid rgba(232, 224, 215, 0.92);
+	box-shadow: $shadow-card;
+	box-sizing: border-box;
+}
+
+@mixin bottom-tab-item {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 6rpx;
+	border-radius: $radius-sm;
+}

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.coffee.scanOrder.mapper.ScanOrderItemMapper">
+
+    <resultMap type="ScanOrderItem" id="ScanOrderItemResult">
+        <result property="itemId"       column="item_id"       />
+        <result property="orderId"      column="order_id"      />
+        <result property="productId"    column="product_id"    />
+        <result property="productName"  column="product_name"  />
+        <result property="productImage" column="product_image" />
+        <result property="spec"         column="spec"          />
+        <result property="price"        column="price"         />
+        <result property="quantity"     column="quantity"      />
+        <result property="totalPrice"   column="total_price"   />
+        <result property="createTime"   column="create_time"   />
+    </resultMap>
+
+    <sql id="selectScanOrderItemVo">
+        select item_id, order_id, product_id, product_name, product_image,
+               spec, price, quantity, total_price, create_time
+        from t_scan_order_item
+    </sql>
+
+    <select id="selectItemsByOrderId" parameterType="Long" resultMap="ScanOrderItemResult">
+        <include refid="selectScanOrderItemVo"/>
+        where order_id = #{orderId}
+        order by item_id asc
+    </select>
+
+    <insert id="insertScanOrderItem" parameterType="ScanOrderItem" useGeneratedKeys="true" keyProperty="itemId">
+        insert into t_scan_order_item
+            (order_id, product_id, product_name, product_image,
+             spec, price, quantity, total_price, create_time)
+        values
+            (#{orderId}, #{productId}, #{productName}, #{productImage},
+             #{spec}, #{price}, #{quantity}, #{totalPrice}, #{createTime})
+    </insert>
+
+    <insert id="batchInsertScanOrderItem" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="itemId">
+        insert into t_scan_order_item
+            (order_id, product_id, product_name, product_image,
+             spec, price, quantity, total_price, create_time)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.orderId}, #{item.productId}, #{item.productName}, #{item.productImage},
+             #{item.spec}, #{item.price}, #{item.quantity}, #{item.totalPrice}, #{item.createTime})
+        </foreach>
+    </insert>
+
+</mapper>

@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.coffee.wallet.mapper.TWalletMapper">
+
+    <!-- ===== 钱包 ===== -->
+    <resultMap type="com.ruoyi.project.coffee.wallet.domain.TWallet" id="TWalletResult">
+        <result property="walletId"       column="wallet_id"       />
+        <result property="userId"         column="user_id"         />
+        <result property="balance"        column="balance"         />
+        <result property="totalRecharge"  column="total_recharge"  />
+        <result property="totalGift"      column="total_gift"      />
+        <result property="totalConsumed"  column="total_consumed"  />
+        <result property="frozenAmount"   column="frozen_amount"   />
+        <result property="createTime"     column="create_time"     />
+        <result property="updateTime"     column="update_time"     />
+    </resultMap>
+
+    <select id="selectWalletByUserId" parameterType="Long" resultMap="TWalletResult">
+        select wallet_id, user_id, balance, total_recharge, total_gift, total_consumed, frozen_amount, create_time, update_time
+        from t_wallet
+        where user_id = #{userId}
+    </select>
+
+    <insert id="insertWallet" parameterType="com.ruoyi.project.coffee.wallet.domain.TWallet" useGeneratedKeys="true" keyProperty="walletId">
+        insert into t_wallet (user_id, balance, total_recharge, total_gift, total_consumed, frozen_amount, create_time)
+        values (#{userId}, #{balance}, #{totalRecharge}, #{totalGift}, #{totalConsumed}, #{frozenAmount}, now())
+    </insert>
+
+    <update id="updateWallet" parameterType="com.ruoyi.project.coffee.wallet.domain.TWallet">
+        update t_wallet
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="balance != null">balance = #{balance},</if>
+            <if test="totalRecharge != null">total_recharge = #{totalRecharge},</if>
+            <if test="totalGift != null">total_gift = #{totalGift},</if>
+            <if test="totalConsumed != null">total_consumed = #{totalConsumed},</if>
+            <if test="frozenAmount != null">frozen_amount = #{frozenAmount},</if>
+            update_time = now(),
+        </trim>
+        where user_id = #{userId}
+    </update>
+
+    <!-- 原子加余额 -->
+    <update id="addBalance">
+        update t_wallet
+        set balance = balance + #{amount},
+            update_time = now()
+        where user_id = #{userId}
+    </update>
+
+    <!-- 原子扣余额（余额不足时 affected rows = 0） -->
+    <update id="deductBalance">
+        update t_wallet
+        set balance = balance - #{amount},
+            total_consumed = total_consumed + #{amount},
+            update_time = now()
+        where user_id = #{userId} and balance >= #{amount}
+    </update>
+
+    <!-- ===== 流水 ===== -->
+    <resultMap type="com.ruoyi.project.coffee.wallet.domain.TWalletLog" id="TWalletLogResult">
+        <result property="logId"           column="log_id"            />
+        <result property="userId"          column="user_id"           />
+        <result property="type"            column="type"              />
+        <result property="amount"          column="amount"            />
+        <result property="balanceBefore"   column="balance_before"    />
+        <result property="balanceAfter"    column="balance_after"     />
+        <result property="relatedOrderNo"  column="related_order_no"  />
+        <result property="remark"          column="remark"            />
+        <result property="createTime"      column="create_time"       />
+    </resultMap>
+
+    <insert id="insertWalletLog" parameterType="com.ruoyi.project.coffee.wallet.domain.TWalletLog" useGeneratedKeys="true" keyProperty="logId">
+        insert into t_wallet_log (user_id, type, amount, balance_before, balance_after, related_order_no, remark, create_time)
+        values (#{userId}, #{type}, #{amount}, #{balanceBefore}, #{balanceAfter}, #{relatedOrderNo}, #{remark}, now())
+    </insert>
+
+    <select id="selectWalletLogList" resultMap="TWalletLogResult">
+        select log_id, user_id, type, amount, balance_before, balance_after, related_order_no, remark, create_time
+        from t_wallet_log
+        where user_id = #{userId}
+        order by create_time desc, log_id desc
+    </select>
+
+    <!-- ===== 充值记录 ===== -->
+    <resultMap type="com.ruoyi.project.coffee.wallet.domain.TRechargeRecord" id="TRechargeRecordResult">
+        <result property="recordId"       column="record_id"       />
+        <result property="userId"         column="user_id"         />
+        <result property="rechargeNo"     column="recharge_no"     />
+        <result property="payAmount"      column="pay_amount"      />
+        <result property="giftAmount"     column="gift_amount"     />
+        <result property="totalAmount"    column="total_amount"    />
+        <result property="templateId"     column="template_id"     />
+        <result property="payType"        column="pay_type"        />
+        <result property="status"         column="status"          />
+        <result property="transactionId"  column="transaction_id"  />
+        <result property="createTime"     column="create_time"     />
+        <result property="payTime"        column="pay_time"        />
+    </resultMap>
+
+    <insert id="insertRechargeRecord" parameterType="com.ruoyi.project.coffee.wallet.domain.TRechargeRecord" useGeneratedKeys="true" keyProperty="recordId">
+        insert into t_recharge_record (user_id, recharge_no, pay_amount, gift_amount, total_amount, template_id, pay_type, status, create_time)
+        values (#{userId}, #{rechargeNo}, #{payAmount}, #{giftAmount}, #{totalAmount}, #{templateId}, #{payType}, #{status}, now())
+    </insert>
+
+    <select id="selectRechargeByNo" resultMap="TRechargeRecordResult">
+        select record_id, user_id, recharge_no, pay_amount, gift_amount, total_amount, template_id, pay_type, status, transaction_id, create_time, pay_time
+        from t_recharge_record
+        where recharge_no = #{rechargeNo}
+    </select>
+
+    <update id="updateRechargeRecord" parameterType="com.ruoyi.project.coffee.wallet.domain.TRechargeRecord">
+        update t_recharge_record
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="status != null">status = #{status},</if>
+            <if test="transactionId != null">transaction_id = #{transactionId},</if>
+            <if test="payTime != null">pay_time = #{payTime},</if>
+        </trim>
+        where record_id = #{recordId}
+    </update>
+
+    <!-- 充值记录乐观锁: 仅当当前 status=0 (待支付) 时才允许置为 1 (已支付).
+         并发回调多次只会有一次 affected=1, 用于守护后续入账幂等. -->
+    <update id="markRechargePaid">
+        update t_recharge_record
+        set status = 1,
+            pay_time = #{payTime}
+        where record_id = #{recordId}
+          and status = 0
+    </update>
+
+    <select id="selectRechargeRecordList" resultMap="TRechargeRecordResult">
+        select record_id, user_id, recharge_no, pay_amount, gift_amount, total_amount, template_id, pay_type, status, transaction_id, create_time, pay_time
+        from t_recharge_record
+        where user_id = #{userId}
+        order by create_time desc
+    </select>
+
+    <!-- ===== 充值模板 ===== -->
+    <resultMap type="com.ruoyi.project.coffee.wallet.domain.TRechargeTemplate" id="TRechargeTemplateResult">
+        <result property="templateId"  column="template_id"  />
+        <result property="payAmount"   column="pay_amount"   />
+        <result property="giftAmount"  column="gift_amount"  />
+        <result property="totalAmount" column="total_amount" />
+        <result property="sortOrder"   column="sort_order"   />
+        <result property="status"      column="status"       />
+        <result property="createTime"  column="create_time"  />
+    </resultMap>
+
+    <select id="selectActiveTemplates" resultMap="TRechargeTemplateResult">
+        select template_id, pay_amount, gift_amount, total_amount, sort_order, status, create_time
+        from t_recharge_template
+        where status = 1
+        order by sort_order asc
+    </select>
+
+    <select id="selectTemplateById" parameterType="Long" resultMap="TRechargeTemplateResult">
+        select template_id, pay_amount, gift_amount, total_amount, sort_order, status, create_time
+        from t_recharge_template
+        where template_id = #{templateId}
+    </select>
+
+    <select id="selectAllTemplates" resultMap="TRechargeTemplateResult">
+        select template_id, pay_amount, gift_amount, total_amount, sort_order, status, create_time
+        from t_recharge_template
+        order by sort_order asc
+    </select>
+
+    <insert id="insertTemplate" parameterType="com.ruoyi.project.coffee.wallet.domain.TRechargeTemplate" useGeneratedKeys="true" keyProperty="templateId">
+        insert into t_recharge_template (pay_amount, gift_amount, total_amount, sort_order, status, create_time)
+        values (#{payAmount}, #{giftAmount}, #{totalAmount}, #{sortOrder}, #{status}, now())
+    </insert>
+
+    <update id="updateTemplate" parameterType="com.ruoyi.project.coffee.wallet.domain.TRechargeTemplate">
+        update t_recharge_template
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="payAmount != null">pay_amount = #{payAmount},</if>
+            <if test="giftAmount != null">gift_amount = #{giftAmount},</if>
+            <if test="totalAmount != null">total_amount = #{totalAmount},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="status != null">status = #{status},</if>
+        </trim>
+        where template_id = #{templateId}
+    </update>
+
+    <delete id="deleteTemplateByIds" parameterType="String">
+        delete from t_recharge_template where template_id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- ===== 后台查询（全量） ===== -->
+    <select id="selectAllRechargeRecords" resultMap="TRechargeRecordResult">
+        select record_id, user_id, recharge_no, pay_amount, gift_amount, total_amount, template_id, pay_type, status, transaction_id, create_time, pay_time
+        from t_recharge_record
+        order by create_time desc
+    </select>
+
+    <select id="selectAllWalletLogs" resultMap="TWalletLogResult">
+        select log_id, user_id, type, amount, balance_before, balance_after, related_order_no, remark, create_time
+        from t_wallet_log
+        order by create_time desc, log_id desc
+    </select>
+
+</mapper>

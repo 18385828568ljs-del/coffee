@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <th:block th:include="include :: header('商品列表')" />
+    <th:block th:include="include :: select2-css" />
+    <style>
+        .product-edit-row {
+            padding: 16px 18px 18px;
+            background: #f9fbfd;
+            border: 1px solid #e5e9f0;
+            border-left: 3px solid #1ab394;
+            border-radius: 6px;
+        }
+
+        .product-edit-row .product-edit-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 14px;
+        }
+
+        .product-edit-row .product-edit-title {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            min-width: 0;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .product-edit-row .product-edit-title span {
+            max-width: 420px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .product-edit-row .product-edit-title small {
+            color: #888;
+            font-weight: 400;
+        }
+
+        .product-edit-row .product-edit-actions {
+            display: flex;
+            flex: 0 0 auto;
+            gap: 8px;
+        }
+
+        .product-edit-row .product-edit-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(170px, 1fr));
+            gap: 12px 16px;
+        }
+
+        .product-edit-row .product-edit-field {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            margin: 0;
+        }
+
+        .product-edit-row .product-edit-field > span {
+            margin-bottom: 6px;
+            color: #53606a;
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .product-edit-row .product-edit-field.is-wide {
+            grid-column: span 2;
+        }
+
+        .product-edit-row .product-edit-field.is-full {
+            grid-column: 1 / -1;
+        }
+
+        .product-edit-row .form-control {
+            height: 34px;
+            border-radius: 4px;
+        }
+
+        .product-edit-row .select2-container {
+            width: 100% !important;
+        }
+
+        .product-edit-row .select2-container--bootstrap .select2-selection {
+            min-height: 34px;
+            border-radius: 4px;
+        }
+
+        .product-edit-row .select2-container--bootstrap .select2-selection--single .select2-selection__rendered {
+            line-height: 32px;
+            padding-left: 12px;
+        }
+
+        .product-edit-row .select2-container--bootstrap .select2-selection--single .select2-selection__arrow {
+            height: 32px;
+        }
+
+        .product-select-dropdown,
+        .product-edit-select-dropdown {
+            z-index: 3000;
+        }
+
+        .product-select-dropdown.select2-dropdown--above,
+        .product-edit-select-dropdown.select2-dropdown--above {
+            border-top: 0;
+            border-bottom: 1px solid #66afe9;
+        }
+
+        .product-select-dropdown .select2-search--dropdown,
+        .product-edit-select-dropdown .select2-search--dropdown {
+            padding: 8px;
+        }
+
+        .product-select-dropdown .select2-search__field,
+        .product-edit-select-dropdown .select2-search__field {
+            height: 32px;
+            border-radius: 4px;
+        }
+
+        .product-select-dropdown .select2-results > .select2-results__options,
+        .product-edit-select-dropdown .select2-results > .select2-results__options {
+            max-height: 260px;
+            overflow-y: auto;
+        }
+
+        .product-edit-row textarea {
+            min-height: 68px;
+            resize: vertical;
+        }
+
+        @media (max-width: 1200px) {
+            .product-edit-row .product-edit-grid {
+                grid-template-columns: repeat(2, minmax(180px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .product-edit-row .product-edit-head {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .product-edit-row .product-edit-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .product-edit-row .product-edit-field.is-wide {
+                grid-column: 1 / -1;
+            }
+        }
+
+        #bootstrap-table tbody tr[data-has-detail-view] {
+            cursor: pointer;
+        }
+
+        #bootstrap-table tbody tr.expanded-product-row > td {
+            background-color: #eaf7f1 !important;
+            border-bottom-color: transparent !important;
+        }
+
+        #bootstrap-table tbody tr.expanded-product-row > td:first-child {
+            border-left: 3px solid #1ab394;
+        }
+
+        #bootstrap-table tbody tr.expanded-product-row + tr.detail-view > td {
+            background-color: #f9fbfd;
+            border-top: none;
+            padding-top: 0;
+        }
+
+        #bootstrap-table tbody tr.expanded-product-row + tr.detail-view .product-edit-row {
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+            margin-top: -1px;
+        }
+
+        #bootstrap-table .detail-icon {
+            color: #1ab394;
+            font-size: 16px;
+            text-decoration: none;
+        }
+
+        #bootstrap-table .detail-icon .glyphicon {
+            font-family: FontAwesome;
+            font-style: normal;
+            font-weight: normal;
+            line-height: 1;
+        }
+
+        #bootstrap-table .detail-icon .glyphicon-plus:before {
+            content: "\f0da";
+        }
+
+        #bootstrap-table .detail-icon .glyphicon-minus:before {
+            content: "\f0d7";
+        }
+
+        .product-edit-image-card {
+            position: relative;
+            width: 160px;
+            min-height: 120px;
+            border: 1px dashed #d0d7de;
+            border-radius: 6px;
+            cursor: pointer;
+            background: #fff;
+            transition: border-color .2s ease, background-color .2s ease;
+        }
+
+        .product-edit-image-card:hover,
+        .product-edit-image-card.is-dragover {
+            border-color: #1c84c6;
+            background: #f8fbff;
+        }
+
+        .product-edit-image-card input[type="file"] {
+            position: absolute;
+            left: -9999px;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+        }
+
+        .product-edit-image-card .empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 120px;
+            padding: 12px;
+            color: #888;
+            text-align: center;
+        }
+
+        .product-edit-image-card .empty i {
+            color: #1c84c6;
+            font-size: 22px;
+            margin-bottom: 6px;
+        }
+
+        .product-edit-image-card .empty span {
+            font-size: 12px;
+        }
+
+        .product-edit-image-card .preview {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+        }
+
+        .product-edit-image-card .preview img {
+            width: 96px;
+            height: 96px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .product-edit-image-card .preview .actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .product-edit-image-card .preview .actions .btn {
+            padding: 2px 8px;
+            font-size: 12px;
+        }
+
+        .product-edit-image-card.has-image .empty {
+            display: none;
+        }
+
+        .product-edit-image-card.has-image .preview {
+            display: flex;
+        }
+
+        .product-image-thumb {
+            position: relative;
+            display: inline-block;
+            width: 56px;
+            height: 56px;
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+            vertical-align: middle;
+            background: #f5f5f5;
+        }
+
+        .product-image-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .product-image-thumb .thumb-mask {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.45);
+            color: #fff;
+            font-size: 11px;
+            opacity: 0;
+            transition: opacity .15s ease;
+        }
+
+        .product-image-thumb:hover .thumb-mask {
+            opacity: 1;
+        }
+
+        .product-image-thumb.empty {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px dashed #c8d0d8;
+            color: #888;
+            font-size: 11px;
+            background: #fafbfc;
+        }
+
+        .product-image-thumb.empty:hover {
+            border-color: #1c84c6;
+            color: #1c84c6;
+        }
+    </style>
+</head>
+<body class="gray-bg">
+     <div class="container-div">
+        <div class="row">
+            <div class="col-sm-12 search-collapse">
+                <form id="formId">
+                    <div class="select-list">
+                        <ul>
+                            <li>
+                                <label>商品分类：</label>
+                                <select name="categoryId" class="product-filter-select" data-placeholder="全部分类">
+                                    <option value="">全部</option>
+                                    <option th:each="category : ${categories}"
+                                            th:value="${category.categoryId}"
+                                            th:text="${category.categoryName}"></option>
+                                </select>
+                            </li>
+                            <li>
+                                <label>商品名称：</label>
+                                <input type="text" name="productName"/>
+                            </li>
+                            <li>
+                                <label>产地：</label>
+                                <input type="text" name="origin"/>
+                            </li>
+                            <li>
+                                <label>处理法：</label>
+                                <input type="text" name="processingMethod"/>
+                            </li>
+                            <li>
+                                <label>烘焙度：</label>
+                                <input type="text" name="roastLevel"/>
+                            </li>
+                            <li>
+                                <label>价格：</label>
+                                <input type="text" name="price"/>
+                            </li>
+                            <li>
+                                <label>库存：</label>
+                                <input type="text" name="stock"/>
+                            </li>
+                            <li>
+                                <label>商品状态：</label>
+                                <select name="status" class="product-filter-select" data-placeholder="全部状态">
+                                    <option value="">全部</option>
+                                    <option value="1">上架</option>
+                                    <option value="0">下架</option>
+                                </select>
+                            </li>
+                            <li>
+                                <a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+                                <a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+                            </li>
+                        </ul>
+                    </div>
+                </form>
+            </div>
+
+            <div class="btn-group-sm" id="toolbar" role="group">
+                <a class="btn btn-success" onclick="$.operate.add()" shiro:hasPermission="coffee:product:add">
+                    <i class="fa fa-plus"></i> 添加
+                </a>
+                <a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="coffee:product:remove">
+                    <i class="fa fa-remove"></i> 删除
+                </a>
+                <a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="coffee:product:export">
+                    <i class="fa fa-download"></i> 导出
+                </a>
+            </div>
+            <div class="col-sm-12 select-table table-striped">
+                <table id="bootstrap-table"></table>
+            </div>
+        </div>
+    </div>
+    <input type="file" id="listImageUploader" accept="image/*" style="display:none">
+    <th:block th:include="include :: footer" />
+    <th:block th:include="include :: select2-js" />
+    <script th:inline="javascript">
+        var removeFlag = [[${@permission.hasPermi('coffee:product:remove')}]];
+        var categories = [[${categories}]];
+        var originOptions = [[${originOptions}]];
+        var processingMethodOptions = [[${processingMethodOptions}]];
+        var roastLevelOptions = [[${roastLevelOptions}]];
+        var flavorOptions = [[${flavorOptions}]];
+        var prefix = ctx + "coffee/product";
+        var select2SearchPlaceholder = "输入关键词搜索";
+        var productSelectPositionEvent = 'scroll.productSelectPosition resize.productSelectPosition';
+        var $productSelectScrollParents = $();
+
+        function getCategoryName(categoryId) {
+            for (var i = 0; i < categories.length; i++) {
+                if (categories[i].categoryId == categoryId) {
+                    return categories[i].categoryName;
+                }
+            }
+            return '-';
+        }
+
+        function escapeHtml(value) {
+            if (value === null || value === undefined) {
+                return '';
+            }
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function optionHtml(options, value, emptyText) {
+            var html = emptyText ? '<option value="">' + emptyText + '</option>' : '';
+            for (var i = 0; i < options.length; i++) {
+                var optionValue = options[i];
+                var selected = String(optionValue) === String(value == null ? '' : value) ? ' selected' : '';
+                html += '<option value="' + escapeHtml(optionValue) + '"' + selected + '>' + escapeHtml(optionValue) + '</option>';
+            }
+            return html;
+        }
+
+        function categoryOptionHtml(value) {
+            var html = '';
+            for (var i = 0; i < categories.length; i++) {
+                var category = categories[i];
+                var selected = String(category.categoryId) === String(value == null ? '' : value) ? ' selected' : '';
+                html += '<option value="' + escapeHtml(category.categoryId) + '"' + selected + '>' + escapeHtml(category.categoryName) + '</option>';
+            }
+            return html;
+        }
+
+        function positionDropdownBelow($select, focusSearch) {
+            var applyPosition = function() {
+                var $container = $select.next('.select2-container');
+                var $selection = $container.find('.select2-selection');
+                var $dropdownWrap = $('.select2-container--open').has('.select2-dropdown').last();
+                if (!$selection.length || !$dropdownWrap.length) {
+                    return;
+                }
+
+                var offset = $selection.offset();
+                $dropdownWrap.css({
+                    top: offset.top + $selection.outerHeight(),
+                    left: offset.left,
+                    width: $selection.outerWidth()
+                });
+                $dropdownWrap
+                    .removeClass('select2-container--above')
+                    .addClass('select2-container--below');
+                $dropdownWrap.find('.select2-dropdown')
+                    .addClass('product-select-dropdown')
+                    .removeClass('select2-dropdown--above')
+                    .addClass('select2-dropdown--below');
+                var $search = $('.select2-container--open .select2-search__field')
+                    .attr('placeholder', select2SearchPlaceholder);
+                if (focusSearch) {
+                    $search.trigger('focus');
+                }
+            };
+
+            window.setTimeout(applyPosition, 0);
+            window.setTimeout(applyPosition, 30);
+            if (window.requestAnimationFrame) {
+                window.requestAnimationFrame(applyPosition);
+            }
+        }
+
+        function unbindDropdownPositionEvents() {
+            $(window).off(productSelectPositionEvent);
+            $(document).off(productSelectPositionEvent);
+            $productSelectScrollParents.off(productSelectPositionEvent);
+            $productSelectScrollParents = $();
+        }
+
+        function bindDropdownPositionEvents($select) {
+            unbindDropdownPositionEvents();
+            $productSelectScrollParents = $select.parents().filter(function() {
+                var overflow = $(this).css('overflow') + $(this).css('overflow-y') + $(this).css('overflow-x');
+                return /(auto|scroll)/.test(overflow);
+            });
+            $(window).on(productSelectPositionEvent, function() {
+                positionDropdownBelow($select, false);
+            });
+            $(document).on(productSelectPositionEvent, function() {
+                positionDropdownBelow($select, false);
+            });
+            $productSelectScrollParents.on(productSelectPositionEvent, function() {
+                positionDropdownBelow($select, false);
+            });
+        }
+
+        function initProductSelects($selects, options) {
+            $selects.each(function() {
+                var $select = $(this);
+                if ($select.data('select2')) {
+                    return;
+                }
+
+                var placeholder = $select.data('placeholder') || $select.find('option:first').text() || '请选择';
+                $select.select2($.extend(true, {
+                    theme: 'bootstrap',
+                    width: '100%',
+                    allowClear: false,
+                    dropdownAutoWidth: false,
+                    minimumResultsForSearch: 0,
+                    placeholder: placeholder,
+                    language: {
+                        noResults: function() {
+                            return '没有找到匹配的选项';
+                        },
+                        searching: function() {
+                            return '搜索中...';
+                        }
+                    }
+                }, options || {})).on('select2:open.productSelect', function() {
+                    var $currentSelect = $(this);
+                    bindDropdownPositionEvents($currentSelect);
+                    positionDropdownBelow($currentSelect, true);
+                }).on('select2:close.productSelect', function() {
+                    unbindDropdownPositionEvents();
+                });
+            });
+        }
+
+        function buildInlineEditGridForm(row) {
+            var productId = escapeHtml(row.productId);
+            var imageUrl = row.imageUrl || '';
+            var hasImage = !!imageUrl;
+            return [
+                '<div class="product-edit-row">',
+                    '<form class="inline-product-form" id="inline-product-form-' + productId + '">',
+                        '<input type="hidden" name="productId" value="' + productId + '">',
+                        '<div class="product-edit-head">',
+                            '<div class="product-edit-title">',
+                                '<span>快速编辑：' + escapeHtml(row.productName) + '</span>',
+                                '<small>双击其他商品可切换编辑项</small>',
+                            '</div>',
+                            '<div class="product-edit-actions">',
+                                '<button class="btn btn-primary btn-sm" type="button" onclick="saveInlineProduct(\'' + productId + '\')"><i class="fa fa-save"></i> 保存</button>',
+                                '<button class="btn btn-default btn-sm" type="button" onclick="collapseInlineProduct(\'' + productId + '\')">取消</button>',
+                            '</div>',
+                        '</div>',
+                        '<div class="product-edit-grid">',
+                            '<label class="product-edit-field is-wide"><span>商品名称</span><input class="form-control" name="productName" type="text" value="' + escapeHtml(row.productName) + '"></label>',
+                            '<label class="product-edit-field is-wide"><span>商品分类</span><select class="form-control product-edit-select" name="categoryId">' + categoryOptionHtml(row.categoryId) + '</select></label>',
+                            '<label class="product-edit-field"><span>价格</span><input class="form-control" name="price" type="number" min="0" step="0.01" value="' + escapeHtml(row.price) + '"></label>',
+                            '<label class="product-edit-field"><span>库存</span><input class="form-control" name="stock" type="number" min="0" step="1" value="' + escapeHtml(row.stock) + '"></label>',
+                            '<label class="product-edit-field"><span>产地</span><select class="form-control product-edit-select" name="origin">' + optionHtml(originOptions, row.origin, '请选择') + '</select></label>',
+                            '<label class="product-edit-field"><span>处理法</span><select class="form-control product-edit-select" name="processingMethod">' + optionHtml(processingMethodOptions, row.processingMethod, '请选择') + '</select></label>',
+                            '<label class="product-edit-field"><span>烘焙度</span><select class="form-control product-edit-select" name="roastLevel">' + optionHtml(roastLevelOptions, row.roastLevel, '请选择') + '</select></label>',
+                            '<label class="product-edit-field"><span>状态</span><select class="form-control product-edit-select" name="status"><option value="1"' + (String(row.status) === '1' ? ' selected' : '') + '>上架</option><option value="0"' + (String(row.status) === '0' ? ' selected' : '') + '>下架</option></select></label>',
+                            '<label class="product-edit-field is-wide"><span>风味</span><select class="form-control product-edit-select" name="flavorNotes">' + optionHtml(flavorOptions, row.flavorNotes, '请选择') + '</select></label>',
+                            '<label class="product-edit-field is-wide"><span>规格</span><input class="form-control" name="remark" type="text" value="' + escapeHtml(row.remark) + '"></label>',
+                            '<div class="product-edit-field is-wide">',
+                                '<span>商品主图</span>',
+                                '<input type="hidden" name="imageUrl" value="' + escapeHtml(imageUrl) + '">',
+                                '<div class="product-edit-image-card' + (hasImage ? ' has-image' : '') + '" data-product-id="' + productId + '">',
+                                    '<input class="inline-image-file" accept="image/*" type="file">',
+                                    '<div class="empty">',
+                                        '<i class="fa fa-cloud-upload"></i>',
+                                        '<span>点击或拖拽上传图片</span>',
+                                    '</div>',
+                                    '<div class="preview">',
+                                        '<img alt="主图预览" src="' + escapeHtml(imageUrl) + '">',
+                                        '<div class="actions">',
+                                            '<button class="btn btn-primary btn-xs inline-image-change" type="button">换图</button>',
+                                            '<button class="btn btn-default btn-xs inline-image-remove" type="button">移除</button>',
+                                        '</div>',
+                                    '</div>',
+                                '</div>',
+                            '</div>',
+                            '<label class="product-edit-field is-full"><span>描述</span><textarea class="form-control" name="description" rows="3">' + escapeHtml(row.description) + '</textarea></label>',
+                        '</div>',
+                    '</form>',
+                '</div>'
+            ].join('');
+        }
+
+        function initInlineProductSelects($container) {
+            initProductSelects($container.find('.product-edit-select'), {
+                allowClear: false,
+                placeholder: '请选择'
+            });
+        }
+
+        function setInlineImagePreview($card, url) {
+            var hasImage = !!url;
+            $card.toggleClass('has-image', hasImage);
+            $card.find('.preview img').attr('src', url || '');
+            $card.closest('.inline-product-form').find('input[name="imageUrl"]').val(url || '');
+            if (!hasImage) {
+                $card.find('.inline-image-file').val('');
+            }
+        }
+
+        function uploadInlineProductImage($card, file) {
+            if (!file) {
+                return;
+            }
+            var formData = new FormData();
+            formData.append('file', file);
+            $.modal.loading('图片上传中，请稍候...');
+            $.ajax({
+                url: ctx + 'common/upload',
+                type: 'post',
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                success: function(result) {
+                    $.modal.closeLoading();
+                    if (result.code === web_status.SUCCESS && result.url) {
+                        setInlineImagePreview($card, result.url);
+                        $.modal.msgSuccess('图片上传成功');
+                    } else {
+                        $.modal.alertError(result.msg || '图片上传失败');
+                    }
+                },
+                error: function() {
+                    $.modal.closeLoading();
+                    $.modal.alertError('图片上传失败，请重试');
+                }
+            });
+        }
+
+        function expandInlineProduct(index) {
+            var $table = $('#bootstrap-table');
+            var $row = $table.find('tbody > tr[data-uniqueid="' + index + '"]');
+            if ($row.next('tr.detail-view').length) {
+                $table.bootstrapTable('collapseRowByUniqueId', index);
+                return;
+            }
+            $table.bootstrapTable('collapseAllRows');
+            $table.bootstrapTable('expandRowByUniqueId', index);
+            window.setTimeout(function() {
+                var $form = $('#inline-product-form-' + index);
+                if ($form.length) {
+                    initInlineProductSelects($form);
+                }
+            }, 0);
+        }
+
+        function collapseInlineProduct(productId) {
+            $('#bootstrap-table').bootstrapTable('collapseRowByUniqueId', productId);
+        }
+
+        function saveInlineProduct(productId) {
+            var $form = $('#inline-product-form-' + productId);
+            var productName = $.trim($form.find('[name="productName"]').val());
+            var price = $form.find('[name="price"]').val();
+            var stock = $form.find('[name="stock"]').val();
+
+            if (!productName) {
+                $.modal.alertWarning("商品名称不能为空");
+                return;
+            }
+            if (price === '' || isNaN(Number(price)) || Number(price) < 0) {
+                $.modal.alertWarning("价格不能小于 0");
+                return;
+            }
+            if (stock === '' || !/^\d+$/.test(stock)) {
+                $.modal.alertWarning("库存必须是非负整数");
+                return;
+            }
+
+            $.ajax({
+                url: prefix + "/edit",
+                type: "post",
+                data: $form.serialize(),
+                success: function(result) {
+                    if (result.code === web_status.SUCCESS) {
+                        $.modal.msgSuccess("保存成功");
+                        $('#bootstrap-table').bootstrapTable('refresh');
+                    } else {
+                        $.modal.alertError(result.msg);
+                    }
+                }
+            });
+        }
+
+        function uploadListProductImage(productId, file) {
+            if (!file || !productId) {
+                return;
+            }
+            var formData = new FormData();
+            formData.append('file', file);
+            $.modal.loading('图片上传中，请稍候...');
+            $.ajax({
+                url: ctx + 'common/upload',
+                type: 'post',
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                success: function(result) {
+                    if (result.code !== web_status.SUCCESS || !result.url) {
+                        $.modal.closeLoading();
+                        $.modal.alertError(result.msg || '图片上传失败');
+                        return;
+                    }
+                    $.ajax({
+                        url: prefix + '/edit',
+                        type: 'post',
+                        data: { productId: productId, imageUrl: result.url },
+                        success: function(editResult) {
+                            $.modal.closeLoading();
+                            if (editResult.code === web_status.SUCCESS) {
+                                $.modal.msgSuccess('主图已更新');
+                                $('#bootstrap-table').bootstrapTable('refresh');
+                            } else {
+                                $.modal.alertError(editResult.msg || '保存失败');
+                            }
+                        },
+                        error: function() {
+                            $.modal.closeLoading();
+                            $.modal.alertError('保存失败，请重试');
+                        }
+                    });
+                },
+                error: function() {
+                    $.modal.closeLoading();
+                    $.modal.alertError('图片上传失败，请重试');
+                }
+            });
+        }
+
+        $(function() {
+            initProductSelects($('.product-filter-select'), {
+                allowClear: true
+            });
+
+            $(document).on('mousedown', '.product-edit-select:not(.select2-hidden-accessible)', function(event) {
+                var $select = $(this);
+                initInlineProductSelects($select.closest('.product-edit-row'));
+                event.preventDefault();
+                $select.select2('open');
+            });
+
+            var $listImageUploader = $('#listImageUploader');
+            var pendingThumbProductId = null;
+
+            $(document).on('click', '.product-image-thumb', function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                pendingThumbProductId = $(this).data('product-id');
+                $listImageUploader.val('').trigger('click');
+            });
+
+            $(document).on('dblclick', '.product-image-thumb', function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+            });
+
+            $listImageUploader.on('change', function() {
+                if (this.files && this.files.length && pendingThumbProductId) {
+                    uploadListProductImage(pendingThumbProductId, this.files[0]);
+                }
+                pendingThumbProductId = null;
+            });
+
+            $(document).on('click', '.product-edit-image-card', function(event) {
+                if ($(event.target).closest('button, input').length) {
+                    return;
+                }
+                $(this).find('.inline-image-file').trigger('click');
+            });
+
+            $(document).on('dragenter dragover', '.product-edit-image-card', function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                $(this).addClass('is-dragover');
+            });
+
+            $(document).on('dragleave dragend drop', '.product-edit-image-card', function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                $(this).removeClass('is-dragover');
+            });
+
+            $(document).on('drop', '.product-edit-image-card', function(event) {
+                var files = event.originalEvent.dataTransfer.files;
+                if (files && files.length) {
+                    uploadInlineProductImage($(this), files[0]);
+                }
+            });
+
+            $(document).on('change', '.inline-image-file', function() {
+                if (this.files && this.files.length) {
+                    uploadInlineProductImage($(this).closest('.product-edit-image-card'), this.files[0]);
+                }
+            });
+
+            $(document).on('click', '.inline-image-change', function(event) {
+                event.stopPropagation();
+                $(this).closest('.product-edit-image-card').find('.inline-image-file').trigger('click');
+            });
+
+            $(document).on('click', '.inline-image-remove', function(event) {
+                event.stopPropagation();
+                setInlineImagePreview($(this).closest('.product-edit-image-card'), '');
+            });
+
+            var options = {
+                url: prefix + "/list",
+                createUrl: prefix + "/add",
+                removeUrl: prefix + "/remove",
+                exportUrl: prefix + "/export",
+                modalName: "商品",
+                uniqueId: "productId",
+                detailView: true,
+                detailViewIcon: false,
+                detailFormatter: function(index, row) {
+                    return buildInlineEditGridForm(row);
+                },
+                onExpandRow: function(index, row, $detail) {
+                    initInlineProductSelects($detail);
+                    var $table = $('#bootstrap-table');
+                    $table.find('tbody > tr.expanded-product-row').removeClass('expanded-product-row');
+                    $table.find('tbody > tr[data-uniqueid="' + row.productId + '"]').addClass('expanded-product-row');
+                },
+                onCollapseRow: function(index, row) {
+                    $('#bootstrap-table')
+                        .find('tbody > tr[data-uniqueid="' + row.productId + '"]')
+                        .removeClass('expanded-product-row');
+                },
+                onDblClickRow: function(row) {
+                    expandInlineProduct(row.productId);
+                },
+                columns: [{
+                    checkbox: true
+                },
+                {
+                    field: 'productId',
+                    title: '商品ID',
+                    visible: false
+                },
+                {
+                    field: 'categoryId',
+                    title: '商品分类',
+                    formatter: function(value) {
+                        return getCategoryName(value);
+                    }
+                },
+                {
+                    field: 'productName',
+                    title: '商品名称'
+                },
+                {
+                    field: 'origin',
+                    title: '产地'
+                },
+                {
+                    field: 'processingMethod',
+                    title: '处理法'
+                },
+                {
+                    field: 'roastLevel',
+                    title: '烘焙度'
+                },
+                {
+                    field: 'flavorNotes',
+                    title: '风味/描述',
+                    formatter: function(value, row) {
+                        var flavor = row.flavorNotes || '-';
+                        var description = row.description || '-';
+                        return '<div><strong>风味：</strong>' + escapeHtml(flavor) + '</div>' +
+                            '<div class="text-muted"><strong>描述：</strong>' + escapeHtml(description) + '</div>';
+                    }
+                },
+                {
+                    field: 'price',
+                    title: '价格'
+                },
+                {
+                    field: 'stock',
+                    title: '库存'
+                },
+                {
+                    field: 'imageUrl',
+                    title: '商品主图',
+                    formatter: function(value, row) {
+                        var productId = escapeHtml(row.productId);
+                        if (!value) {
+                            return '<a class="product-image-thumb empty" href="javascript:void(0)" data-product-id="' + productId + '" title="点击上传">上传</a>';
+                        }
+                        return '<a class="product-image-thumb" href="javascript:void(0)" data-product-id="' + productId + '" title="点击换图">' +
+                            '<img src="' + escapeHtml(value) + '" alt="主图">' +
+                            '<span class="thumb-mask">点击换图</span>' +
+                            '</a>';
+                    }
+                },
+                {
+                    field: 'status',
+                    title: '商品状态',
+                    formatter: function(value) {
+                        if (String(value) === '1') {
+                            return '<span class="label label-primary">上架</span>';
+                        }
+                        if (String(value) === '0') {
+                            return '<span class="label label-default">下架</span>';
+                        }
+                        return '-';
+                    }
+                },
+                {
+                    field: 'remark',
+                    title: '规格'
+                },
+                {
+                    title: '操作',
+                    align: 'center',
+                    formatter: function(value, row) {
+                        var actions = [];
+                        actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.productId + '\')"><i class="fa fa-remove"></i>删除</a>');
+                        return actions.join('');
+                    }
+                }]
+            };
+            $.table.init(options);
+        });
+    </script>
+</body>
+</html>

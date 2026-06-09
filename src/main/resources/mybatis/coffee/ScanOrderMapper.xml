@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.coffee.scanOrder.mapper.ScanOrderMapper">
+
+    <resultMap type="ScanOrder" id="ScanOrderResult">
+        <result property="orderId"         column="order_id"         />
+        <result property="orderNo"         column="order_no"         />
+        <result property="userId"          column="user_id"          />
+        <result property="shopId"          column="shop_id"          />
+        <result property="shopName"        column="shop_name"        />
+        <result property="tableNo"         column="table_no"         />
+        <result property="scene"           column="scene"            />
+        <result property="totalAmount"     column="total_amount"     />
+        <result property="payAmount"       column="pay_amount"       />
+        <result property="discountAmount"  column="discount_amount"  />
+        <result property="memberDiscount"  column="member_discount"  />
+        <result property="activitySummary" column="activity_summary" />
+        <result property="status"          column="status"           />
+        <result property="payType"         column="pay_type"         />
+        <result property="payTime"         column="pay_time"         />
+        <result property="finishTime"      column="finish_time"      />
+        <result property="cancelTime"      column="cancel_time"      />
+        <result property="remark"          column="remark"           />
+        <result property="createBy"        column="create_by"        />
+        <result property="createTime"      column="create_time"      />
+        <result property="updateBy"        column="update_by"        />
+        <result property="updateTime"      column="update_time"      />
+    </resultMap>
+
+    <sql id="selectScanOrderVo">
+        select order_id, order_no, user_id, shop_id, shop_name, table_no, scene,
+               total_amount, pay_amount, discount_amount, member_discount, activity_summary,
+               status, pay_type, pay_time, finish_time, cancel_time,
+               remark, create_by, create_time, update_by, update_time
+        from t_scan_order
+    </sql>
+
+    <select id="selectScanOrderById" parameterType="Long" resultMap="ScanOrderResult">
+        <include refid="selectScanOrderVo"/>
+        where order_id = #{orderId}
+    </select>
+
+    <select id="selectScanOrderByOrderNo" parameterType="String" resultMap="ScanOrderResult">
+        <include refid="selectScanOrderVo"/>
+        where order_no = #{orderNo}
+    </select>
+
+    <select id="selectScanOrderList" parameterType="ScanOrder" resultMap="ScanOrderResult">
+        <include refid="selectScanOrderVo"/>
+        <where>
+            <if test="userId != null"> and user_id = #{userId}</if>
+            <if test="shopId != null"> and shop_id = #{shopId}</if>
+            <if test="tableNo != null and tableNo != ''"> and table_no = #{tableNo}</if>
+            <if test="status != null"> and status = #{status}</if>
+        </where>
+        order by
+        case when create_time is null then 1 else 0 end,
+        create_time desc,
+        order_id desc
+    </select>
+
+    <insert id="insertScanOrder" parameterType="ScanOrder" useGeneratedKeys="true" keyProperty="orderId">
+        insert into t_scan_order
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            order_no, user_id,
+            <if test="shopId != null">shop_id,</if>
+            <if test="shopName != null">shop_name,</if>
+            <if test="tableNo != null and tableNo != ''">table_no,</if>
+            <if test="scene != null and scene != ''">scene,</if>
+            total_amount, pay_amount,
+            <if test="discountAmount != null">discount_amount,</if>
+            <if test="memberDiscount != null">member_discount,</if>
+            <if test="activitySummary != null">activity_summary,</if>
+            status,
+            <if test="payType != null and payType != ''">pay_type,</if>
+            <if test="payTime != null">pay_time,</if>
+            <if test="finishTime != null">finish_time,</if>
+            <if test="cancelTime != null">cancel_time,</if>
+            <if test="remark != null">remark,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{orderNo}, #{userId},
+            <if test="shopId != null">#{shopId},</if>
+            <if test="shopName != null">#{shopName},</if>
+            <if test="tableNo != null and tableNo != ''">#{tableNo},</if>
+            <if test="scene != null and scene != ''">#{scene},</if>
+            #{totalAmount}, #{payAmount},
+            <if test="discountAmount != null">#{discountAmount},</if>
+            <if test="memberDiscount != null">#{memberDiscount},</if>
+            <if test="activitySummary != null">#{activitySummary},</if>
+            #{status},
+            <if test="payType != null and payType != ''">#{payType},</if>
+            <if test="payTime != null">#{payTime},</if>
+            <if test="finishTime != null">#{finishTime},</if>
+            <if test="cancelTime != null">#{cancelTime},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+        </trim>
+    </insert>
+
+    <update id="updateScanOrderStatus">
+        update t_scan_order
+        <set>
+            status = #{newStatus},
+            update_time = now(),
+            <if test="payTime != null">pay_time = #{payTime},</if>
+            <if test="finishTime != null">finish_time = #{finishTime},</if>
+            <if test="cancelTime != null">cancel_time = #{cancelTime},</if>
+            <if test="payType != null and payType != ''">pay_type = #{payType},</if>
+        </set>
+        where order_id = #{orderId}
+          and status = #{oldStatus}
+    </update>
+
+</mapper>
