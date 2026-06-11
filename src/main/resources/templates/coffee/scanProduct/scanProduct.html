@@ -2,6 +2,307 @@
 <html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
 <head>
     <th:block th:include="include :: header('点单商品列表')" />
+    <style>
+        .scan-product-edit-row {
+            padding: 16px 18px 18px;
+            background: #f9fbfd;
+            border: 1px solid #e5e9f0;
+            border-left: 3px solid #1ab394;
+            border-radius: 6px;
+        }
+
+        .scan-product-edit-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 14px;
+        }
+
+        .scan-product-edit-title {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            min-width: 0;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .scan-product-edit-title span {
+            max-width: 420px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .scan-product-edit-title small {
+            color: #888;
+            font-weight: 400;
+        }
+
+        .scan-product-edit-actions {
+            display: flex;
+            flex: 0 0 auto;
+            gap: 8px;
+        }
+
+        .scan-product-edit-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(170px, 1fr));
+            gap: 12px 16px;
+        }
+
+        .scan-product-edit-field {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            margin: 0;
+        }
+
+        .scan-product-edit-field > span {
+            margin-bottom: 6px;
+            color: #53606a;
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .scan-product-edit-field.is-wide {
+            grid-column: span 2;
+        }
+
+        .scan-product-edit-field.is-full {
+            grid-column: 1 / -1;
+        }
+
+        .scan-product-edit-row .form-control {
+            height: 34px;
+            border-radius: 4px;
+        }
+
+        .scan-product-edit-row textarea {
+            min-height: 68px;
+            resize: vertical;
+        }
+
+        @media (max-width: 1200px) {
+            .scan-product-edit-grid {
+                grid-template-columns: repeat(2, minmax(180px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .scan-product-edit-head {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .scan-product-edit-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .scan-product-edit-field.is-wide {
+                grid-column: 1 / -1;
+            }
+        }
+
+        #bootstrap-table tbody tr[data-has-detail-view] {
+            cursor: pointer;
+        }
+
+        #bootstrap-table tbody tr.expanded-scan-product-row > td {
+            background-color: #eaf7f1 !important;
+            border-bottom-color: transparent !important;
+        }
+
+        #bootstrap-table tbody tr.expanded-scan-product-row > td:first-child {
+            border-left: 3px solid #1ab394;
+        }
+
+        #bootstrap-table tbody tr.expanded-scan-product-row + tr.detail-view > td {
+            background-color: #f9fbfd;
+            border-top: none;
+            padding-top: 0;
+        }
+
+        #bootstrap-table tbody tr.expanded-scan-product-row + tr.detail-view .scan-product-edit-row {
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+            margin-top: -1px;
+        }
+
+        #bootstrap-table .detail-icon {
+            color: #1ab394;
+            font-size: 16px;
+            text-decoration: none;
+        }
+
+        #bootstrap-table .detail-icon .glyphicon {
+            font-family: FontAwesome;
+            font-style: normal;
+            font-weight: normal;
+            line-height: 1;
+        }
+
+        #bootstrap-table .detail-icon .glyphicon-plus:before {
+            content: "\f0da";
+        }
+
+        #bootstrap-table .detail-icon .glyphicon-minus:before {
+            content: "\f0d7";
+        }
+
+        .scan-product-upload-card {
+            position: relative;
+            width: 160px;
+            min-height: 120px;
+            border: 1px dashed #d0d7de;
+            border-radius: 6px;
+            cursor: pointer;
+            background: #fff;
+            transition: border-color .2s ease, background-color .2s ease;
+        }
+
+        .scan-product-upload-card:hover,
+        .scan-product-upload-card.is-dragover {
+            border-color: #1c84c6;
+            background: #f8fbff;
+        }
+
+        .scan-product-upload-card input[type="file"] {
+            position: absolute;
+            left: -9999px;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+        }
+
+        .scan-product-upload-card .empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 120px;
+            padding: 12px;
+            color: #888;
+            text-align: center;
+        }
+
+        .scan-product-upload-card .empty i {
+            color: #1c84c6;
+            font-size: 22px;
+            margin-bottom: 6px;
+        }
+
+        .scan-product-upload-card .empty span {
+            font-size: 12px;
+        }
+
+        .scan-product-upload-card .preview {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+        }
+
+        .scan-product-upload-card .preview img {
+            width: 96px;
+            height: 96px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .scan-product-upload-card .preview .video-file {
+            width: 96px;
+            min-height: 96px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border-radius: 4px;
+            color: #1c84c6;
+            background: #eef7ff;
+        }
+
+        .scan-product-upload-card .preview .video-file i {
+            font-size: 26px;
+        }
+
+        .scan-product-upload-card .preview .video-file small {
+            color: #53606a;
+        }
+
+        .scan-product-upload-card .preview .actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .scan-product-upload-card .preview .actions .btn {
+            padding: 2px 8px;
+            font-size: 12px;
+        }
+
+        .scan-product-upload-card.has-file .empty {
+            display: none;
+        }
+
+        .scan-product-upload-card.has-file .preview {
+            display: flex;
+        }
+
+        .scan-product-image-thumb {
+            position: relative;
+            display: inline-block;
+            width: 56px;
+            height: 56px;
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+            vertical-align: middle;
+            background: #f5f5f5;
+        }
+
+        .scan-product-image-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .scan-product-image-thumb .thumb-mask {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.45);
+            color: #fff;
+            font-size: 11px;
+            opacity: 0;
+            transition: opacity .15s ease;
+        }
+
+        .scan-product-image-thumb:hover .thumb-mask {
+            opacity: 1;
+        }
+
+        .scan-product-image-thumb.empty {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px dashed #c8d0d8;
+            color: #888;
+            font-size: 11px;
+            background: #fafbfc;
+        }
+
+        .scan-product-image-thumb.empty:hover {
+            border-color: #1c84c6;
+            color: #1c84c6;
+        }
+    </style>
 </head>
 <body class="gray-bg">
 <div class="container-div">
@@ -52,6 +353,7 @@
             </a>
         </div>
         <div class="col-sm-12 select-table table-striped">
+            <input id="listImageUploader" accept="image/*" type="file" style="display:none;">
             <table id="bootstrap-table"></table>
         </div>
     </div>
@@ -63,6 +365,18 @@
     var categories = [[${categories}]];
     var prefix = ctx + "coffee/scanProduct";
 
+    function escapeHtml(value) {
+        if (value === null || value === undefined) {
+            return '';
+        }
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     function getCategoryName(categoryId) {
         for (var i = 0; i < categories.length; i++) {
             if (String(categories[i].categoryId) === String(categoryId)) {
@@ -72,13 +386,355 @@
         return '-';
     }
 
+    function categoryOptionHtml(selectedId) {
+        var html = '<option value="">请选择商品分类</option>';
+        for (var i = 0; i < categories.length; i++) {
+            var category = categories[i];
+            html += '<option value="' + escapeHtml(category.categoryId) + '"' +
+                (String(category.categoryId) === String(selectedId) ? ' selected' : '') + '>' +
+                escapeHtml(category.categoryName) + '</option>';
+        }
+        return html;
+    }
+
+    function buildInlineScanProductForm(row) {
+        var productId = escapeHtml(row.productId);
+        var imageUrl = row.imageUrl || '';
+        var videoUrl = row.videoUrl || '';
+        var hasImage = !!imageUrl;
+        var hasVideo = !!videoUrl;
+        return [
+            '<div class="scan-product-edit-row">',
+                '<form class="inline-scan-product-form" id="inline-scan-product-form-' + productId + '">',
+                    '<input type="hidden" name="productId" value="' + productId + '">',
+                    '<div class="scan-product-edit-head">',
+                        '<div class="scan-product-edit-title">',
+                            '<span>快速编辑：' + escapeHtml(row.productName) + '</span>',
+                            '<small>双击其他商品可切换编辑项</small>',
+                        '</div>',
+                        '<div class="scan-product-edit-actions">',
+                            '<button class="btn btn-primary btn-sm" type="button" onclick="saveInlineScanProduct(\'' + productId + '\')"><i class="fa fa-save"></i> 保存</button>',
+                            '<button class="btn btn-default btn-sm" type="button" onclick="collapseInlineScanProduct(\'' + productId + '\')">取消</button>',
+                        '</div>',
+                    '</div>',
+                    '<div class="scan-product-edit-grid">',
+                        '<label class="scan-product-edit-field is-wide"><span>商品名称</span><input class="form-control" name="productName" type="text" value="' + escapeHtml(row.productName) + '"></label>',
+                        '<label class="scan-product-edit-field is-wide"><span>商品分类</span><select class="form-control" name="categoryId">' + categoryOptionHtml(row.categoryId) + '</select></label>',
+                        '<label class="scan-product-edit-field is-wide"><span>副标题</span><input class="form-control" name="subTitle" type="text" value="' + escapeHtml(row.subTitle) + '"></label>',
+                        '<label class="scan-product-edit-field"><span>价格</span><input class="form-control" name="price" type="number" min="0" step="0.01" value="' + escapeHtml(row.price) + '"></label>',
+                        '<label class="scan-product-edit-field"><span>月售</span><input class="form-control" name="monthSales" type="number" min="0" step="1" value="' + escapeHtml(row.monthSales || 0) + '"></label>',
+                        '<label class="scan-product-edit-field"><span>标签</span><input class="form-control" name="tag" type="text" value="' + escapeHtml(row.tag) + '"></label>',
+                        '<label class="scan-product-edit-field"><span>排序</span><input class="form-control" name="sortOrder" type="number" min="0" step="1" value="' + escapeHtml(row.sortOrder || 0) + '"></label>',
+                        '<label class="scan-product-edit-field"><span>状态</span><select class="form-control" name="status"><option value="1"' + (String(row.status) === '1' ? ' selected' : '') + '>上架</option><option value="0"' + (String(row.status) === '0' ? ' selected' : '') + '>下架</option></select></label>',
+                        '<div class="scan-product-edit-field is-wide">',
+                            '<span>商品主图</span>',
+                            '<input type="hidden" name="imageUrl" value="' + escapeHtml(imageUrl) + '">',
+                            '<div class="scan-product-upload-card scan-product-image-card' + (hasImage ? ' has-file' : '') + '" data-product-id="' + productId + '">',
+                                '<input class="inline-image-file" accept="image/*" type="file">',
+                                '<div class="empty"><i class="fa fa-cloud-upload"></i><span>点击或拖拽上传图片</span></div>',
+                                '<div class="preview">',
+                                    '<img alt="主图预览" src="' + escapeHtml(imageUrl) + '">',
+                                    '<div class="actions">',
+                                        '<button class="btn btn-primary btn-xs inline-image-change" type="button">换图</button>',
+                                        '<button class="btn btn-default btn-xs inline-image-remove" type="button">移除</button>',
+                                    '</div>',
+                                '</div>',
+                            '</div>',
+                        '</div>',
+                        '<div class="scan-product-edit-field is-wide">',
+                            '<span>讲解视频</span>',
+                            '<input type="hidden" name="videoUrl" value="' + escapeHtml(videoUrl) + '">',
+                            '<div class="scan-product-upload-card scan-product-video-card' + (hasVideo ? ' has-file' : '') + '" data-product-id="' + productId + '">',
+                                '<input class="inline-video-file" accept="video/mp4,video/quicktime,video/x-m4v" type="file">',
+                                '<div class="empty"><i class="fa fa-video-camera"></i><span>点击或拖拽上传视频</span></div>',
+                                '<div class="preview">',
+                                    '<div class="video-file"><i class="fa fa-file-video-o"></i><small>已上传</small></div>',
+                                    '<div class="actions">',
+                                        '<button class="btn btn-primary btn-xs inline-video-change" type="button">换视频</button>',
+                                        '<button class="btn btn-default btn-xs inline-video-remove" type="button">移除</button>',
+                                    '</div>',
+                                '</div>',
+                            '</div>',
+                        '</div>',
+                        '<label class="scan-product-edit-field is-full"><span>备注</span><textarea class="form-control" name="remark" rows="3">' + escapeHtml(row.remark) + '</textarea></label>',
+                    '</div>',
+                '</form>',
+            '</div>'
+        ].join('');
+    }
+
+    function setInlineImagePreview($card, url) {
+        var hasImage = !!url;
+        $card.toggleClass('has-file', hasImage);
+        $card.find('.preview img').attr('src', url || '');
+        $card.closest('.inline-scan-product-form').find('input[name="imageUrl"]').val(url || '');
+        if (!hasImage) {
+            $card.find('.inline-image-file').val('');
+        }
+    }
+
+    function setInlineVideoPreview($card, url) {
+        var hasVideo = !!url;
+        $card.toggleClass('has-file', hasVideo);
+        $card.closest('.inline-scan-product-form').find('input[name="videoUrl"]').val(url || '');
+        if (!hasVideo) {
+            $card.find('.inline-video-file').val('');
+        }
+    }
+
+    function uploadInlineScanProductFile($card, file, targetName) {
+        if (!file) {
+            return;
+        }
+        var isVideo = targetName === 'videoUrl';
+        var formData = new FormData();
+        formData.append('file', file);
+        $.modal.loading((isVideo ? '视频' : '图片') + '上传中，请稍候...');
+        $.ajax({
+            url: ctx + 'common/upload',
+            type: 'post',
+            data: formData,
+            cache: false,
+            contentType: false,
+            processData: false,
+            success: function(result) {
+                $.modal.closeLoading();
+                if (result.code === web_status.SUCCESS && result.url) {
+                    if (isVideo) {
+                        setInlineVideoPreview($card, result.url);
+                    } else {
+                        setInlineImagePreview($card, result.url);
+                    }
+                    $.modal.msgSuccess((isVideo ? '视频' : '图片') + '上传成功');
+                } else {
+                    $.modal.alertError(result.msg || ((isVideo ? '视频' : '图片') + '上传失败'));
+                }
+            },
+            error: function() {
+                $.modal.closeLoading();
+                $.modal.alertError((isVideo ? '视频' : '图片') + '上传失败，请重试');
+            }
+        });
+    }
+
+    function expandInlineScanProduct(productId) {
+        var $table = $('#bootstrap-table');
+        var $row = $table.find('tbody > tr[data-uniqueid="' + productId + '"]');
+        if ($row.next('tr.detail-view').length) {
+            $table.bootstrapTable('collapseRowByUniqueId', productId);
+            return;
+        }
+        $table.bootstrapTable('collapseAllRows');
+        $table.bootstrapTable('expandRowByUniqueId', productId);
+    }
+
+    function collapseInlineScanProduct(productId) {
+        $('#bootstrap-table').bootstrapTable('collapseRowByUniqueId', productId);
+    }
+
+    function saveInlineScanProduct(productId) {
+        var $form = $('#inline-scan-product-form-' + productId);
+        var productName = $.trim($form.find('[name="productName"]').val());
+        var categoryId = $form.find('[name="categoryId"]').val();
+        var price = $form.find('[name="price"]').val();
+        var monthSales = $form.find('[name="monthSales"]').val();
+        var sortOrder = $form.find('[name="sortOrder"]').val();
+
+        if (!productName) {
+            $.modal.alertWarning("商品名称不能为空");
+            return;
+        }
+        if (!categoryId) {
+            $.modal.alertWarning("商品分类不能为空");
+            return;
+        }
+        if (price === '' || isNaN(Number(price)) || Number(price) < 0) {
+            $.modal.alertWarning("价格不能小于 0");
+            return;
+        }
+        if (monthSales !== '' && !/^\d+$/.test(monthSales)) {
+            $.modal.alertWarning("月售必须是非负整数");
+            return;
+        }
+        if (sortOrder !== '' && !/^\d+$/.test(sortOrder)) {
+            $.modal.alertWarning("排序必须是非负整数");
+            return;
+        }
+
+        $.ajax({
+            url: prefix + "/edit",
+            type: "post",
+            data: $form.serialize(),
+            success: function(result) {
+                if (result.code === web_status.SUCCESS) {
+                    $.modal.msgSuccess("保存成功");
+                    $('#bootstrap-table').bootstrapTable('refresh');
+                } else {
+                    $.modal.alertError(result.msg || "保存失败");
+                }
+            }
+        });
+    }
+
+    function uploadListScanProductImage(productId, file) {
+        if (!file || !productId) {
+            return;
+        }
+        var formData = new FormData();
+        formData.append('file', file);
+        $.modal.loading('图片上传中，请稍候...');
+        $.ajax({
+            url: ctx + 'common/upload',
+            type: 'post',
+            data: formData,
+            cache: false,
+            contentType: false,
+            processData: false,
+            success: function(result) {
+                if (result.code !== web_status.SUCCESS || !result.url) {
+                    $.modal.closeLoading();
+                    $.modal.alertError(result.msg || '图片上传失败');
+                    return;
+                }
+                $.ajax({
+                    url: prefix + '/edit',
+                    type: 'post',
+                    data: { productId: productId, imageUrl: result.url },
+                    success: function(editResult) {
+                        $.modal.closeLoading();
+                        if (editResult.code === web_status.SUCCESS) {
+                            $.modal.msgSuccess('主图已更新');
+                            $('#bootstrap-table').bootstrapTable('refresh');
+                        } else {
+                            $.modal.alertError(editResult.msg || '保存失败');
+                        }
+                    },
+                    error: function() {
+                        $.modal.closeLoading();
+                        $.modal.alertError('保存失败，请重试');
+                    }
+                });
+            },
+            error: function() {
+                $.modal.closeLoading();
+                $.modal.alertError('图片上传失败，请重试');
+            }
+        });
+    }
+
     $(function() {
+        var $listImageUploader = $('#listImageUploader');
+        var pendingThumbProductId = null;
+
+        $(document).on('click', '.scan-product-image-thumb', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            pendingThumbProductId = $(this).data('product-id');
+            $listImageUploader.val('').trigger('click');
+        });
+
+        $(document).on('dblclick', '.scan-product-image-thumb', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+        });
+
+        $listImageUploader.on('change', function() {
+            if (this.files && this.files.length && pendingThumbProductId) {
+                uploadListScanProductImage(pendingThumbProductId, this.files[0]);
+            }
+            pendingThumbProductId = null;
+        });
+
+        $(document).on('click', '.scan-product-upload-card', function(event) {
+            if ($(event.target).closest('button, input').length) {
+                return;
+            }
+            $(this).find('input[type="file"]').trigger('click');
+        });
+
+        $(document).on('dragenter dragover', '.scan-product-upload-card', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            $(this).addClass('is-dragover');
+        });
+
+        $(document).on('dragleave dragend drop', '.scan-product-upload-card', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            $(this).removeClass('is-dragover');
+        });
+
+        $(document).on('drop', '.scan-product-image-card', function(event) {
+            var files = event.originalEvent.dataTransfer.files;
+            if (files && files.length) {
+                uploadInlineScanProductFile($(this), files[0], 'imageUrl');
+            }
+        });
+
+        $(document).on('drop', '.scan-product-video-card', function(event) {
+            var files = event.originalEvent.dataTransfer.files;
+            if (files && files.length) {
+                uploadInlineScanProductFile($(this), files[0], 'videoUrl');
+            }
+        });
+
+        $(document).on('change', '.inline-image-file', function() {
+            if (this.files && this.files.length) {
+                uploadInlineScanProductFile($(this).closest('.scan-product-image-card'), this.files[0], 'imageUrl');
+            }
+        });
+
+        $(document).on('change', '.inline-video-file', function() {
+            if (this.files && this.files.length) {
+                uploadInlineScanProductFile($(this).closest('.scan-product-video-card'), this.files[0], 'videoUrl');
+            }
+        });
+
+        $(document).on('click', '.inline-image-change', function(event) {
+            event.stopPropagation();
+            $(this).closest('.scan-product-image-card').find('.inline-image-file').trigger('click');
+        });
+
+        $(document).on('click', '.inline-image-remove', function(event) {
+            event.stopPropagation();
+            setInlineImagePreview($(this).closest('.scan-product-image-card'), '');
+        });
+
+        $(document).on('click', '.inline-video-change', function(event) {
+            event.stopPropagation();
+            $(this).closest('.scan-product-video-card').find('.inline-video-file').trigger('click');
+        });
+
+        $(document).on('click', '.inline-video-remove', function(event) {
+            event.stopPropagation();
+            setInlineVideoPreview($(this).closest('.scan-product-video-card'), '');
+        });
+
         var options = {
             url: prefix + "/list",
             createUrl: prefix + "/add",
             updateUrl: prefix + "/edit/{id}",
             removeUrl: prefix + "/remove",
             modalName: "点单商品",
+            uniqueId: "productId",
+            detailView: true,
+            detailViewIcon: false,
+            detailFormatter: function(index, row) {
+                return buildInlineScanProductForm(row);
+            },
+            onExpandRow: function(index, row) {
+                var $table = $('#bootstrap-table');
+                $table.find('tbody > tr.expanded-scan-product-row').removeClass('expanded-scan-product-row');
+                $table.find('tbody > tr[data-uniqueid="' + row.productId + '"]').addClass('expanded-scan-product-row');
+            },
+            onCollapseRow: function(index, row) {
+                $('#bootstrap-table')
+                    .find('tbody > tr[data-uniqueid="' + row.productId + '"]')
+                    .removeClass('expanded-scan-product-row');
+            },
+            onDblClickRow: function(row) {
+                expandInlineScanProduct(row.productId);
+            },
             columns: [{
                 checkbox: true
             },
@@ -108,11 +764,15 @@
             {
                 field: 'imageUrl',
                 title: '商品主图',
-                formatter: function(value) {
+                formatter: function(value, row) {
+                    var productId = escapeHtml(row.productId);
                     if (!value) {
-                        return '-';
+                        return '<a class="scan-product-image-thumb empty" href="javascript:void(0)" data-product-id="' + productId + '" title="点击上传">上传</a>';
                     }
-                    return '<img src="' + value + '" style="width: 56px; height: 56px; object-fit: cover; border-radius: 4px;">';
+                    return '<a class="scan-product-image-thumb" href="javascript:void(0)" data-product-id="' + productId + '" title="点击换图">' +
+                        '<img src="' + escapeHtml(value) + '" alt="主图">' +
+                        '<span class="thumb-mask">点击换图</span>' +
+                        '</a>';
                 }
             },
             {
