@@ -328,6 +328,183 @@
             border-color: #1c84c6;
             color: #1c84c6;
         }
+
+        .ai-image-panel {
+            padding: 16px;
+        }
+
+        .ai-image-compare {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 14px;
+        }
+
+        .ai-image-card {
+            border: 1px solid #e5e9f0;
+            border-radius: 6px;
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .ai-image-card-title {
+            padding: 8px 10px;
+            color: #53606a;
+            font-weight: 600;
+            border-bottom: 1px solid #edf0f5;
+            background: #f9fbfd;
+        }
+
+        .ai-image-card-body {
+            min-height: 240px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+        }
+
+        .ai-image-card-body img {
+            max-width: 100%;
+            max-height: 320px;
+            border-radius: 4px;
+        }
+
+        .ai-previewable {
+            cursor: zoom-in;
+        }
+
+        .ai-image-preview-layer {
+            min-height: 520px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: #111827;
+        }
+
+        .ai-image-preview-layer img {
+            max-width: 100%;
+            max-height: 78vh;
+            object-fit: contain;
+            border-radius: 4px;
+            background: #fff;
+        }
+
+        .ai-image-placeholder {
+            color: #888;
+            text-align: center;
+        }
+
+        .ai-image-prompt {
+            margin-bottom: 14px;
+        }
+
+        .ai-image-prompt label {
+            display: block;
+            margin-bottom: 6px;
+            color: #53606a;
+            font-weight: 600;
+        }
+
+        .ai-image-prompt textarea {
+            resize: vertical;
+            min-height: 72px;
+        }
+
+        .ai-preset-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .ai-preset-option {
+            border: 1px solid #d9e1ea;
+            border-radius: 4px;
+            padding: 7px 12px;
+            color: #53606a;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        .ai-preset-option.active {
+            border-color: #1c84c6;
+            color: #1c84c6;
+            background: #eef7ff;
+            font-weight: 600;
+        }
+
+        .ai-image-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .ai-image-button {
+            margin-left: 6px;
+        }
+
+        .ai-batch-panel {
+            padding: 16px;
+        }
+
+        .ai-batch-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: flex-start;
+            margin-bottom: 14px;
+        }
+
+        .ai-batch-summary {
+            color: #53606a;
+            line-height: 1.7;
+        }
+
+        .ai-batch-list {
+            max-height: 430px;
+            overflow-y: auto;
+            border: 1px solid #e5e9f0;
+            border-radius: 6px;
+        }
+
+        .ai-batch-table {
+            width: 100%;
+            margin-bottom: 0;
+        }
+
+        .ai-batch-table th,
+        .ai-batch-table td {
+            padding: 10px;
+            border-bottom: 1px solid #edf0f5;
+            vertical-align: middle;
+        }
+
+        .ai-batch-table th {
+            color: #53606a;
+            background: #f9fbfd;
+            font-weight: 600;
+        }
+
+        .ai-batch-thumb {
+            width: 72px;
+            height: 72px;
+            object-fit: cover;
+            border: 1px solid #e5e9f0;
+            border-radius: 4px;
+            background: #f8f9fb;
+        }
+
+        .ai-batch-status {
+            min-width: 78px;
+            display: inline-block;
+        }
+
+        @media (max-width: 768px) {
+            .ai-image-compare {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body class="gray-bg">
@@ -393,6 +570,9 @@
                 </a>
                 <a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="coffee:product:remove">
                     <i class="fa fa-remove"></i> 删除
+                </a>
+                <a class="btn btn-info" onclick="openBatchAiImageDialog()" shiro:hasPermission="coffee:product:edit">
+                    <i class="fa fa-magic"></i> 批量AI生成
                 </a>
                 <a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="coffee:product:export">
                     <i class="fa fa-download"></i> 导出
@@ -595,6 +775,7 @@
                                         '<div class="actions">',
                                             '<button class="btn btn-primary btn-xs inline-image-change" type="button">换图</button>',
                                             '<button class="btn btn-default btn-xs inline-image-remove" type="button">移除</button>',
+                                            '<button class="btn btn-info btn-xs inline-image-ai" type="button" data-product-id="' + productId + '" data-image-url="' + escapeHtml(imageUrl) + '">AI生成</button>',
                                         '</div>',
                                     '</div>',
                                 '</div>',
@@ -708,6 +889,505 @@
             });
         }
 
+        var aiImageState = {
+            productType: 'mall',
+            productId: null,
+            originalUrl: '',
+            generatedUrl: ''
+        };
+
+        var aiBatchState = {
+            productType: 'mall',
+            items: [],
+            running: false,
+            completed: 0,
+            layerIndex: null,
+            prompt: '',
+            batchId: null,
+            pollTimer: null,
+            storageKey: 'coffee.aiBatch.mall'
+        };
+
+        var aiPromptPresets = {
+            ecommerce: '保留商品主体和包装关键文字，生成适合电商列表展示的咖啡商品主图。提升清晰度、光影、色彩层次和商业质感，背景干净，主体突出，不要添加多余文字。',
+            cafe: '保留商品主体和包装关键文字，生成咖啡馆氛围的商品图。背景使用温暖自然光、木桌、少量咖啡豆或杯具点缀，画面真实高级，不要改变商品核心外观。',
+            premium: '保留商品主体和包装关键文字，生成高端质感商品图。增强金属、玻璃、包装材质和立体光影，背景简洁深浅有层次，整体精致、有品牌感。',
+            clean: '保留商品主体和包装关键文字，生成干净白底或浅色背景商品图。主体居中，边缘清晰，光线均匀，适合商品管理和货架展示，不要添加装饰文字。',
+            campaign: '保留商品主体和包装关键文字，生成适合营销活动的商品图。画面更明亮、有促销氛围，但不要添加价格、优惠券、促销文字或多余品牌字样。'
+        };
+
+        function buildAiPrompt() {
+            var presetKey = $('.ai-preset-option.active').data('preset') || 'ecommerce';
+            var presetPrompt = aiPromptPresets[presetKey] || aiPromptPresets.ecommerce;
+            var extraPrompt = $.trim($('#aiPromptInput').val());
+            if (extraPrompt) {
+                return presetPrompt + ' 补充要求：' + extraPrompt;
+            }
+            return presetPrompt;
+        }
+
+        function getSelectedAiItems() {
+            var rows = $('#bootstrap-table').bootstrapTable('getSelections') || [];
+            var items = [];
+            for (var i = 0; i < rows.length; i++) {
+                if (rows[i].imageUrl) {
+                    items.push({
+                        productId: rows[i].productId,
+                        productName: rows[i].productName || '-',
+                        originalUrl: rows[i].imageUrl,
+                        generatedUrl: '',
+                        status: '等待中',
+                        message: ''
+                    });
+                }
+            }
+            return items;
+        }
+
+        function openBatchAiImageDialog() {
+            var savedBatchId = aiBatchState.batchId || getStoredBatchId();
+            if (savedBatchId) {
+                loadBatchAiStatus(savedBatchId, true);
+                return;
+            }
+            var items = getSelectedAiItems();
+            if (!items.length) {
+                $.modal.alertWarning('请选择已有主图的商品');
+                return;
+            }
+            aiBatchState.items = items;
+            aiBatchState.running = false;
+            aiBatchState.completed = 0;
+            aiBatchState.batchId = null;
+            showBatchAiImageDialog();
+        }
+
+        function showBatchAiImageDialog() {
+            var items = aiBatchState.items;
+            var content = [
+                '<div class="ai-batch-panel">',
+                    '<div class="ai-batch-header">',
+                        '<div class="ai-image-prompt">',
+                            '<label>风格模板</label>',
+                            '<div class="ai-preset-options">',
+                                '<button class="ai-preset-option active" type="button" data-preset="ecommerce">电商主图</button>',
+                                '<button class="ai-preset-option" type="button" data-preset="cafe">咖啡馆氛围</button>',
+                                '<button class="ai-preset-option" type="button" data-preset="premium">高端质感</button>',
+                                '<button class="ai-preset-option" type="button" data-preset="clean">干净白底</button>',
+                                '<button class="ai-preset-option" type="button" data-preset="campaign">营销活动</button>',
+                            '</div>',
+                            '<label for="aiPromptInput">补充要求（可选）</label>',
+                            '<textarea class="form-control" id="aiPromptInput" rows="2" placeholder="例如：背景亮一点、不要改变包装文字、适合夏天。"></textarea>',
+                        '</div>',
+                        '<div class="ai-batch-summary" id="aiBatchSummary">共 ' + items.length + ' 个商品，等待生成</div>',
+                    '</div>',
+                    '<div class="ai-batch-list">',
+                        '<table class="ai-batch-table">',
+                            '<thead><tr><th>商品</th><th>原图</th><th>AI生成图</th><th>状态</th></tr></thead>',
+                            '<tbody id="aiBatchRows">' + buildBatchRows(items) + '</tbody>',
+                        '</table>',
+                    '</div>',
+                    '<div class="ai-image-actions" style="margin-top:14px;">',
+                        '<button class="btn btn-primary" id="aiBatchGenerateBtn" type="button">开始生成</button>',
+                        '<button class="btn btn-success" id="aiBatchApplyBtn" type="button" disabled>应用成功图片</button>',
+                        '<button class="btn btn-default" id="aiBatchClearBtn" type="button" disabled>清除记录</button>',
+                    '</div>',
+                '</div>'
+            ].join('');
+            if (aiBatchState.layerIndex) {
+                layer.close(aiBatchState.layerIndex);
+            }
+            aiBatchState.layerIndex = layer.open({
+                type: 1,
+                title: '批量AI商品图生成',
+                area: ['980px', '680px'],
+                content: content,
+                success: function() {
+                    updateBatchSummary();
+                },
+                end: function() {
+                    aiBatchState.layerIndex = null;
+                }
+            });
+        }
+
+        function buildBatchRows(items) {
+            var html = [];
+            for (var i = 0; i < items.length; i++) {
+                html.push(buildBatchRow(items[i], i));
+            }
+            return html.join('');
+        }
+
+        function buildBatchRow(item, index) {
+            var generated = item.generatedUrl
+                ? '<img class="ai-batch-thumb ai-previewable" src="' + escapeHtml(item.generatedUrl) + '" alt="AI生成图">'
+                : '<span class="text-muted">待生成</span>';
+            return [
+                '<tr data-ai-batch-index="' + index + '">',
+                    '<td><strong>' + escapeHtml(item.productName) + '</strong><br><small>ID: ' + escapeHtml(item.productId) + '</small></td>',
+                    '<td><img class="ai-batch-thumb ai-previewable" src="' + escapeHtml(item.originalUrl) + '" alt="原图"></td>',
+                    '<td class="ai-batch-generated">' + generated + '</td>',
+                    '<td><span class="ai-batch-status">' + escapeHtml(item.status) + '</span><br><small class="text-muted ai-batch-message">' + escapeHtml(item.message) + '</small></td>',
+                '</tr>'
+            ].join('');
+        }
+
+        function updateBatchRow(index) {
+            var item = aiBatchState.items[index];
+            var $row = $('#aiBatchRows').find('tr[data-ai-batch-index="' + index + '"]');
+            $row.find('.ai-batch-generated').html(item.generatedUrl
+                ? '<img class="ai-batch-thumb ai-previewable" src="' + escapeHtml(item.generatedUrl) + '" alt="AI生成图">'
+                : '<span class="text-muted">待生成</span>');
+            $row.find('.ai-batch-status').text(item.status);
+            $row.find('.ai-batch-message').text(item.message || '');
+            updateBatchSummary();
+        }
+
+        function updateBatchSummary() {
+            var success = 0;
+            var failed = 0;
+            var running = 0;
+            for (var i = 0; i < aiBatchState.items.length; i++) {
+                if (aiBatchState.items[i].status === '成功') {
+                    success++;
+                } else if (aiBatchState.items[i].status === '失败') {
+                    failed++;
+                } else if (aiBatchState.items[i].status === '生成中') {
+                    running++;
+                }
+            }
+            $('#aiBatchSummary').text('共 ' + aiBatchState.items.length + ' 个商品，成功 ' + success + '，失败 ' + failed + (running ? '，生成中 ' + running : ''));
+            $('#aiBatchGenerateBtn')
+                .prop('disabled', aiBatchState.running)
+                .text(aiBatchState.running ? '生成中...' : (aiBatchState.completed > 0 ? '重新生成' : '开始生成'));
+            $('#aiBatchApplyBtn').prop('disabled', success === 0 || aiBatchState.running);
+            $('#aiBatchClearBtn').prop('disabled', aiBatchState.running || !aiBatchState.batchId);
+        }
+
+        function getStoredBatchId() {
+            try {
+                return window.localStorage.getItem(aiBatchState.storageKey);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function storeBatchId(batchId) {
+            try {
+                window.localStorage.setItem(aiBatchState.storageKey, batchId);
+            } catch (e) {
+            }
+        }
+
+        function clearStoredBatchId() {
+            try {
+                window.localStorage.removeItem(aiBatchState.storageKey);
+            } catch (e) {
+            }
+        }
+
+        function startBatchPolling() {
+            stopBatchPolling();
+            if (!aiBatchState.batchId || !aiBatchState.running) {
+                return;
+            }
+            aiBatchState.pollTimer = window.setInterval(function() {
+                loadBatchAiStatus(aiBatchState.batchId, false);
+            }, 2000);
+        }
+
+        function stopBatchPolling() {
+            if (aiBatchState.pollTimer) {
+                window.clearInterval(aiBatchState.pollTimer);
+                aiBatchState.pollTimer = null;
+            }
+        }
+
+        function loadBatchAiStatus(batchId, openDialog) {
+            $.ajax({
+                url: ctx + 'coffee/imageAi/batch/status',
+                type: 'post',
+                contentType: 'application/json',
+                data: JSON.stringify({ batchId: batchId }),
+                success: function(result) {
+                    if (result.code !== web_status.SUCCESS) {
+                        clearStoredBatchId();
+                        if (openDialog) {
+                            $.modal.alertError(result.msg || '批量任务不存在或已过期');
+                        }
+                        return;
+                    }
+                    syncBatchAiState(result);
+                    if (openDialog) {
+                        showBatchAiImageDialog();
+                    }
+                },
+                error: function() {
+                    if (openDialog) {
+                        $.modal.alertError('获取批量任务状态失败，请稍后重试');
+                    }
+                }
+            });
+        }
+
+        function syncBatchAiState(result) {
+            aiBatchState.batchId = result.batchId || aiBatchState.batchId;
+            aiBatchState.productType = result.productType || aiBatchState.productType;
+            aiBatchState.items = result.items || [];
+            aiBatchState.running = !!result.running;
+            aiBatchState.completed = result.completed || 0;
+            if (aiBatchState.batchId) {
+                storeBatchId(aiBatchState.batchId);
+            }
+            if ($('#aiBatchRows').length) {
+                $('#aiBatchRows').html(buildBatchRows(aiBatchState.items));
+                updateBatchSummary();
+            }
+            if (aiBatchState.running) {
+                startBatchPolling();
+            } else {
+                stopBatchPolling();
+                updateBatchSummary();
+            }
+        }
+
+        function runBatchAiGenerate() {
+            if (aiBatchState.running) {
+                return;
+            }
+            aiBatchState.running = true;
+            aiBatchState.completed = 0;
+            aiBatchState.prompt = buildAiPrompt();
+            updateBatchSummary();
+            $.ajax({
+                url: ctx + 'coffee/imageAi/batch/start',
+                type: 'post',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    productType: aiBatchState.productType,
+                    prompt: aiBatchState.prompt,
+                    items: $.map(aiBatchState.items, function(item) {
+                        return {
+                            productId: item.productId,
+                            productName: item.productName,
+                            imageUrl: item.originalUrl
+                        };
+                    })
+                }),
+                success: function(result) {
+                    if (result.code !== web_status.SUCCESS || !result.batchId) {
+                        aiBatchState.running = false;
+                        updateBatchSummary();
+                        $.modal.alertError(result.msg || '批量生成启动失败');
+                        return;
+                    }
+                    syncBatchAiState(result);
+                },
+                error: function() {
+                    aiBatchState.running = false;
+                    updateBatchSummary();
+                    $.modal.alertError('批量生成启动失败，请稍后重试');
+                }
+            });
+        }
+
+        function requestAiApply(item) {
+            return $.ajax({
+                url: ctx + 'coffee/imageAi/apply',
+                type: 'post',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    productType: aiBatchState.productType,
+                    productId: item.productId,
+                    generatedUrl: item.generatedUrl
+                })
+            });
+        }
+
+        function applyBatchAiImages() {
+            var successItems = $.grep(aiBatchState.items, function(item) {
+                return item.status === '成功' && item.generatedUrl;
+            });
+            if (!successItems.length) {
+                $.modal.alertWarning('没有可应用的生成图');
+                return;
+            }
+            $('#aiBatchApplyBtn').prop('disabled', true).text('应用中...');
+            applyBatchItem(successItems, 0, 0);
+        }
+
+        function applyBatchItem(items, index, applied) {
+            if (index >= items.length) {
+                $.modal.msgSuccess('已应用 ' + applied + ' 张图片');
+                if (aiBatchState.layerIndex) {
+                    layer.close(aiBatchState.layerIndex);
+                }
+                aiBatchState.batchId = null;
+                aiBatchState.items = [];
+                aiBatchState.completed = 0;
+                clearStoredBatchId();
+                $('#bootstrap-table').bootstrapTable('refresh');
+                return;
+            }
+            requestAiApply(items[index]).done(function(result) {
+                if (result.code === web_status.SUCCESS) {
+                    applied++;
+                }
+            }).always(function() {
+                applyBatchItem(items, index + 1, applied);
+            });
+        }
+
+        function clearBatchAiRecord() {
+            if (aiBatchState.running) {
+                $.modal.alertWarning('生成中不能清除记录');
+                return;
+            }
+            aiBatchState.batchId = null;
+            aiBatchState.items = [];
+            aiBatchState.completed = 0;
+            clearStoredBatchId();
+            stopBatchPolling();
+            if (aiBatchState.layerIndex) {
+                layer.close(aiBatchState.layerIndex);
+            }
+        }
+
+        function openAiImageDialog(productId, imageUrl) {
+            if (!imageUrl) {
+                $.modal.alertWarning('请先上传商品主图');
+                return;
+            }
+            aiImageState.productId = productId;
+            aiImageState.originalUrl = imageUrl;
+            aiImageState.generatedUrl = '';
+            var content = [
+                '<div class="ai-image-panel">',
+                    '<div class="ai-image-prompt">',
+                        '<label>风格模板</label>',
+                        '<div class="ai-preset-options">',
+                            '<button class="ai-preset-option active" type="button" data-preset="ecommerce">电商主图</button>',
+                            '<button class="ai-preset-option" type="button" data-preset="cafe">咖啡馆氛围</button>',
+                            '<button class="ai-preset-option" type="button" data-preset="premium">高端质感</button>',
+                            '<button class="ai-preset-option" type="button" data-preset="clean">干净白底</button>',
+                            '<button class="ai-preset-option" type="button" data-preset="campaign">营销活动</button>',
+                        '</div>',
+                        '<label for="aiPromptInput">补充要求（可选）</label>',
+                        '<textarea class="form-control" id="aiPromptInput" rows="2" placeholder="例如：背景亮一点、不要改变包装文字、适合夏天。"></textarea>',
+                    '</div>',
+                    '<div class="ai-image-compare">',
+                        '<div class="ai-image-card">',
+                            '<div class="ai-image-card-title">原图</div>',
+                            '<div class="ai-image-card-body"><img class="ai-previewable" src="' + escapeHtml(imageUrl) + '" alt="原图"></div>',
+                        '</div>',
+                        '<div class="ai-image-card">',
+                            '<div class="ai-image-card-title">AI生成图</div>',
+                            '<div class="ai-image-card-body" id="aiGeneratedImageBox"><div class="ai-image-placeholder">点击生成后在这里预览</div></div>',
+                        '</div>',
+                    '</div>',
+                    '<div class="ai-image-actions">',
+                        '<button class="btn btn-primary" id="aiGenerateBtn" type="button">生成</button>',
+                        '<button class="btn btn-warning" id="aiRegenerateBtn" type="button" disabled>重新生成</button>',
+                        '<button class="btn btn-success" id="aiApplyBtn" type="button" disabled>应用此图</button>',
+                    '</div>',
+                '</div>'
+            ].join('');
+            layer.open({
+                type: 1,
+                title: 'AI商品图生成',
+                area: ['860px', '560px'],
+                content: content
+            });
+        }
+
+        function setAiButtonsLoading(loading) {
+            $('#aiGenerateBtn').prop('disabled', loading);
+            $('#aiRegenerateBtn, #aiApplyBtn').prop('disabled', loading || !aiImageState.generatedUrl);
+            $('#aiGenerateBtn').text(loading ? '生成中...' : '生成');
+            $('#aiRegenerateBtn').text(loading ? '生成中...' : '重新生成');
+        }
+
+        function generateAiImage() {
+            setAiButtonsLoading(true);
+            $('#aiGeneratedImageBox').html('<div class="ai-image-placeholder">AI生成中，请稍候...</div>');
+            $.ajax({
+                url: ctx + 'coffee/imageAi/generate',
+                type: 'post',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    productType: aiImageState.productType,
+                    productId: aiImageState.productId,
+                    imageUrl: aiImageState.originalUrl,
+                    prompt: buildAiPrompt()
+                }),
+                success: function(result) {
+                    if (result.code !== web_status.SUCCESS || !result.generatedUrl) {
+                        aiImageState.generatedUrl = '';
+                        setAiButtonsLoading(false);
+                        $('#aiGeneratedImageBox').html('<div class="ai-image-placeholder">生成失败</div>');
+                        $.modal.alertError(result.msg || 'AI生成失败');
+                        return;
+                    }
+                    aiImageState.generatedUrl = result.generatedUrl;
+                    setAiButtonsLoading(false);
+                    $('#aiGeneratedImageBox').html('<img class="ai-previewable" src="' + escapeHtml(result.generatedUrl) + '" alt="AI生成图">');
+                    $('#aiRegenerateBtn, #aiApplyBtn').prop('disabled', false);
+                },
+                error: function() {
+                    aiImageState.generatedUrl = '';
+                    setAiButtonsLoading(false);
+                    $('#aiGeneratedImageBox').html('<div class="ai-image-placeholder">生成失败</div>');
+                    $.modal.alertError('AI生成失败，请稍后重试');
+                }
+            });
+        }
+
+        function previewAiImage(url, title) {
+            if (!url) {
+                return;
+            }
+            layer.open({
+                type: 1,
+                title: title || '图片预览',
+                area: ['82%', '86%'],
+                shadeClose: true,
+                content: '<div class="ai-image-preview-layer"><img src="' + escapeHtml(url) + '" alt="' + escapeHtml(title || '图片预览') + '"></div>'
+            });
+        }
+
+        function applyAiImage() {
+            if (!aiImageState.generatedUrl) {
+                $.modal.alertWarning('请先生成图片');
+                return;
+            }
+            $('#aiApplyBtn').prop('disabled', true).text('应用中...');
+            $.ajax({
+                url: ctx + 'coffee/imageAi/apply',
+                type: 'post',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    productType: aiImageState.productType,
+                    productId: aiImageState.productId,
+                    generatedUrl: aiImageState.generatedUrl
+                }),
+                success: function(result) {
+                    if (result.code === web_status.SUCCESS) {
+                        $.modal.msgSuccess('主图已应用');
+                        layer.closeAll('page');
+                        $('#bootstrap-table').bootstrapTable('refresh');
+                    } else {
+                        $('#aiApplyBtn').prop('disabled', false).text('应用此图');
+                        $.modal.alertError(result.msg || '应用失败');
+                    }
+                },
+                error: function() {
+                    $('#aiApplyBtn').prop('disabled', false).text('应用此图');
+                    $.modal.alertError('应用失败，请稍后重试');
+                }
+            });
+        }
+
         function uploadListProductImage(productId, file) {
             if (!file || !productId) {
                 return;
@@ -781,6 +1461,12 @@
                 event.stopPropagation();
             });
 
+            $(document).on('click', '.product-image-ai', function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                openAiImageDialog($(this).data('product-id'), $(this).data('image-url'));
+            });
+
             $listImageUploader.on('change', function() {
                 if (this.files && this.files.length && pendingThumbProductId) {
                     uploadListProductImage(pendingThumbProductId, this.files[0]);
@@ -828,6 +1514,43 @@
             $(document).on('click', '.inline-image-remove', function(event) {
                 event.stopPropagation();
                 setInlineImagePreview($(this).closest('.product-edit-image-card'), '');
+            });
+
+            $(document).on('click', '.inline-image-ai', function(event) {
+                event.stopPropagation();
+                var $form = $(this).closest('.inline-product-form');
+                openAiImageDialog($(this).data('product-id'), $form.find('input[name="imageUrl"]').val());
+            });
+
+            $(document).on('click', '.ai-preset-option', function() {
+                $('.ai-preset-option').removeClass('active');
+                $(this).addClass('active');
+            });
+
+            $(document).on('click', '#aiBatchGenerateBtn', function() {
+                runBatchAiGenerate();
+            });
+
+            $(document).on('click', '#aiBatchApplyBtn', function() {
+                applyBatchAiImages();
+            });
+
+            $(document).on('click', '#aiBatchClearBtn', function() {
+                clearBatchAiRecord();
+            });
+
+            $(document).on('click', '.ai-previewable', function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                previewAiImage($(this).attr('src'), $(this).attr('alt'));
+            });
+
+            $(document).on('click', '#aiGenerateBtn, #aiRegenerateBtn', function() {
+                generateAiImage();
+            });
+
+            $(document).on('click', '#aiApplyBtn', function() {
+                applyAiImage();
             });
 
             var options = {
@@ -911,12 +1634,13 @@
                     formatter: function(value, row) {
                         var productId = escapeHtml(row.productId);
                         if (!value) {
-                            return '<a class="product-image-thumb empty" href="javascript:void(0)" data-product-id="' + productId + '" title="点击上传">上传</a>';
-                        }
+                        return '<a class="product-image-thumb empty" href="javascript:void(0)" data-product-id="' + productId + '" title="点击上传">上传</a>';
+                    }
                         return '<a class="product-image-thumb" href="javascript:void(0)" data-product-id="' + productId + '" title="点击换图">' +
                             '<img src="' + escapeHtml(value) + '" alt="主图">' +
                             '<span class="thumb-mask">点击换图</span>' +
-                            '</a>';
+                            '</a>' +
+                            '<button class="btn btn-info btn-xs ai-image-button product-image-ai" type="button" data-product-id="' + productId + '" data-image-url="' + escapeHtml(value) + '">AI生成</button>';
                     }
                 },
                 {

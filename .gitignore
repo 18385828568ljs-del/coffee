@@ -41,8 +41,8 @@ nbdist/
 *.xml.versionsBackup
 *.swp
 src/main/resources/application-local.yml
-src/main/resources/application-druid.yml
 src/main/resources/application.yml
+src/test/
 coffee-mall-backend-src/
 coffee-mall-backend-src.zip
 
