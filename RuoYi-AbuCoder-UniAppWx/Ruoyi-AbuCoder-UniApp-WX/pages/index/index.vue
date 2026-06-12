@@ -65,6 +65,28 @@
 					</view>
 				</view>
 
+				<view v-if="featuredActivity" class="activity-section">
+					<view class="activity-section-head">
+						<text class="activity-section-title">参与线下活动</text>
+					</view>
+					<view class="activity-card" @tap="goActivityDetail(featuredActivity)">
+						<image
+							v-if="getActivityImage(featuredActivity)"
+							class="activity-cover"
+							:src="getActivityImage(featuredActivity)"
+							mode="aspectFill"
+						></image>
+						<view v-else class="activity-cover activity-cover-empty">
+							<text>线下活动</text>
+						</view>
+						<view class="activity-copy">
+							<text class="activity-title">{{ featuredActivity.title }}</text>
+							<text class="activity-meta">{{ formatActivityTime(featuredActivity.startTime) }}</text>
+							<text class="activity-desc">{{ featuredActivity.summary || featuredActivity.location || '预约参加线下活动' }}</text>
+						</view>
+					</view>
+				</view>
+
 				<view class="content-bottom-space"></view>
 			</view>
 		</scroll-view>
@@ -74,7 +96,8 @@
 </template>
 
 <script>
-import { bannerApi, resolveImageUrl } from '@/utils/apiconfig.js'
+import { bannerApi, offlineActivityApi, resolveImageUrl } from '@/utils/apiconfig.js'
+import { getToken } from '@/utils/auth.js'
 import { requestPromise, isSuccessResponse } from '@/utils/request-helper.js'
 
 const DEFAULT_SHOP_ID = 1
@@ -113,6 +136,7 @@ export default {
 			shopName: DEFAULT_SHOP_NAME,
 			tableNo: '',
 			bannerList: [],
+			activityList: [],
 			bannerImageErrorMap: {}
 		}
 	},
@@ -120,10 +144,22 @@ export default {
 	onLoad(options = {}) {
 		this.resolveEntryContext(options)
 		this.loadBanners()
+		this.loadActivities()
 	},
 
 	onPullDownRefresh() {
-		this.loadBanners({ stopRefresh: true })
+		Promise.all([
+			this.loadBanners(),
+			this.loadActivities()
+		]).finally(() => {
+			uni.stopPullDownRefresh()
+		})
+	},
+
+	computed: {
+		featuredActivity() {
+			return this.activityList[0] || null
+		}
 	},
 
 	methods: {
@@ -138,7 +174,7 @@ export default {
 			this.shopName = shopName ? decodeValue(shopName) : DEFAULT_SHOP_NAME
 		},
 
-		async loadBanners(options = {}) {
+		async loadBanners() {
 			try {
 				const res = await requestPromise({
 					url: bannerApi.list,
@@ -152,11 +188,33 @@ export default {
 				this.bannerList = []
 			} catch (error) {
 				this.bannerList = []
-			} finally {
-				if (options.stopRefresh) {
-					uni.stopPullDownRefresh()
-				}
 			}
+		},
+
+		async loadActivities() {
+			try {
+				const res = await requestPromise({
+					url: offlineActivityApi.list,
+					method: 'GET',
+					header: this.getAuthHeader()
+				})
+				if (isSuccessResponse(res)) {
+					const list = (res.data && res.data.data) || []
+					this.activityList = Array.isArray(list) ? list : []
+					return
+				}
+				this.activityList = []
+			} catch (error) {
+				this.activityList = []
+			}
+		},
+
+		getAuthHeader() {
+			const token = getToken()
+			return token ? {
+				Authorization: `Bearer ${token}`,
+				'X-Wx-Token': token
+			} : {}
 		},
 
 		getBannerKey(item, index) {
@@ -227,6 +285,25 @@ export default {
 
 		goMall() {
 			uni.navigateTo({ url: '/pages/mall/index' })
+		},
+
+		getActivityImage(item) {
+			return item && item.coverImage ? resolveImageUrl(item.coverImage) : ''
+		},
+
+		formatActivityTime(value) {
+			return value ? String(value).replace(/:\d{2}$/, '') : '时间待定'
+		},
+
+		goActivityList() {
+			uni.navigateTo({ url: '/pages/activity/list' })
+		},
+
+		goActivityDetail(item) {
+			if (!item || !item.activityId) {
+				return
+			}
+			uni.navigateTo({ url: `/pages/activity/detail?id=${item.activityId}` })
 		}
 	}
 }
@@ -452,6 +529,98 @@ export default {
 	font-size: 22rpx;
 	font-weight: 700;
 	color: $text-primary;
+}
+
+.activity-section {
+	display: flex;
+	flex-direction: column;
+	gap: 18rpx;
+}
+
+.activity-section-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 8rpx;
+}
+
+.activity-section-title {
+	font-family: $font-family;
+	font-size: 32rpx;
+	font-weight: 700;
+	color: $text-primary;
+}
+
+.activity-card {
+	@include card(16rpx);
+	display: flex;
+	align-items: center;
+	gap: 20rpx;
+	min-height: 196rpx;
+	@include active-press;
+}
+
+.activity-cover {
+	width: 164rpx;
+	height: 164rpx;
+	flex-shrink: 0;
+	border-radius: 16rpx;
+	background: $accent-surface;
+	display: block;
+}
+
+.activity-cover-empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.activity-cover-empty text {
+	font-family: $font-family;
+	font-size: 24rpx;
+	font-weight: 700;
+	color: $text-primary;
+}
+
+.activity-copy {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 10rpx;
+	box-sizing: border-box;
+}
+
+.activity-title,
+.activity-meta,
+.activity-desc {
+	font-family: $font-family;
+}
+
+.activity-title {
+	font-size: 30rpx;
+	font-weight: 700;
+	color: $text-primary;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.activity-meta {
+	font-size: 22rpx;
+	font-weight: 600;
+	color: $text-secondary;
+}
+
+.activity-desc {
+	font-size: 22rpx;
+	font-weight: 500;
+	line-height: 1.45;
+	color: $text-secondary;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
 }
 
 .content-bottom-space {

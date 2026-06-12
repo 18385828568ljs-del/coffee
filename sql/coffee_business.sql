@@ -269,6 +269,46 @@ CREATE TABLE `t_recharge_template` (
   PRIMARY KEY (`template_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='充值模板';
 
+CREATE TABLE `t_offline_activity` (
+  `activity_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '线下活动ID',
+  `title` VARCHAR(120) NOT NULL COMMENT '活动标题',
+  `cover_image` VARCHAR(500) DEFAULT NULL COMMENT '封面图地址',
+  `summary` VARCHAR(500) DEFAULT NULL COMMENT '活动简介',
+  `content` TEXT DEFAULT NULL COMMENT '活动详情',
+  `start_time` DATETIME NOT NULL COMMENT '活动开始时间',
+  `end_time` DATETIME DEFAULT NULL COMMENT '活动结束时间',
+  `signup_deadline` DATETIME DEFAULT NULL COMMENT '预约截止时间',
+  `location` VARCHAR(200) DEFAULT NULL COMMENT '活动地点',
+  `quota` INT NOT NULL DEFAULT 1 COMMENT '人数上限',
+  `sort_order` INT NOT NULL DEFAULT 0 COMMENT '排序',
+  `status` TINYINT NOT NULL DEFAULT 0 COMMENT '状态(0=下架,1=上架)',
+  `create_by` VARCHAR(64) DEFAULT '' COMMENT '创建者',
+  `create_time` DATETIME DEFAULT NULL COMMENT '创建时间',
+  `update_by` VARCHAR(64) DEFAULT '' COMMENT '更新者',
+  `update_time` DATETIME DEFAULT NULL COMMENT '更新时间',
+  `remark` VARCHAR(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`activity_id`),
+  KEY `idx_status_time` (`status`, `start_time`, `end_time`),
+  KEY `idx_sort_order` (`sort_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='线下活动';
+
+CREATE TABLE `t_offline_activity_signup` (
+  `signup_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '预约ID',
+  `activity_id` BIGINT NOT NULL COMMENT '线下活动ID',
+  `user_id` BIGINT NOT NULL COMMENT '微信用户ID',
+  `status` TINYINT NOT NULL DEFAULT 0 COMMENT '状态(0=已预约,1=已取消,2=已到店,3=未到店)',
+  `signup_time` DATETIME DEFAULT NULL COMMENT '预约时间',
+  `cancel_time` DATETIME DEFAULT NULL COMMENT '取消时间',
+  `checkin_time` DATETIME DEFAULT NULL COMMENT '到店核对时间',
+  `create_time` DATETIME DEFAULT NULL COMMENT '创建时间',
+  `update_time` DATETIME DEFAULT NULL COMMENT '更新时间',
+  `remark` VARCHAR(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`signup_id`),
+  KEY `idx_activity_status` (`activity_id`, `status`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_signup_time` (`signup_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='线下活动预约记录';
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- =============================================================================

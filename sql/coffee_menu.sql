@@ -109,7 +109,13 @@ VALUES
 (2071, '记录查询', 2070, 1, '#', '', 'F', '0', '1', 'coffee:rechargeRecord:list', '#', 'admin', NOW(), '', NULL, ''),
 
 (2075, '余额流水', 2000, 11, 'coffee/walletLog', '', 'C', '0', '1', 'coffee:walletLog:view', '#', 'admin', NOW(), '', NULL, '余额流水菜单'),
-(2076, '流水查询', 2075, 1, '#', '', 'F', '0', '1', 'coffee:walletLog:list', '#', 'admin', NOW(), '', NULL, '');
+(2076, '流水查询', 2075, 1, '#', '', 'F', '0', '1', 'coffee:walletLog:list', '#', 'admin', NOW(), '', NULL, ''),
+
+(2080, '线下活动', 2000, 12, 'coffee/offlineActivity', '', 'C', '0', '1', 'coffee:offlineActivity:view', 'fa fa-calendar', 'admin', NOW(), '', NULL, '线下活动菜单'),
+(2081, '活动查询', 2080, 1, '#', '', 'F', '0', '1', 'coffee:offlineActivity:list', '#', 'admin', NOW(), '', NULL, ''),
+(2082, '活动新增', 2080, 2, '#', '', 'F', '0', '1', 'coffee:offlineActivity:add', '#', 'admin', NOW(), '', NULL, ''),
+(2083, '活动修改', 2080, 3, '#', '', 'F', '0', '1', 'coffee:offlineActivity:edit', '#', 'admin', NOW(), '', NULL, ''),
+(2084, '活动删除', 2080, 4, '#', '', 'F', '0', '1', 'coffee:offlineActivity:remove', '#', 'admin', NOW(), '', NULL, '');
 
 INSERT INTO `sys_role_menu` (`role_id`, `menu_id`)
 SELECT 1, `menu_id`

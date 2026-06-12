@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('修改线下活动')" />
+    <th:block th:include="include :: datetimepicker-css" />
+    <th:block th:include="include :: bootstrap-fileinput-css" />
+</head>
+<body class="white-bg">
+<div class="wrapper wrapper-content animated fadeInRight ibox-content">
+    <form class="form-horizontal m" id="form-offlineActivity-edit" th:object="${offlineActivity}">
+        <input name="activityId" th:field="*{activityId}" type="hidden">
+        <div class="form-group">
+            <label class="col-sm-3 control-label is-required">活动标题：</label>
+            <div class="col-sm-8">
+                <input name="title" th:field="*{title}" class="form-control" type="text" required>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">封面图：</label>
+            <div class="col-sm-8">
+                <input type="hidden" name="coverImage" th:field="*{coverImage}">
+                <div class="file-loading">
+                    <input class="file" id="coverImageFile" name="file" type="file">
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">活动简介：</label>
+            <div class="col-sm-8">
+                <textarea name="summary" class="form-control" rows="3">[[*{summary}]]</textarea>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">活动详情：</label>
+            <div class="col-sm-8">
+                <textarea name="content" class="form-control" rows="6">[[*{content}]]</textarea>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label is-required">开始时间：</label>
+            <div class="col-sm-8">
+                <input name="startTime" th:value="${#dates.format(offlineActivity.startTime, 'yyyy-MM-dd HH:mm:ss')}" class="form-control time-input" type="text" required>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">结束时间：</label>
+            <div class="col-sm-8">
+                <input name="endTime" th:value="${#dates.format(offlineActivity.endTime, 'yyyy-MM-dd HH:mm:ss')}" class="form-control time-input" type="text">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">预约截止：</label>
+            <div class="col-sm-8">
+                <input name="signupDeadline" th:value="${#dates.format(offlineActivity.signupDeadline, 'yyyy-MM-dd HH:mm:ss')}" class="form-control time-input" type="text">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">活动地点：</label>
+            <div class="col-sm-8">
+                <input name="location" th:field="*{location}" class="form-control" type="text">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label is-required">人数上限：</label>
+            <div class="col-sm-8">
+                <input name="quota" th:field="*{quota}" class="form-control" type="number" min="1" required>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">排序：</label>
+            <div class="col-sm-8">
+                <input name="sortOrder" th:field="*{sortOrder}" class="form-control" type="number">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">状态：</label>
+            <div class="col-sm-8">
+                <select name="status" class="form-control" th:field="*{status}">
+                    <option value="1">上架</option>
+                    <option value="0">下架</option>
+                </select>
+            </div>
+        </div>
+    </form>
+</div>
+<th:block th:include="include :: footer" />
+<th:block th:include="include :: datetimepicker-js" />
+<th:block th:include="include :: bootstrap-fileinput-js" />
+<script th:inline="javascript">
+    var prefix = ctx + "coffee/offlineActivity";
+    var coverImage = [[${offlineActivity.coverImage}]];
+    $("#form-offlineActivity-edit").validate({ focusCleanup: true });
+
+    function submitHandler() {
+        if ($.validate.form()) {
+            $.operate.save(prefix + "/edit", $('#form-offlineActivity-edit').serialize());
+        }
+    }
+
+    $(".time-input").datetimepicker({
+        format: "yyyy-mm-dd hh:ii:ss",
+        autoclose: true
+    });
+
+    $("#coverImageFile").fileinput({
+        uploadUrl: ctx + "common/upload",
+        maxFileCount: 1,
+        autoReplace: true,
+        initialPreview: coverImage ? [coverImage] : [],
+        initialPreviewAsData: true,
+        allowedFileExtensions: ['jpg', 'jpeg', 'png', 'gif']
+    }).on('fileuploaded', function(event, data) {
+        $("input[name='coverImage']").val(data.response.url);
+    }).on('fileclear fileremoved', function() {
+        $("input[name='coverImage']").val('');
+    });
+</script>
+</body>
+</html>

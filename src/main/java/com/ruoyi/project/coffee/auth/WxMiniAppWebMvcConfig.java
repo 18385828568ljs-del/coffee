@@ -19,6 +19,7 @@ public class WxMiniAppWebMvcConfig implements WebMvcConfigurer
     {
         registry.addInterceptor(wxUserAuthInterceptor)
             .addPathPatterns("/api/cart/**", "/api/order/**", "/api/address/**", "/api/activity/preview",
-                "/api/scanCart/**", "/api/scanOrder/**", "/api/wallet/**", "/api/member/**");
+                "/api/scanCart/**", "/api/scanOrder/**", "/api/wallet/**", "/api/member/**",
+                "/api/offlineActivity/signup", "/api/offlineActivity/cancel", "/api/offlineActivity/my");
     }
 }

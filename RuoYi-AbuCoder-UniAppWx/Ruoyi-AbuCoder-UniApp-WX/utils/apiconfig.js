@@ -159,6 +159,14 @@ export const activityApi = {
 	preview: `${baseUrl}/api/activity/preview`
 }
 
+export const offlineActivityApi = {
+	list: `${baseUrl}/api/offlineActivity/list`,
+	detail: `${baseUrl}/api/offlineActivity/`,
+	signup: `${baseUrl}/api/offlineActivity/signup`,
+	cancel: `${baseUrl}/api/offlineActivity/cancel`,
+	my: `${baseUrl}/api/offlineActivity/my`
+}
+
 export const memberApi = {
 	info: `${baseUrl}/api/member/info`,
 	levelConfig: `${baseUrl}/api/member/level-config`
