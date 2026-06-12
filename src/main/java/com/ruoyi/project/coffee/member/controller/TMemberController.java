@@ -72,6 +72,7 @@ public class TMemberController extends BaseController
     @ResponseBody
     public TableDataInfo list(TMember member)
     {
+        memberService.recalcAllMembers();
         startPage();
         List<TMember> list = memberMapper.selectAllMembers();
         return getDataTable(list);

@@ -22,32 +22,26 @@
 				</view>
 
 				<!-- 会员卡区域 -->
-				<view v-if="isLogin" class="member-card" @click="goRecharge">
+				<view v-if="isLogin" class="member-card" :class="memberCardThemeClass" @click="goMemberCard">
+					<view class="member-card-shine"></view>
 					<view class="member-top">
 						<view class="member-level">
-							<view class="level-icon" :class="levelIconClass">
-								<text class="level-icon-text">{{ levelIcon }}</text>
+							<view class="level-copy">
+								<text class="level-name">{{ memberLevelName }}</text>
+								<text class="level-subtitle">咖啡会员卡</text>
 							</view>
-							<text class="level-name">{{ memberInfo.levelName }}</text>
-							<text class="level-badge">Lv.{{ memberInfo.level || 1 }}</text>
 						</view>
-						<view class="member-discount" v-if="memberInfo.level >= 2">
+						<view class="member-discount">
 							<text class="discount-text">{{ discountText }}</text>
 						</view>
-					</view>
-					<!-- 升级进度条 -->
-					<view class="level-progress" v-if="nextLevelInfo">
-						<view class="progress-bar">
-							<view class="progress-fill" :style="{ width: progressPercent + '%' }"></view>
-						</view>
-						<text class="progress-text">
-							再消费 ¥{{ formatMoney(nextLevelInfo.gap) }} 升级为{{ nextLevelInfo.name }}
-						</text>
 					</view>
 					<view class="member-bottom">
 						<view class="balance-block">
 							<text class="balance-value">¥{{ formatMoney(walletInfo.balance) }}</text>
 							<text class="balance-label">余额</text>
+						</view>
+						<view class="member-entry">
+							<text>查看会员卡</text>
 						</view>
 						<view class="recharge-btn" @click.stop="goRecharge">
 							<text>充值</text>
@@ -120,10 +114,10 @@ const ORDER_TABS = [
 
 // 兜底等级配置: 仅在 /api/member/level-config 加载失败时使用,正常情况实时从后端取
 const FALLBACK_LEVEL_CONFIG = [
-	{ level: 1, levelName: '初遇会员', icon: '初', threshold: 0, discountRate: 1.0 },
-	{ level: 2, levelName: '常客会员', icon: '常', threshold: 200, discountRate: 0.98 },
-	{ level: 3, levelName: '知味会员', icon: '知', threshold: 800, discountRate: 0.95 },
-	{ level: 4, levelName: '臻享会员', icon: '臻', threshold: 2000, discountRate: 0.92 }
+	{ level: 1, levelName: 'Lv.1', icon: '', threshold: 0, discountRate: 1.0 },
+	{ level: 2, levelName: 'Lv.2', icon: '', threshold: 0, discountRate: 1.0 },
+	{ level: 3, levelName: 'Lv.3', icon: '', threshold: 0, discountRate: 1.0 },
+	{ level: 4, levelName: 'Lv.4', icon: '', threshold: 0, discountRate: 1.0 }
 ]
 
 export default {
@@ -159,21 +153,19 @@ export default {
 			return arr[0] || '?'
 		},
 
-		levelIcon() {
-			const config = this.levelConfigList.find(c => c.level === this.memberInfo.level)
-			return config ? config.icon : ''
+		memberCardThemeClass() {
+			return `member-card-level-${this.memberInfo.level || 1}`
 		},
 
-		levelIconClass() {
-			return `level-icon-${this.memberInfo.level || 1}`
+		memberLevelName() {
+			return this.memberInfo.levelName || 'Lv.' + (this.memberInfo.level || 1)
 		},
 
 		discountText() {
 			const rate = this.memberInfo.discountRate || 1.0
 			if (rate >= 1) {
-				return ''
+				return '暂无折扣'
 			}
-			// 0.98 → "98折"  0.95 → "95折"  0.92 → "92折"
 			return Math.round(rate * 100) + '折'
 		},
 
@@ -437,6 +429,15 @@ export default {
 			})
 		},
 
+		goMemberCard() {
+			if (!ensureLocalLogin()) {
+				return
+			}
+			uni.navigateTo({
+				url: '/pages/member/card'
+			})
+		},
+
 		goWalletLog() {
 			if (!ensureLocalLogin()) {
 				return
@@ -570,13 +571,45 @@ export default {
 
 /* 会员卡区域 */
 .member-card {
-	@include hero-card(28rpx);
-	background: linear-gradient(145deg, #3D2B1F 0%, #6F4E37 55%, #9A6C45 100%);
-	border: none;
+	position: relative;
+	overflow: hidden;
+	min-height: 224rpx;
+	padding: 28rpx;
+	border-radius: 28rpx;
+	box-shadow: 0 18rpx 38rpx rgba(32, 26, 23, 0.18);
+	box-sizing: border-box;
 	@include active-press;
 }
 
+.member-card-level-1 {
+	background: linear-gradient(145deg, #7b5138 0%, #b37a51 58%, #e4c3a2 100%);
+}
+
+.member-card-level-2 {
+	background: linear-gradient(145deg, #596168 0%, #9fa9ae 58%, #e8edf0 100%);
+}
+
+.member-card-level-3 {
+	background: linear-gradient(145deg, #5b3516 0%, #b9822e 54%, #f4d28b 100%);
+}
+
+.member-card-level-4 {
+	background: linear-gradient(145deg, #151313 0%, #3d332b 58%, #90714e 100%);
+}
+
+.member-card-shine {
+	position: absolute;
+	right: -88rpx;
+	top: -104rpx;
+	width: 250rpx;
+	height: 250rpx;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.16);
+}
+
 .member-top {
+	position: relative;
+	z-index: 1;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -587,53 +620,7 @@ export default {
 	display: flex;
 	align-items: center;
 	gap: 10rpx;
-}
-
-.level-icon {
-	width: 44rpx;
-	height: 44rpx;
-	border-radius: 14rpx;
-	border: 1rpx solid rgba(255, 255, 255, 0.42);
-	box-shadow: 0 8rpx 20rpx rgba(32, 26, 23, 0.2);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	box-sizing: border-box;
-	flex-shrink: 0;
-}
-
-.level-icon-text {
-	font-family: $font-family;
-	font-size: 22rpx;
-	font-weight: 800;
-	line-height: 1;
-}
-
-.level-icon-1 {
-	background: linear-gradient(145deg, #f3e3cf 0%, #cda981 100%);
-}
-
-.level-icon-1 .level-icon-text,
-.level-icon-2 .level-icon-text,
-.level-icon-3 .level-icon-text {
-	color: #3d2b1f;
-}
-
-.level-icon-2 {
-	background: linear-gradient(145deg, #e9f0f1 0%, #9fb0b5 100%);
-}
-
-.level-icon-3 {
-	background: linear-gradient(145deg, #ffd98a 0%, #ba7633 100%);
-}
-
-.level-icon-4 {
-	background: linear-gradient(145deg, #211b18 0%, #7a6043 100%);
-	border-color: rgba(255, 231, 178, 0.6);
-}
-
-.level-icon-4 .level-icon-text {
-	color: #fff0c2;
+	min-width: 0;
 }
 
 .level-name {
@@ -643,17 +630,29 @@ export default {
 	color: #FFFFFF;
 }
 
-.level-badge {
-	height: 36rpx;
-	padding: 0 14rpx;
+.level-copy {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 4rpx;
+}
+
+.level-subtitle {
+	font-family: $font-family;
+	font-size: 20rpx;
+	font-weight: 500;
+	color: rgba(255, 255, 255, 0.58);
+}
+
+.member-discount {
+	min-height: 44rpx;
+	padding: 0 16rpx;
 	display: flex;
 	align-items: center;
-	border-radius: 20rpx;
+	justify-content: center;
+	border-radius: 999rpx;
 	background: rgba(255, 255, 255, 0.2);
-	font-family: $font-family;
-	font-size: 18rpx;
-	font-weight: 600;
-	color: rgba(255, 255, 255, 0.9);
+	flex-shrink: 0;
 }
 
 .member-discount .discount-text {
@@ -663,44 +662,19 @@ export default {
 	color: rgba(255, 255, 255, 0.8);
 }
 
-/* 升级进度条 */
-.level-progress {
-	margin-top: 20rpx;
-}
-
-.progress-bar {
-	height: 8rpx;
-	border-radius: 4rpx;
-	background: rgba(255, 255, 255, 0.15);
-	overflow: hidden;
-}
-
-.progress-fill {
-	height: 100%;
-	border-radius: 4rpx;
-	background: rgba(255, 255, 255, 0.7);
-	transition: width 0.3s ease;
-}
-
-.progress-text {
-	display: block;
-	margin-top: 10rpx;
-	font-family: $font-family;
-	font-size: 18rpx;
-	font-weight: 500;
-	color: rgba(255, 255, 255, 0.5);
-}
-
 .member-bottom {
+	position: relative;
+	z-index: 1;
 	margin-top: 24rpx;
-	padding-top: 20rpx;
-	border-top: 2rpx solid rgba(255, 255, 255, 0.12);
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+	gap: 18rpx;
 }
 
 .balance-block {
+	flex: 1;
+	min-width: 0;
 	display: flex;
 	flex-direction: column;
 	gap: 4rpx;
@@ -718,6 +692,17 @@ export default {
 	font-size: 20rpx;
 	font-weight: 500;
 	color: rgba(255, 255, 255, 0.6);
+}
+
+.member-entry {
+	flex-shrink: 0;
+}
+
+.member-entry text {
+	font-family: $font-family;
+	font-size: 22rpx;
+	font-weight: 600;
+	color: rgba(255, 255, 255, 0.76);
 }
 
 .recharge-btn {

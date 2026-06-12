@@ -2,6 +2,7 @@ package com.ruoyi.project.coffee.member.service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.common.utils.StringUtils;
@@ -64,6 +65,10 @@ public class MemberService
             member.setTotalSpending(BigDecimal.ZERO);
             memberMapper.insertMember(member);
         }
+        else
+        {
+            syncMemberLevel(member);
+        }
         return member;
     }
 
@@ -119,11 +124,38 @@ public class MemberService
         for (TMember m : all)
         {
             if (m == null) continue;
-            evaluateLevel(m);
-            memberMapper.updateMember(m);
+            syncMemberLevel(m);
             affected++;
         }
         return affected;
+    }
+
+    private void syncMemberLevel(TMember member)
+    {
+        Integer oldLevel = member.getLevel();
+        String oldLevelName = member.getLevelName();
+        BigDecimal oldDiscountRate = member.getDiscountRate();
+
+        evaluateLevel(member);
+        if (!Objects.equals(oldLevel, member.getLevel())
+            || !Objects.equals(oldLevelName, member.getLevelName())
+            || !sameBigDecimal(oldDiscountRate, member.getDiscountRate()))
+        {
+            memberMapper.updateMember(member);
+        }
+    }
+
+    private boolean sameBigDecimal(BigDecimal a, BigDecimal b)
+    {
+        if (a == null && b == null)
+        {
+            return true;
+        }
+        if (a == null || b == null)
+        {
+            return false;
+        }
+        return a.compareTo(b) == 0;
     }
 
     /**
