@@ -15,7 +15,7 @@
 							v-if="getActivityImage(item)"
 							class="activity-image"
 							:src="getActivityImage(item)"
-							mode="aspectFill"
+							mode="widthFix"
 						></image>
 						<view v-else class="activity-image activity-image-empty">
 							<text>线下活动</text>
@@ -167,7 +167,6 @@ export default {
 
 .activity-image {
 	width: 100%;
-	height: 320rpx;
 	display: block;
 	background: $accent-surface;
 }

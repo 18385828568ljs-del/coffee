@@ -3,6 +3,7 @@ package com.ruoyi.project.coffee.api;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,10 +17,12 @@ import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.framework.web.controller.BaseController;
 import com.ruoyi.framework.web.domain.AjaxResult;
 import com.ruoyi.framework.web.page.TableDataInfo;
+import com.ruoyi.project.abucoder.wxuser.domain.AbucoderWxuser;
 import com.ruoyi.project.coffee.activity.domain.MarketingPreviewResult;
 import com.ruoyi.project.coffee.auth.WxUserAuthContext;
 import com.ruoyi.project.coffee.member.service.MemberService;
 import com.ruoyi.project.coffee.scanOrder.domain.ScanOrder;
+import com.ruoyi.project.coffee.scanOrder.domain.ScanOrderStatus;
 import com.ruoyi.project.coffee.scanOrder.service.IScanOrderService;
 
 /**
@@ -40,6 +43,17 @@ public class ScanOrderApiController extends BaseController
     @Autowired
     private MemberService memberService;
 
+    @Value("${wx.miniapp.subscribe.pickup-template-id:}")
+    private String pickupTemplateId;
+
+    @GetMapping("/subscribe-config")
+    public AjaxResult subscribeConfig()
+    {
+        Map<String, Object> data = new HashMap<String, Object>();
+        data.put("pickupTemplateId", pickupTemplateId);
+        return AjaxResult.success(data);
+    }
+
     @PostMapping("/create")
     public AjaxResult createOrder(@RequestBody Map<String, Object> body)
     {
@@ -53,7 +67,11 @@ public class ScanOrderApiController extends BaseController
         {
             return AjaxResult.error("请先登录后再下单");
         }
-        String openid = trimToNull(parseString(body.get("openid")));
+        String openid = currentOpenid();
+        if (openid == null)
+        {
+            openid = trimToNull(parseString(body.get("openid")));
+        }
         Long shopId = parseLong(body.get("shopId"));
         if (shopId == null)
         {
@@ -107,8 +125,13 @@ public class ScanOrderApiController extends BaseController
             return AjaxResult.error("请先登录");
         }
         Long resolvedShopId = shopId == null ? DEFAULT_SHOP_ID : shopId;
+        String resolvedOpenid = currentOpenid();
+        if (resolvedOpenid == null)
+        {
+            resolvedOpenid = trimToNull(openid);
+        }
         MarketingPreviewResult preview = scanOrderService.previewOrderFromCart(
-            userId, openid, resolvedShopId, trimToNull(tableNo));
+            userId, resolvedOpenid, resolvedShopId, trimToNull(tableNo));
 
         Map<String, Object> data = new HashMap<String, Object>();
         data.put("totalAmount", preview.getTotalAmount());
@@ -127,6 +150,10 @@ public class ScanOrderApiController extends BaseController
             return AjaxResult.error("订单ID不能为空");
         }
         Long userId = WxUserAuthContext.getCurrentUserId();
+        if (userId == null)
+        {
+            return AjaxResult.error("请先登录");
+        }
         ScanOrder order = scanOrderService.selectScanOrderWithItems(orderId);
         if (order == null || !userId.equals(order.getUserId()))
         {
@@ -139,15 +166,19 @@ public class ScanOrderApiController extends BaseController
     public AjaxResult cancelOrder(@PathVariable Long orderId)
     {
         Long userId = WxUserAuthContext.getCurrentUserId();
+        if (userId == null)
+        {
+            return AjaxResult.error("请先登录");
+        }
         ScanOrder exist = scanOrderService.selectScanOrderById(orderId);
         if (exist == null || !userId.equals(exist.getUserId()))
         {
             return AjaxResult.error("订单不存在");
         }
         Integer status = exist.getStatus();
-        if (status == null || status != 0)
+        if (status == null || status != ScanOrderStatus.PENDING_PAY)
         {
-            if (status != null && status == 3)
+            if (status != null && status == ScanOrderStatus.CANCELLED)
             {
                 return AjaxResult.error("订单已取消");
             }
@@ -166,6 +197,10 @@ public class ScanOrderApiController extends BaseController
                                @RequestParam(value = "payType", required = false) String payType)
     {
         Long userId = WxUserAuthContext.getCurrentUserId();
+        if (userId == null)
+        {
+            return AjaxResult.error("请先登录");
+        }
         ScanOrder exist = scanOrderService.selectScanOrderById(orderId);
         if (exist == null || !userId.equals(exist.getUserId()))
         {
@@ -176,28 +211,31 @@ public class ScanOrderApiController extends BaseController
         {
             return AjaxResult.error("订单状态异常");
         }
-        if (status == 1 || status == 2)
+        if (ScanOrderStatus.isPaid(status))
         {
             return AjaxResult.error("订单已支付");
         }
-        if (status == 3)
+        if (status == ScanOrderStatus.CANCELLED)
         {
             return AjaxResult.error("订单已取消");
         }
-        if (status != 0)
+        if (status != ScanOrderStatus.PENDING_PAY)
         {
             return AjaxResult.error("仅未支付订单可以支付");
         }
 
-        // 检查微信支付是否可用
         String resolvedPayType = trimToNull(payType);
         if (resolvedPayType == null)
         {
             resolvedPayType = exist.getPayType();
         }
-        if ("wechat".equals(resolvedPayType))
+        if (resolvedPayType == null)
         {
-            return AjaxResult.error("微信支付功能开发中,请选择余额支付");
+            resolvedPayType = "shouqianba";
+        }
+        if (!"balance".equals(resolvedPayType) && !"shouqianba".equals(resolvedPayType))
+        {
+            return AjaxResult.error("不支持的支付方式: " + resolvedPayType);
         }
 
         try
@@ -213,15 +251,41 @@ public class ScanOrderApiController extends BaseController
             return AjaxResult.error(e.getMessage());
         }
         // 支付成功后累加会员消费,与普通订单 OrderApiController.payOrder 行为对齐
-        if (exist.getPayAmount() != null)
+        ScanOrder paidOrder = scanOrderService.selectScanOrderById(orderId);
+        if (paidOrder != null && paidOrder.getPayAmount() != null)
         {
-            memberService.addSpending(userId, exist.getPayAmount());
+            memberService.addSpending(userId, paidOrder.getPayAmount());
         }
         Map<String, Object> data = new HashMap<String, Object>();
         data.put("orderId", orderId);
         data.put("payStatus", 1);
-        data.put("orderStatus", 1);
+        data.put("orderStatus", ScanOrderStatus.MAKING);
+        data.put("pickupNo", paidOrder == null ? null : paidOrder.getPickupNo());
+        data.put("estimatedWaitMinutes", paidOrder == null ? null : paidOrder.getEstimatedWaitMinutes());
         return AjaxResult.success("支付成功", data);
+    }
+
+    @PostMapping("/urge/{orderId}")
+    public AjaxResult urgeOrder(@PathVariable Long orderId)
+    {
+        Long userId = WxUserAuthContext.getCurrentUserId();
+        if (userId == null)
+        {
+            return AjaxResult.error("请先登录");
+        }
+        try
+        {
+            int affected = scanOrderService.urgeOrder(orderId, userId);
+            if (affected <= 0)
+            {
+                return AjaxResult.error("催单失败，请刷新后重试");
+            }
+            return AjaxResult.success("已催单，商家会尽快处理");
+        }
+        catch (ServiceException e)
+        {
+            return AjaxResult.error(e.getMessage());
+        }
     }
 
     private String parseString(Object v)
@@ -243,5 +307,11 @@ public class ScanOrderApiController extends BaseController
         if (s == null) return null;
         String t = s.trim();
         return t.isEmpty() ? null : t;
+    }
+
+    private String currentOpenid()
+    {
+        AbucoderWxuser user = WxUserAuthContext.getCurrentUser();
+        return user == null ? null : trimToNull(user.getOpenid());
     }
 }

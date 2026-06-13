@@ -8,7 +8,7 @@
 					v-if="getActivityImage(activity)"
 					class="cover"
 					:src="getActivityImage(activity)"
-					mode="aspectFill"
+					mode="widthFix"
 				></image>
 				<view v-else class="cover cover-empty">
 					<text>线下活动</text>
@@ -304,7 +304,6 @@ export default {
 
 .cover {
 	width: 100%;
-	height: 420rpx;
 	display: block;
 	border-radius: 20rpx;
 	background: $accent-surface;

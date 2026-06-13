@@ -12,11 +12,12 @@
 				<view class="app-nav-row">
 					<view
 						class="app-nav-side app-nav-back"
-						:class="{ 'app-nav-side-hidden': !showBack }"
+						:class="{ 'app-nav-side-hidden': !showBack && !leftText, 'app-nav-left-text-only': !showBack && leftText }"
 						@click="handleBack"
 					>
 						<view v-if="showBack" class="app-nav-back-arrow"></view>
 						<text v-if="showBack" class="app-nav-side-text">返回</text>
+						<text v-if="!showBack && leftText" class="app-nav-side-text app-nav-left-text">{{ leftText }}</text>
 					</view>
 					<text class="app-nav-title">{{ title }}</text>
 					<view
@@ -44,6 +45,10 @@ export default {
 		showBack: {
 			type: Boolean,
 			default: true
+		},
+		leftText: {
+			type: String,
+			default: ''
 		},
 		rightText: {
 			type: String,
@@ -195,6 +200,10 @@ export default {
 	min-width: 88rpx;
 }
 
+.app-nav-left-text-only {
+	pointer-events: none;
+}
+
 .app-nav-back-arrow {
 	width: 18rpx;
 	height: 18rpx;
@@ -224,6 +233,13 @@ export default {
 	font-size: 22rpx;
 	font-weight: 600;
 	color: $text-primary;
+}
+
+.app-nav-left-text {
+	max-width: $top-nav-side-width;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 .app-nav-right-text {

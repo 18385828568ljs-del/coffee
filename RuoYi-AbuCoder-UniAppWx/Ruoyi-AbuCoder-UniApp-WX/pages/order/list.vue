@@ -78,6 +78,10 @@
 				<view v-if="orderType === 'scan' && (order.shopName || order.tableNo)" class="summary-extra">
 					<text class="summary-text">{{ order.shopName || '咖啡门店' }}{{ order.tableNo ? ' · ' + order.tableNo + '桌' : '' }}</text>
 				</view>
+				<view v-if="orderType === 'scan' && (order.pickupNo || order.estimatedWaitMinutes)" class="summary-extra scan-progress-extra">
+					<text v-if="order.pickupNo" class="summary-text">取餐号 {{ order.pickupNo }}</text>
+					<text v-if="order.estimatedWaitMinutes" class="summary-text">预计等待 {{ order.estimatedWaitMinutes }} 分钟</text>
+				</view>
 
 				<view v-if="orderType === 'mall' && (order.deliveryTime || order.expressNo)" class="summary-extra">
 					<text v-if="order.deliveryTime" class="summary-text">发货时间 {{ order.deliveryTime }}</text>
@@ -102,7 +106,7 @@
 							v-if="order.status === 0"
 							class="action-btn action-btn-primary"
 							:class="{ 'action-btn-disabled': isOrderPending(order.orderId) }"
-							@tap.stop="payOrder(order.orderId)"
+							@tap.stop="payOrder(order)"
 						>
 							<text>{{ isOrderActionPending(order.orderId, 'pay') ? '支付中...' : '立即支付' }}</text>
 						</view>
@@ -113,6 +117,14 @@
 							@tap.stop="confirmOrder(order.orderId)"
 						>
 							<text>{{ isOrderActionPending(order.orderId, 'confirm') ? '确认中...' : '确认收货' }}</text>
+						</view>
+						<view
+							v-if="orderType === 'scan' && canUrgeOrder(order)"
+							class="action-btn action-btn-light"
+							:class="{ 'action-btn-disabled': isOrderPending(order.orderId) }"
+							@tap.stop="urgeOrder(order.orderId)"
+						>
+							<text>{{ isOrderActionPending(order.orderId, 'urge') ? '催单中...' : '催单' }}</text>
 						</view>
 					</view>
 				</view>
@@ -165,9 +177,10 @@ const ORDER_TABS = [
 const SCAN_ORDER_TABS = [
 	{ name: '全部', status: null },
 	{ name: '待付款', status: 0 },
-	{ name: '制作中', status: 1 },
-	{ name: '已完成', status: 2 },
-	{ name: '已取消', status: 3 }
+	{ name: '制作中', status: 2 },
+	{ name: '待取餐', status: 3 },
+	{ name: '已完成', status: 4 },
+	{ name: '已取消', status: 5 }
 ]
 
 const ORDER_STATUS_META = {
@@ -180,9 +193,10 @@ const ORDER_STATUS_META = {
 
 const SCAN_ORDER_STATUS_META = {
 	0: { text: '待付款', color: '#9A6C45' },
-	1: { text: '制作中', color: '#84776C' },
-	2: { text: '已完成', color: '#6E655E' },
-	3: { text: '已取消', color: '#C86E60' }
+	2: { text: '制作中', color: '#84776C' },
+	3: { text: '待取餐', color: '#9A6C45' },
+	4: { text: '已完成', color: '#6E655E' },
+	5: { text: '已取消', color: '#C86E60' }
 }
 
 export default {
@@ -211,6 +225,9 @@ export default {
 	},
 
 	onLoad(options) {
+		if (options.type === 'scan') {
+			this.orderType = 'scan'
+		}
 		if (options.tab !== undefined) {
 			const tabIndex = Number(options.tab)
 			if (!Number.isNaN(tabIndex) && tabIndex >= 0 && tabIndex < this.tabs.length) {
@@ -253,9 +270,14 @@ export default {
 				return ''
 			}
 			if (this.orderType === 'scan') {
-				return `/pages/scan/pay-success?orderId=${order.orderId}`
+				return `/pages/scan/detail?orderId=${order.orderId}`
 			}
 			return `/pages/order/detail?id=${order.orderId}`
+		},
+
+		canUrgeOrder(order) {
+			if (!order || this.orderType !== 'scan') return false
+			return order.status === 2 || order.status === 3
 		},
 
 		switchOrderType(type) {
@@ -488,13 +510,41 @@ export default {
 			}
 		},
 
-		async payOrder(orderId) {
+		async urgeOrder(orderId) {
 			if (this.pendingOrderActionKey) {
 				return
 			}
+			this.pendingOrderActionKey = this.getOrderActionKey(orderId, 'urge')
+			try {
+				const result = await requestPromise({
+					url: scanOrderApi.urge + orderId,
+					method: 'POST',
+					header: this.authHeader()
+				})
+				if (isSuccessResponse(result)) {
+					showSuccess('已催单')
+					this.refreshCurrentList()
+					return
+				}
+				showError((result.data && result.data.msg) || '催单失败')
+			} catch (error) {
+				showError('催单失败')
+			} finally {
+				this.pendingOrderActionKey = ''
+			}
+		},
+
+		async payOrder(order) {
+			if (this.pendingOrderActionKey) {
+				return
+			}
+			const orderId = order && order.orderId
+			const payType = this.orderType === 'scan' ? (order.payType || 'shouqianba') : ''
 			const confirmed = await showConfirm({
 				title: '确认支付',
-				content: '当前先走业务联调支付接口，确认继续吗？'
+				content: this.orderType === 'scan' && payType === 'balance'
+					? '确认使用余额支付该点单订单吗？'
+					: '确认继续支付该订单吗？'
 			})
 			if (!confirmed) {
 				return
@@ -503,7 +553,7 @@ export default {
 			this.pendingOrderActionKey = this.getOrderActionKey(orderId, 'pay')
 			try {
 				const res = await requestPromise({
-					url: this.orderType === 'scan' ? scanOrderApi.pay + orderId + '?payType=wechat' : orderApi.pay + orderId,
+					url: this.orderType === 'scan' ? scanOrderApi.pay + orderId + '?payType=' + payType : orderApi.pay + orderId,
 					method: 'PUT',
 					header: this.authHeader()
 				})

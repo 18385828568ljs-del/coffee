@@ -36,10 +36,16 @@
             <div class="col-sm-6 detail-item"><strong>桌号：</strong><span th:text="*{tableNo} ?: '-'"></span></div>
             <div class="col-sm-6 detail-item"><strong>订单总金额：</strong><span th:text="*{totalAmount}"></span></div>
             <div class="col-sm-6 detail-item"><strong>实付金额：</strong><span th:text="*{payAmount}"></span></div>
+            <div class="col-sm-6 detail-item"><strong>取餐号：</strong><span th:text="*{pickupNo} ?: '-'"></span></div>
+            <div class="col-sm-6 detail-item"><strong>预计等待：</strong><span th:text="${scanOrder.estimatedWaitMinutes != null ? scanOrder.estimatedWaitMinutes + ' 分钟' : '-'}"></span></div>
             <div class="col-sm-6 detail-item"><strong>支付状态：</strong><span th:text="*{payStatus} == 1 ? '已支付' : '未支付'"></span></div>
-            <div class="col-sm-6 detail-item"><strong>订单状态：</strong><span th:text="*{orderStatus} == 0 ? '待支付' : (*{orderStatus} == 1 ? '已支付/制作中' : (*{orderStatus} == 2 ? '已完成' : '已取消'))"></span></div>
+            <div class="col-sm-6 detail-item"><strong>订单状态：</strong><span th:text="*{orderStatus} == 0 ? '待支付' : (*{orderStatus} == 2 ? '制作中' : (*{orderStatus} == 3 ? '待取餐' : (*{orderStatus} == 4 ? '已完成' : '已取消')))"></span></div>
+            <div class="col-sm-6 detail-item"><strong>催单次数：</strong><span th:text="*{urgeCount} ?: 0"></span></div>
+            <div class="col-sm-6 detail-item"><strong>最后催单：</strong><span th:text="${scanOrder.lastUrgeTime != null ? #dates.format(scanOrder.lastUrgeTime, 'yyyy-MM-dd HH:mm:ss') : '-'}"></span></div>
             <div class="col-sm-6 detail-item"><strong>支付方式：</strong><span th:text="*{payType} ?: '-'"></span></div>
             <div class="col-sm-6 detail-item"><strong>支付时间：</strong><span th:text="${scanOrder.payTime != null ? #dates.format(scanOrder.payTime, 'yyyy-MM-dd HH:mm:ss') : '-'}"></span></div>
+            <div class="col-sm-6 detail-item"><strong>开始制作：</strong><span th:text="${scanOrder.makingTime != null ? #dates.format(scanOrder.makingTime, 'yyyy-MM-dd HH:mm:ss') : '-'}"></span></div>
+            <div class="col-sm-6 detail-item"><strong>叫号时间：</strong><span th:text="${scanOrder.callTime != null ? #dates.format(scanOrder.callTime, 'yyyy-MM-dd HH:mm:ss') : '-'}"></span></div>
             <div class="col-sm-6 detail-item"><strong>创建时间：</strong><span th:text="${scanOrder.createTime != null ? #dates.format(scanOrder.createTime, 'yyyy-MM-dd HH:mm:ss') : '-'}"></span></div>
             <div class="col-sm-6 detail-item"><strong>完成时间：</strong><span th:text="${scanOrder.finishTime != null ? #dates.format(scanOrder.finishTime, 'yyyy-MM-dd HH:mm:ss') : '-'}"></span></div>
             <div class="col-sm-6 detail-item"><strong>取消时间：</strong><span th:text="${scanOrder.cancelTime != null ? #dates.format(scanOrder.cancelTime, 'yyyy-MM-dd HH:mm:ss') : '-'}"></span></div>

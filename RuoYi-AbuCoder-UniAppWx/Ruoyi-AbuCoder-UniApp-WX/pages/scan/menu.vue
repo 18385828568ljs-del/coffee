@@ -1,20 +1,9 @@
 <template>
 	<view class="page">
-		<app-nav title="点单" :show-back="false" />
+		<app-nav title="点单" :show-back="false" :left-text="navTableText" />
 
 		<view v-if="loadError" class="error-bar">
 			<text class="error-text">{{ loadError }}</text>
-		</view>
-
-		<view v-if="hasScanContext" class="scan-context-card">
-			<view class="scan-context-item">
-				<text class="scan-context-label">门店</text>
-				<text class="scan-context-value">{{ shopName }}</text>
-			</view>
-			<view class="scan-context-item scan-context-item-right">
-				<text class="scan-context-label">桌号</text>
-				<text class="scan-context-value">{{ tableNo || '未识别' }}</text>
-			</view>
 		</view>
 
 		<view class="immersive-shell">
@@ -166,8 +155,8 @@ export default {
 		}
 	},
 	computed: {
-		hasScanContext() {
-			return !!(this.tableNo || this.shopName !== '咖啡门店')
+		navTableText() {
+			return this.tableNo ? this.tableNo + '桌' : ''
 		}
 	},
 	onLoad(options = {}) {
@@ -674,48 +663,6 @@ export default {
 	font-size: 24rpx;
 	font-weight: 500;
 	color: #b45548;
-}
-
-.scan-context-card {
-	position: relative;
-	z-index: 6;
-	display: flex;
-	justify-content: space-between;
-	gap: 20rpx;
-	margin: 0 $space-page 8rpx;
-	padding: 14rpx 22rpx;
-	border-radius: 999rpx;
-	background: rgba(255, 255, 255, 0.16);
-	border: 2rpx solid rgba(255, 255, 255, 0.2);
-	backdrop-filter: blur(20rpx);
-	-webkit-backdrop-filter: blur(20rpx);
-	box-sizing: border-box;
-}
-
-.scan-context-item {
-	display: flex;
-	flex-direction: column;
-	min-width: 0;
-}
-
-.scan-context-item-right {
-	align-items: flex-end;
-	flex-shrink: 0;
-}
-
-.scan-context-label {
-	font-family: $font-family;
-	font-size: 19rpx;
-	font-weight: 500;
-	color: rgba(255, 255, 255, 0.62);
-}
-
-.scan-context-value {
-	margin-top: 6rpx;
-	font-family: $font-family;
-	font-size: 26rpx;
-	font-weight: 600;
-	color: #ffffff;
 }
 
 .immersive-shell {

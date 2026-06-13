@@ -28,9 +28,21 @@ public interface IScanOrderService
 
     List<ScanOrder> selectMyOrderList(Long userId);
 
-    /** 模拟支付:0(待支付) → 1(已支付/制作中) */
+    /** 支付:0(待支付) → 2(制作中) */
     int payOrder(Long orderId, String payType);
 
-    /** 取消:0(待支付) → 3(已取消) */
+    /** 用户取消:0(待支付) → 5(已取消) */
     int cancelOrder(Long orderId);
+
+    /** 商家叫号:2(制作中) → 3(待取餐) */
+    int callOrder(Long orderId);
+
+    /** 完成订单:3(待取餐) → 4(已完成) */
+    int completeOrder(Long orderId);
+
+    /** 商家取消:2(制作中) → 5(已取消) */
+    int cancelPaidOrder(Long orderId);
+
+    /** 用户催单 */
+    int urgeOrder(Long orderId, Long userId);
 }

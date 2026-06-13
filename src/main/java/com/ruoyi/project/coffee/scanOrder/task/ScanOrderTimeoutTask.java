@@ -14,7 +14,7 @@ import com.ruoyi.project.coffee.scanOrder.service.IScanOrderService;
  * 扫码点单订单超时自动取消定时任务
  *
  * 由 RuoYi quartz 调度,在 sys_job 中以 invoke_target = scanOrderTimeoutTask.cancelTimeoutOrders 注册。
- * 点单无库存概念,仅做 status: 0 → 3 状态流转,依赖 ScanOrderMapper 的乐观锁保证幂等。
+ * 点单无库存概念,仅做 status: 0 → 5 状态流转,依赖 ScanOrderMapper 的乐观锁保证幂等。
  */
 @Component("scanOrderTimeoutTask")
 public class ScanOrderTimeoutTask

@@ -164,6 +164,14 @@
 				"enablePullDownRefresh": false,
 				"navigationStyle": "custom"
 			}
+		},
+		{
+			"path": "pages/scan/detail",
+			"style": {
+				"navigationBarTitleText": "点单详情",
+				"enablePullDownRefresh": true,
+				"navigationStyle": "custom"
+			}
 		}
 	],
 	"tabBar": {

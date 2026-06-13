@@ -12,7 +12,7 @@ import com.ruoyi.framework.web.domain.BaseEntity;
  * 扫码点单-订单对象 t_scan_order
  *
  * 表内使用单一 status 字段标识订单生命周期:
- *   0-待支付, 1-已支付/制作中, 2-已完成, 3-已取消
+ *   0-待支付, 1-保留, 2-制作中, 3-待取餐, 4-已完成, 5-已取消
  * 前端历史上惯用 payStatus + orderStatus 两段式,这里提供派生只读 getter,
  * 数据库仍只存 status 一列。
  */
@@ -29,6 +29,9 @@ public class ScanOrder extends BaseEntity
 
     /** 下单用户ID */
     private Long userId;
+
+    /** WeChat openid */
+    private String openid;
 
     /** 门店ID */
     @Excel(name = "门店ID")
@@ -63,9 +66,30 @@ public class ScanOrder extends BaseEntity
     /** 命中的活动文案,逗号分隔,供前端展示 */
     private String activitySummary;
 
-    /** 状态(0-待支付,1-已支付/制作中,2-已完成,3-已取消) */
+    /** 状态(0-待支付,1-保留,2-制作中,3-待取餐,4-已完成,5-已取消) */
     @Excel(name = "状态")
     private Integer status;
+
+    /** 取餐号 */
+    private String pickupNo;
+
+    /** 预计等待分钟数 */
+    private Integer estimatedWaitMinutes;
+
+    /** 自动开始时间 */
+    private Date acceptTime;
+
+    /** 开始制作时间 */
+    private Date makingTime;
+
+    /** 叫号时间 */
+    private Date callTime;
+
+    /** 催单次数 */
+    private Integer urgeCount;
+
+    /** 最后催单时间 */
+    private Date lastUrgeTime;
 
     /** 支付方式 */
     private String payType;
@@ -90,6 +114,9 @@ public class ScanOrder extends BaseEntity
 
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
+
+    public String getOpenid() { return openid; }
+    public void setOpenid(String openid) { this.openid = openid; }
 
     public Long getShopId() { return shopId; }
     public void setShopId(Long shopId) { this.shopId = shopId; }
@@ -121,6 +148,27 @@ public class ScanOrder extends BaseEntity
     public Integer getStatus() { return status; }
     public void setStatus(Integer status) { this.status = status; }
 
+    public String getPickupNo() { return pickupNo; }
+    public void setPickupNo(String pickupNo) { this.pickupNo = pickupNo; }
+
+    public Integer getEstimatedWaitMinutes() { return estimatedWaitMinutes; }
+    public void setEstimatedWaitMinutes(Integer estimatedWaitMinutes) { this.estimatedWaitMinutes = estimatedWaitMinutes; }
+
+    public Date getAcceptTime() { return acceptTime; }
+    public void setAcceptTime(Date acceptTime) { this.acceptTime = acceptTime; }
+
+    public Date getMakingTime() { return makingTime; }
+    public void setMakingTime(Date makingTime) { this.makingTime = makingTime; }
+
+    public Date getCallTime() { return callTime; }
+    public void setCallTime(Date callTime) { this.callTime = callTime; }
+
+    public Integer getUrgeCount() { return urgeCount; }
+    public void setUrgeCount(Integer urgeCount) { this.urgeCount = urgeCount; }
+
+    public Date getLastUrgeTime() { return lastUrgeTime; }
+    public void setLastUrgeTime(Date lastUrgeTime) { this.lastUrgeTime = lastUrgeTime; }
+
     public String getPayType() { return payType; }
     public void setPayType(String payType) { this.payType = payType; }
 
@@ -140,8 +188,7 @@ public class ScanOrder extends BaseEntity
     public Integer getPayStatus()
     {
         if (status == null) return 0;
-        // 只有 1(制作中) 和 2(已完成) 属于已支付
-        return (status == 1 || status == 2) ? 1 : 0;
+        return ScanOrderStatus.isPaid(status) ? 1 : 0;
     }
 
     /** 派生:订单流转状态,与 status 同值,提供给前端更语义化的字段名 */
@@ -156,11 +203,13 @@ public class ScanOrder extends BaseEntity
             .append("orderId", orderId)
             .append("orderNo", orderNo)
             .append("userId", userId)
+            .append("openid", openid)
             .append("shopId", shopId)
             .append("tableNo", tableNo)
             .append("totalAmount", totalAmount)
             .append("payAmount", payAmount)
             .append("status", status)
+            .append("pickupNo", pickupNo)
             .append("payType", payType)
             .append("payTime", payTime)
             .append("createTime", getCreateTime())

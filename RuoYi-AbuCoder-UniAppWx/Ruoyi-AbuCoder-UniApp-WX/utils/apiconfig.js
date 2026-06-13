@@ -199,8 +199,10 @@ export const scanCartApi = {
 export const scanOrderApi = {
 	list: `${baseUrl}/api/scanOrder/list`,
 	detail: `${baseUrl}/api/scanOrder/`,
+	subscribeConfig: `${baseUrl}/api/scanOrder/subscribe-config`,
 	create: `${baseUrl}/api/scanOrder/create`,
 	preview: `${baseUrl}/api/scanOrder/preview`,
 	pay: `${baseUrl}/api/scanOrder/pay/`,
-	cancel: `${baseUrl}/api/scanOrder/cancel/`
+	cancel: `${baseUrl}/api/scanOrder/cancel/`,
+	urge: `${baseUrl}/api/scanOrder/urge/`
 }

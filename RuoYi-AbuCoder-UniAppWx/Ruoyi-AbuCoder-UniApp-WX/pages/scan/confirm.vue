@@ -2,15 +2,9 @@
 	<view class="page">
 		<app-nav title="确认点单" />
 
-		<view class="scan-context-card">
-			<view class="scan-context-item">
-				<text class="scan-context-label">门店</text>
-				<text class="scan-context-value">{{ shopName }}</text>
-			</view>
-			<view class="scan-context-item scan-context-item-right">
-				<text class="scan-context-label">桌号</text>
-				<text class="scan-context-value">{{ tableNo || '未识别' }}</text>
-			</view>
+		<view v-if="tableNo" class="table-context-card">
+			<text class="table-context-label">桌号</text>
+			<text class="table-context-value">{{ tableNo }}</text>
 		</view>
 
 		<view class="section-card">
@@ -74,6 +68,24 @@
 			</view>
 		</view>
 
+		<view v-if="cartList.length" class="section-card pay-method-card">
+			<text class="section-title">支付方式</text>
+			<view class="pay-method-row" @tap="payType = 'shouqianba'">
+				<view class="pay-method-main">
+					<text class="pay-method-name">微信支付</text>
+					<text class="pay-method-desc">使用微信完成付款</text>
+				</view>
+				<view class="pay-radio" :class="{ 'pay-radio-active': payType === 'shouqianba' }"></view>
+			</view>
+			<view class="pay-method-row" @tap="payType = 'balance'">
+				<view class="pay-method-main">
+					<text class="pay-method-name">余额支付</text>
+					<text class="pay-method-desc">从会员余额扣款</text>
+				</view>
+				<view class="pay-radio" :class="{ 'pay-radio-active': payType === 'balance' }"></view>
+			</view>
+		</view>
+
 		<view class="bottom-bar">
 			<view class="total-box">
 				<text class="total-label">应付</text>
@@ -91,7 +103,7 @@
 
 <script>
 import { scanCartApi, scanOrderApi, resolveImageUrl } from '@/utils/apiconfig.js'
-import { getLocalUserId, ensureLocalLogin } from '@/utils/session.js'
+import { getLocalUserInfo, getLocalUserId, ensureLocalLogin } from '@/utils/session.js'
 import { requestPromise, isSuccessResponse } from '@/utils/request-helper.js'
 import { getToken } from '@/utils/auth.js'
 import { showError, showSuccess, showBusy, hideBusy } from '@/utils/ui-feedback.js'
@@ -115,6 +127,8 @@ export default {
 			memberDiscount: 0,
 			activitySummary: '',
 			remark: '',
+			payType: 'shouqianba',
+			pickupTemplateId: '',
 			loading: false,
 			submitting: false
 		}
@@ -127,6 +141,7 @@ export default {
 			this.shopName = decodeURIComponent(String(options.shopName)) || this.shopName
 		}
 		this.loadCartList()
+		this.loadSubscribeConfig()
 	},
 
 	onShow() {
@@ -150,6 +165,20 @@ export default {
 
 		shortName(name) {
 			return String(name || '咖啡').slice(0, 2)
+		},
+
+		loadSubscribeConfig() {
+			requestPromise({
+				url: scanOrderApi.subscribeConfig,
+				method: 'GET',
+				header: this.authHeader()
+			}).then(res => {
+				if (!isSuccessResponse(res)) return
+				const templateId = res.data && res.data.data && res.data.data.pickupTemplateId
+				if (templateId) {
+					this.pickupTemplateId = templateId
+				}
+			}).catch(() => {})
 		},
 
 		itemImage(item) {
@@ -217,7 +246,7 @@ export default {
 				const data = (res.data && res.data.data) || {}
 				// 后端返回的 totalAmount 来自服务端商品当前价,优先用它,避免被前端汇总污染
 				if (data.totalAmount != null) this.totalAmount = toNumber(data.totalAmount)
-				this.payAmount = toNumber(data.payAmount)
+				if (data.payAmount != null) this.payAmount = toNumber(data.payAmount)
 				this.discountAmount = toNumber(data.discountAmount)
 				this.memberDiscount = toNumber(data.memberDiscount)
 				this.activitySummary = data.activitySummary || ''
@@ -232,6 +261,8 @@ export default {
 			this.submitting = true
 			showBusy('正在下单...')
 			try {
+				await this.requestPickupSubscribe()
+				const userInfo = getLocalUserInfo()
 				const createRes = await requestPromise({
 					url: scanOrderApi.create,
 					method: 'POST',
@@ -239,8 +270,9 @@ export default {
 					data: {
 						shopId: this.shopId,
 						tableNo: this.tableNo,
+						openid: userInfo.openid || '',
 						remark: this.remark,
-						payType: 'wechat'
+						payType: this.payType
 					}
 				})
 				if (!isSuccessResponse(createRes)) {
@@ -254,7 +286,7 @@ export default {
 					return
 				}
 				const payRes = await requestPromise({
-					url: scanOrderApi.pay + orderId + '?payType=wechat',
+					url: scanOrderApi.pay + orderId + '?payType=' + this.payType,
 					method: 'PUT',
 					header: this.authHeader()
 				})
@@ -272,6 +304,32 @@ export default {
 				hideBusy()
 				this.submitting = false
 			}
+		},
+
+		requestPickupSubscribe() {
+			return new Promise((resolve, reject) => {
+				if (!uni.requestSubscribeMessage) {
+					resolve()
+					return
+				}
+				const templateId = this.pickupTemplateId
+				if (!templateId) {
+					showError('订阅模板配置未加载，请稍后重试')
+					reject(new Error('pickup template id missing'))
+					return
+				}
+				uni.requestSubscribeMessage({
+					tmplIds: [templateId],
+					success: (res) => {
+						console.log('订阅授权成功:', res)
+						resolve(res)
+					},
+					fail: (err) => {
+						console.log('订阅授权失败:', err)
+						resolve(err)
+					}
+				})
+			})
 		}
 	}
 }
@@ -285,30 +343,21 @@ export default {
 	padding-bottom: 176rpx;
 }
 
-.scan-context-card,
 .section-card {
 	@include card(20rpx 24rpx, $radius-sm);
 	margin: 0 $space-page 18rpx;
 }
 
-.scan-context-card {
+.table-context-card {
+	@include card(18rpx 24rpx, $radius-sm);
+	margin: 0 $space-page 18rpx;
 	display: flex;
+	align-items: center;
 	justify-content: space-between;
-	gap: 20rpx;
+	gap: 16rpx;
 }
 
-.scan-context-item {
-	display: flex;
-	flex-direction: column;
-	min-width: 0;
-}
-
-.scan-context-item-right {
-	align-items: flex-end;
-	flex-shrink: 0;
-}
-
-.scan-context-label,
+.table-context-label,
 .section-subtitle,
 .cart-spec,
 .cart-qty,
@@ -320,7 +369,7 @@ export default {
 	color: $text-tertiary;
 }
 
-.scan-context-value,
+.table-context-value,
 .section-title,
 .cart-name,
 .empty-title {
@@ -328,10 +377,6 @@ export default {
 	font-size: 28rpx;
 	font-weight: 700;
 	color: $text-primary;
-}
-
-.scan-context-value {
-	margin-top: 6rpx;
 }
 
 .section-head,
@@ -485,6 +530,61 @@ export default {
 	background: $accent-primary-soft;
 	padding: 6rpx 12rpx;
 	border-radius: $radius-xs;
+}
+
+.pay-method-card {
+	display: flex;
+	flex-direction: column;
+	gap: 16rpx;
+}
+
+.pay-method-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 18rpx;
+	padding: 18rpx 0;
+	border-top: 2rpx solid $border-subtle;
+}
+
+.pay-method-row:first-of-type {
+	border-top: 0;
+}
+
+.pay-method-main {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 6rpx;
+}
+
+.pay-method-name {
+	font-family: $font-family;
+	font-size: 26rpx;
+	font-weight: 700;
+	color: $text-primary;
+}
+
+.pay-method-desc {
+	font-family: $font-family;
+	font-size: 22rpx;
+	font-weight: 500;
+	line-height: 1.5;
+	color: $text-tertiary;
+}
+
+.pay-radio {
+	width: 34rpx;
+	height: 34rpx;
+	border-radius: 50%;
+	border: 3rpx solid $border-subtle;
+	box-sizing: border-box;
+	flex-shrink: 0;
+}
+
+.pay-radio-active {
+	border: 10rpx solid $accent-primary;
 }
 
 .bottom-bar {

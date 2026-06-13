@@ -30,51 +30,39 @@
 
 			<view class="content-wrap">
 				<view class="entry-grid">
-					<view class="entry-card" @tap="startOrder">
+					<view class="entry-card entry-card-primary" @tap="startOrder">
 						<view class="entry-icon">
-							<view class="entry-icon-cup">
-								<view class="cup-body"></view>
-								<view class="cup-handle"></view>
-								<view class="cup-steam cup-steam-one"></view>
-								<view class="cup-steam cup-steam-two"></view>
-							</view>
+							<image class="entry-icon-image" src="/static/home/order.svg" mode="aspectFit"></image>
 						</view>
 						<text class="entry-title">点单</text>
 						<text class="entry-label">ORDER</text>
 					</view>
 
-					<view class="entry-card" @tap="goMall">
+					<view class="entry-card entry-card-secondary" @tap="goMall">
 						<view class="entry-icon">
-							<view class="entry-icon-bag">
-								<view class="bag-handle"></view>
-								<view class="bag-body"></view>
-							</view>
+							<image class="entry-icon-image" src="/static/home/shop.svg" mode="aspectFit"></image>
 						</view>
 						<text class="entry-title">商店</text>
 						<text class="entry-label">SHOP</text>
 					</view>
 				</view>
 
-				<view class="welcome-card">
-					<view class="welcome-copy">
-						<text class="welcome-title">欢迎光临</text>
-						<text class="welcome-desc">现磨咖啡、轻食与小店周边，选择点单或进入商店。</text>
-					</view>
-					<view v-if="tableNo" class="table-pill">
-						<text>{{ tableNo }} 桌</text>
-					</view>
-				</view>
+				<image class="welcome-image" src="/static/banner/welcome.png" mode="widthFix"></image>
 
 				<view v-if="featuredActivity" class="activity-section">
 					<view class="activity-section-head">
 						<text class="activity-section-title">参与线下活动</text>
+						<view class="activity-more" @tap="goActivityList">
+							<text>更多</text>
+							<text class="activity-more-arrow">›</text>
+						</view>
 					</view>
 					<view class="activity-card" @tap="goActivityDetail(featuredActivity)">
 						<image
 							v-if="getActivityImage(featuredActivity)"
 							class="activity-cover"
 							:src="getActivityImage(featuredActivity)"
-							mode="aspectFill"
+							mode="widthFix"
 						></image>
 						<view v-else class="activity-cover activity-cover-empty">
 							<text>线下活动</text>
@@ -85,6 +73,13 @@
 							<text class="activity-desc">{{ featuredActivity.summary || featuredActivity.location || '预约参加线下活动' }}</text>
 						</view>
 					</view>
+				</view>
+
+				<view class="about-section">
+					<view class="about-section-head">
+						<text class="about-section-title">关于我们</text>
+					</view>
+					<image class="about-image" src="/static/banner/about-us.png" mode="widthFix"></image>
 				</view>
 
 				<view class="content-bottom-space"></view>
@@ -341,10 +336,7 @@ export default {
 }
 
 .entry-title,
-.entry-label,
-.welcome-title,
-.welcome-desc,
-.table-pill text {
+.entry-label {
 	font-family: $font-family;
 }
 
@@ -364,12 +356,12 @@ export default {
 }
 
 .entry-card {
-	min-height: 214rpx;
-	padding: 30rpx 24rpx 26rpx;
-	border-radius: 28rpx;
-	background: rgba(255, 255, 255, 0.98);
-	border: 2rpx solid rgba(232, 224, 215, 0.92);
-	box-shadow: 0 20rpx 44rpx rgba(32, 26, 23, 0.12);
+	min-height: 190rpx;
+	padding: 24rpx 22rpx 22rpx;
+	border-radius: 22rpx;
+	background: rgba(255, 255, 255, 0.96);
+	border: 2rpx solid rgba(232, 224, 215, 0.9);
+	box-shadow: 0 10rpx 26rpx rgba(32, 26, 23, 0.08);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -378,157 +370,63 @@ export default {
 	@include active-press;
 }
 
+.entry-card-primary {
+	background: rgba(255, 255, 255, 0.96);
+	border-color: rgba(232, 224, 215, 0.9);
+	box-shadow: 0 10rpx 26rpx rgba(32, 26, 23, 0.08);
+}
+
+.entry-card-secondary {
+	background: rgba(255, 255, 255, 0.96);
+}
+
 .entry-icon {
-	width: 76rpx;
-	height: 76rpx;
+	width: 84rpx;
+	height: 84rpx;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	color: $text-primary;
 }
 
+.entry-card-primary .entry-icon {
+	color: $accent-primary;
+}
+
+.entry-card-secondary .entry-icon {
+	color: $accent-primary-deep;
+}
+
+.entry-icon-image {
+	width: 76rpx;
+	height: 76rpx;
+	display: block;
+}
+
 .entry-title {
-	margin-top: 22rpx;
-	font-size: 32rpx;
-	font-weight: 600;
-	letter-spacing: 8rpx;
-	text-indent: 8rpx;
+	margin-top: 16rpx;
+	font-size: 30rpx;
+	font-weight: 700;
+	letter-spacing: 4rpx;
+	text-indent: 4rpx;
 	color: $text-primary;
 }
 
 .entry-label {
-	margin-top: 8rpx;
-	font-size: 18rpx;
-	font-weight: 600;
+	margin-top: 6rpx;
+	font-size: 17rpx;
+	font-weight: 700;
 	letter-spacing: 2rpx;
 	color: $text-tertiary;
 }
 
-.entry-icon-cup {
-	position: relative;
-	width: 70rpx;
-	height: 70rpx;
+.entry-card-primary .entry-label {
+	color: $accent-warm;
 }
 
-.cup-body {
-	position: absolute;
-	left: 10rpx;
-	right: 14rpx;
-	bottom: 8rpx;
-	height: 34rpx;
-	border: 4rpx solid currentColor;
-	border-top-width: 5rpx;
-	border-radius: 0 0 16rpx 16rpx;
-}
-
-.cup-handle {
-	position: absolute;
-	right: 2rpx;
-	bottom: 17rpx;
-	width: 20rpx;
-	height: 20rpx;
-	border: 4rpx solid currentColor;
-	border-left: 0;
-	border-radius: 0 18rpx 18rpx 0;
-}
-
-.cup-steam {
-	position: absolute;
-	top: 4rpx;
-	width: 4rpx;
-	height: 24rpx;
-	border-radius: 999rpx;
-	background: currentColor;
-	opacity: 0.72;
-}
-
-.cup-steam-one {
-	left: 24rpx;
-	transform: rotate(-16deg);
-}
-
-.cup-steam-two {
-	left: 42rpx;
-	transform: rotate(16deg);
-}
-
-.entry-icon-bag {
-	position: relative;
-	width: 68rpx;
-	height: 70rpx;
-}
-
-.bag-body {
-	position: absolute;
-	left: 8rpx;
-	right: 8rpx;
-	bottom: 6rpx;
-	height: 46rpx;
-	border: 4rpx solid currentColor;
-	border-radius: 8rpx 8rpx 14rpx 14rpx;
-}
-
-.bag-handle {
-	position: absolute;
-	left: 21rpx;
-	top: 4rpx;
-	width: 26rpx;
-	height: 22rpx;
-	border: 4rpx solid currentColor;
-	border-bottom: 0;
-	border-radius: 22rpx 22rpx 0 0;
-}
-
-.welcome-card {
-	min-height: 136rpx;
-	padding: 28rpx;
-	border-radius: 28rpx;
-	background: rgba(255, 255, 255, 0.96);
-	border: 2rpx solid rgba(232, 224, 215, 0.9);
-	box-shadow: $shadow-soft;
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 20rpx;
-	box-sizing: border-box;
-}
-
-.welcome-copy {
-	flex: 1;
-	min-width: 0;
-	display: flex;
-	flex-direction: column;
-	gap: 10rpx;
-}
-
-.welcome-title {
-	font-size: 32rpx;
-	font-weight: 700;
-	color: $text-primary;
-}
-
-.welcome-desc {
-	font-size: 23rpx;
-	font-weight: 500;
-	line-height: 1.55;
-	color: $text-secondary;
-}
-
-.table-pill {
-	flex-shrink: 0;
-	min-height: 60rpx;
-	padding: 0 22rpx;
-	border-radius: 999rpx;
-	background: $accent-primary-soft;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
-.table-pill text {
-	font-size: 22rpx;
-	font-weight: 700;
-	color: $text-primary;
+.welcome-image {
+	width: 100%;
+	display: block;
 }
 
 .activity-section {
@@ -551,6 +449,52 @@ export default {
 	color: $text-primary;
 }
 
+.activity-more {
+	display: flex;
+	align-items: center;
+	gap: 4rpx;
+	padding: 8rpx 0 8rpx 24rpx;
+	@include active-press;
+}
+
+.activity-more text {
+	font-family: $font-family;
+	font-size: 24rpx;
+	font-weight: 600;
+	color: $text-secondary;
+}
+
+.activity-more .activity-more-arrow {
+	font-size: 30rpx;
+	line-height: 1;
+	color: $text-tertiary;
+}
+
+.about-section {
+	display: flex;
+	flex-direction: column;
+	gap: 18rpx;
+}
+
+.about-section-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 8rpx;
+}
+
+.about-section-title {
+	font-family: $font-family;
+	font-size: 32rpx;
+	font-weight: 700;
+	color: $text-primary;
+}
+
+.about-image {
+	width: 100%;
+	display: block;
+}
+
 .activity-card {
 	@include card(16rpx);
 	display: flex;
@@ -562,7 +506,6 @@ export default {
 
 .activity-cover {
 	width: 164rpx;
-	height: 164rpx;
 	flex-shrink: 0;
 	border-radius: 16rpx;
 	background: $accent-surface;
@@ -570,6 +513,7 @@ export default {
 }
 
 .activity-cover-empty {
+	height: 164rpx;
 	display: flex;
 	align-items: center;
 	justify-content: center;
