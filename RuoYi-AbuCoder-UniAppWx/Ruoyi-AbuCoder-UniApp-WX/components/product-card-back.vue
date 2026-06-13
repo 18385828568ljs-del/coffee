@@ -1,6 +1,9 @@
 <template>
 	<view class="card-back-shell" @tap.stop>
 		<view class="back-head">
+			<view v-if="productImage" class="back-thumb-wrap">
+				<image class="back-thumb-image" :src="productImage" mode="aspectFill" />
+			</view>
 			<view class="back-head-copy">
 				<text class="back-title">{{ headTitle }}</text>
 				<text v-if="headSubtitle" class="back-subtitle">{{ headSubtitle }}</text>
@@ -15,13 +18,13 @@
 				<text class="head-video-text">讲解视频</text>
 			</view>
 			<view class="back-close" hover-class="back-close-press" @tap.stop="onClose">
-				<text>×</text>
+				<text class="back-close-text">×</text>
 			</view>
 		</view>
 
 		<scroll-view class="back-body" scroll-y>
 			<view v-if="loading" class="back-loading">
-				<text>加载详情中…</text>
+				<text>加载详情中...</text>
 			</view>
 
 			<view v-if="hasSpecs" class="back-section">
@@ -56,10 +59,10 @@
 					<view class="spec-options">
 						<view
 							v-for="option in fallbackTemps"
-							:key="'t-' + option.value"
+							:key="option.key"
 							class="spec-chip"
 							:class="{ 'spec-chip-active': fallback.temperature === option.value }"
-							@tap.stop="fallback.temperature = option.value"
+							@tap.stop="selectFallback('temperature', option.value)"
 						>
 							<text class="spec-chip-name">{{ option.label }}</text>
 						</view>
@@ -73,10 +76,10 @@
 					<view class="spec-options">
 						<view
 							v-for="option in fallbackSugars"
-							:key="'s-' + option.value"
+							:key="option.key"
 							class="spec-chip"
 							:class="{ 'spec-chip-active': fallback.sugar === option.value }"
-							@tap.stop="fallback.sugar = option.value"
+							@tap.stop="selectFallback('sugar', option.value)"
 						>
 							<text class="spec-chip-name">{{ option.label }}</text>
 						</view>
@@ -90,10 +93,10 @@
 					<view class="spec-options">
 						<view
 							v-for="option in fallbackCups"
-							:key="'c-' + option.value"
+							:key="option.key"
 							class="spec-chip"
 							:class="{ 'spec-chip-active': fallback.cup === option.value }"
-							@tap.stop="fallback.cup = option.value"
+							@tap.stop="selectFallback('cup', option.value)"
 						>
 							<text class="spec-chip-name">{{ option.label }}</text>
 						</view>
@@ -101,30 +104,12 @@
 				</view>
 			</view>
 
-			<view v-if="detailProduct" class="back-section">
-				<view class="info-row">
-					<text class="info-label">数量</text>
-					<view class="quantity-stepper">
-						<view
-							class="quantity-btn"
-							:class="{ 'quantity-btn-disabled': quantity <= 1 }"
-							@tap.stop="decreaseQuantity"
-						><text>-</text></view>
-						<text class="quantity-value">{{ quantity }}</text>
-						<view class="quantity-btn" @tap.stop="increaseQuantity"><text>+</text></view>
-					</view>
-				</view>
-				<view v-if="combinedSelectedText" class="selected-spec-box">
-					<text class="selected-spec-label">已选：{{ combinedSelectedText }}</text>
-				</view>
+			<view v-if="combinedSelectedText" class="selected-spec-box">
+				<text class="selected-spec-label">已选：{{ combinedSelectedText }}</text>
 			</view>
 
 			<view v-if="detailDescription" class="back-section">
 				<text class="description-text">{{ detailDescription }}</text>
-			</view>
-
-			<view v-if="productImage" class="back-image-section">
-				<image class="back-product-image" :src="productImage" mode="widthFix" />
 			</view>
 
 			<view class="back-bottom-padding"></view>
@@ -136,19 +121,27 @@
 				<text class="bottom-total-value">{{ formatMoney(totalPrice) }}</text>
 			</view>
 			<view class="bottom-actions">
+				<view v-if="cartAdded" class="cart-inline-stepper">
+					<view
+						class="quantity-btn"
+						:class="{ 'quantity-btn-disabled': quantity <= 1 }"
+						@tap.stop="decreaseQuantity"
+					><text class="quantity-btn-text">-</text></view>
+					<text class="quantity-value">{{ quantity }}</text>
+				</view>
 				<view
-					class="bottom-btn bottom-btn-secondary"
+					class="bottom-btn bottom-btn-secondary cart-add-btn"
 					:class="{ 'bottom-btn-disabled': submitting || !detailProduct }"
 					@tap.stop="addToCart"
 				>
-					<text>{{ submitting ? '加入中…' : '加入购物车' }}</text>
+					<text class="bottom-btn-text">{{ addButtonText }}</text>
 				</view>
 				<view
 					class="bottom-btn"
 					:class="{ 'bottom-btn-disabled': submitting || !detailProduct }"
 					@tap.stop="buyNow"
 				>
-					<text>{{ submitting ? '处理中…' : '立即购买' }}</text>
+					<text class="bottom-btn-text">{{ submitting ? '处理中...' : '立即购买' }}</text>
 				</view>
 			</view>
 		</view>
@@ -169,19 +162,19 @@ function toNumber(value) {
 }
 
 const FALLBACK_TEMPS = [
-	{ label: '热', value: 'hot' },
-	{ label: '温', value: 'warm' },
-	{ label: '冰', value: 'iced' }
+	{ key: 'temp-hot', label: '热', value: 'hot' },
+	{ key: 'temp-warm', label: '温', value: 'warm' },
+	{ key: 'temp-iced', label: '冰', value: 'iced' }
 ]
 const FALLBACK_SUGARS = [
-	{ label: '正常糖', value: 'normal' },
-	{ label: '少糖', value: 'less' },
-	{ label: '半糖', value: 'half' },
-	{ label: '无糖', value: 'none' }
+	{ key: 'sugar-normal', label: '正常糖', value: 'normal' },
+	{ key: 'sugar-less', label: '少糖', value: 'less' },
+	{ key: 'sugar-half', label: '半糖', value: 'half' },
+	{ key: 'sugar-none', label: '无糖', value: 'none' }
 ]
 const FALLBACK_CUPS = [
-	{ label: '中杯', value: 'medium' },
-	{ label: '大杯', value: 'large' }
+	{ key: 'cup-medium', label: '中杯', value: 'medium' },
+	{ key: 'cup-large', label: '大杯', value: 'large' }
 ]
 
 export default {
@@ -198,6 +191,8 @@ export default {
 			loading: false,
 			submitting: false,
 			quantity: 1,
+			cartAdded: false,
+			cartItem: null,
 			singleSelections: {},
 			multiSelections: {},
 			fallback: { temperature: 'hot', sugar: 'normal', cup: 'medium' },
@@ -285,6 +280,10 @@ export default {
 		},
 		totalPrice: function () {
 			return this.currentUnitPrice * this.quantity
+		},
+		addButtonText: function () {
+			if (this.submitting) return this.cartAdded ? '加购中...' : '加入中...'
+			return this.cartAdded ? '加购' : '加入购物车'
 		}
 	},
 	methods: {
@@ -327,6 +326,8 @@ export default {
 			self.loading = true
 			self.detailProduct = null
 			self.quantity = 1
+			self.cartAdded = false
+			self.cartItem = null
 			self.singleSelections = {}
 			self.multiSelections = {}
 			self.fallback = { temperature: 'hot', sugar: 'normal', cup: 'medium' }
@@ -385,6 +386,9 @@ export default {
 		},
 		toggleOption: function (spec, option) {
 			if (!spec || !option) return
+			this.cartAdded = false
+			this.cartItem = null
+			this.quantity = 1
 			if (this.isMultipleSpec(spec)) {
 				const ids = (this.multiSelections[spec.specId] || []).slice()
 				const idx = ids.indexOf(option.optionId)
@@ -395,12 +399,19 @@ export default {
 			}
 			this.$set(this.singleSelections, spec.specId, option.optionId)
 		},
-		decreaseQuantity: function () {
-			if (this.quantity <= 1) return
-			this.quantity -= 1
+		selectFallback: function (key, value) {
+			this.cartAdded = false
+			this.cartItem = null
+			this.quantity = 1
+			this.$set(this.fallback, key, value)
 		},
-		increaseQuantity: function () {
-			this.quantity += 1
+		decreaseQuantity: function () {
+			if (this.quantity <= 1 || this.submitting) return
+			if (this.cartAdded && this.cartItem && this.cartItem.id) {
+				this.updateAddedCartQuantity(this.quantity - 1)
+				return
+			}
+			this.quantity -= 1
 		},
 		buildSpecJson: function () {
 			if (this.hasSpecs) {
@@ -442,20 +453,69 @@ export default {
 				status: 1
 			}
 		},
-		submitCart: function () {
+		getAddButtonPoint: function () {
+			return new Promise((resolve) => {
+				uni.createSelectorQuery()
+					.in(this)
+					.select('.cart-add-btn')
+					.boundingClientRect(function (rect) {
+						if (!rect) {
+							resolve(null)
+							return
+						}
+						resolve({
+							x: rect.left + rect.width / 2,
+							y: rect.top + rect.height / 2
+						})
+					})
+					.exec()
+			})
+		},
+		submitCart: function (quantity, flyFrom) {
 			const self = this
+			const payload = self.buildCartPayload()
+			payload.quantity = quantity || payload.quantity
 			return requestPromise({
 				url: scanCartApi.add,
 				method: 'POST',
 				header: Object.assign({ 'Content-Type': 'application/json' }, self.authHeader()),
-				data: self.buildCartPayload()
+				data: payload
 			}).then(function (res) {
 				if (!isSuccessResponse(res)) {
 					showError((res && res.data && res.data.msg) || '加入购物车失败')
 					return false
 				}
-				self.$emit('added')
-				return true
+				const saved = (res.data && res.data.data) || null
+				self.$emit('added', {
+					product: self.detailProduct || self.product,
+					cart: saved,
+					action: 'add',
+					flyFrom: flyFrom || null
+				})
+				return saved || true
+			})
+		},
+		updateAddedCartQuantity: function (quantity) {
+			if (!this.cartItem || !this.cartItem.id || this.submitting) return
+			const self = this
+			self.submitting = true
+			requestPromise({
+				url: scanCartApi.update,
+				method: 'PUT',
+				header: Object.assign({ 'Content-Type': 'application/json' }, self.authHeader()),
+				data: { id: self.cartItem.id, quantity: quantity }
+			}).then(function (res) {
+				if (!isSuccessResponse(res)) {
+					showError((res && res.data && res.data.msg) || '更新失败')
+					return
+				}
+				self.quantity = quantity
+				self.cartItem.quantity = quantity
+				self.$emit('added', { product: self.detailProduct || self.product, cart: self.cartItem, action: 'decrease' })
+			}).catch(function () {
+				showError('更新失败')
+			}).then(function () {
+				self.submitting = false
 			})
 		},
 		addToCart: function () {
@@ -463,11 +523,18 @@ export default {
 			if (!target || this.submitting) return
 			if (!ensureLocalLogin('请先登录后再加入购物车')) return
 			const self = this
+			const wasAdded = self.cartAdded
 			self.submitting = true
-			self.submitCart().then(function (ok) {
-				if (ok) {
-					showSuccess('已加入购物车')
-					self.$emit('close')
+			self.getAddButtonPoint().then(function (flyFrom) {
+				return self.submitCart(wasAdded ? 1 : self.quantity, flyFrom)
+			}).then(function (saved) {
+				if (saved) {
+					self.cartAdded = true
+					if (saved !== true) {
+						self.cartItem = saved
+						self.quantity = saved.quantity || self.quantity
+					}
+					showSuccess(wasAdded ? '已加购' : '已加入购物车')
 				}
 			}).catch(function () {
 				showError('加入购物车失败')
@@ -504,23 +571,41 @@ export default {
 	height: 100%;
 	display: flex;
 	flex-direction: column;
-	background: $bg-card;
-	border-radius: 36rpx;
-	border: 2rpx solid rgba(232, 224, 215, 0.92);
-	box-shadow: 0 30rpx 60rpx rgba(32, 26, 23, 0.14);
+	background:
+		linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(251, 247, 242, 0.98) 100%);
+	border-radius: 30rpx;
+	border: 2rpx solid rgba(255, 255, 255, 0.82);
+	box-shadow: 0 22rpx 50rpx rgba(32, 26, 23, 0.2);
 	overflow: hidden;
 	box-sizing: border-box;
 }
 
 .back-head {
 	position: relative;
-	padding: 28rpx 24rpx 18rpx;
-	border-bottom: 2rpx solid rgba(232, 224, 215, 0.6);
+	padding: 24rpx 24rpx 20rpx;
+	border-bottom: 2rpx solid rgba(232, 224, 215, 0.52);
 	display: flex;
-	align-items: flex-start;
+	align-items: center;
 	justify-content: space-between;
 	gap: 16rpx;
 	flex-shrink: 0;
+}
+
+.back-thumb-wrap {
+	width: 104rpx;
+	height: 104rpx;
+	flex-shrink: 0;
+	border-radius: 20rpx;
+	overflow: hidden;
+	background: $accent-surface;
+	border: 2rpx solid rgba(232, 224, 215, 0.86);
+	box-shadow: 0 8rpx 18rpx rgba(32, 26, 23, 0.08);
+}
+
+.back-thumb-image {
+	display: block;
+	width: 100%;
+	height: 100%;
 }
 
 .back-head-copy {
@@ -533,16 +618,25 @@ export default {
 
 .back-title {
 	font-family: $font-family;
-	font-size: 36rpx;
-	font-weight: 700;
+	font-size: 34rpx;
+	font-weight: 800;
 	color: $text-primary;
+	line-height: 1.2;
+	display: -webkit-box;
+	-webkit-line-clamp: 1;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
 }
 
 .back-subtitle {
 	font-family: $font-family;
-	font-size: 24rpx;
+	font-size: 23rpx;
 	color: $text-secondary;
 	line-height: 1.5;
+	display: -webkit-box;
+	-webkit-line-clamp: 1;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
 }
 
 .head-video-btn {
@@ -552,12 +646,11 @@ export default {
 	gap: 8rpx;
 	padding: 10rpx 18rpx;
 	border-radius: 999rpx;
-	background: linear-gradient(135deg, rgba(111, 78, 55, 0.94) 0%, rgba(154, 108, 69, 0.92) 100%);
-	box-shadow: 0 8rpx 18rpx rgba(111, 78, 55, 0.24);
+	background: linear-gradient(135deg, #7b5138 0%, #b9822e 100%);
+	box-shadow: 0 10rpx 20rpx rgba(111, 78, 55, 0.2);
 }
 
 .head-video-btn-press {
-	transform: scale(0.96);
 	opacity: 0.92;
 }
 
@@ -582,8 +675,8 @@ export default {
 	height: 56rpx;
 	flex-shrink: 0;
 	border-radius: 50%;
-	background: $bg-muted;
-	border: 2rpx solid $border-subtle;
+	background: rgba(111, 78, 55, 0.08);
+	border: 2rpx solid rgba(111, 78, 55, 0.1);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -591,7 +684,7 @@ export default {
 
 .back-close-press { opacity: 0.65; }
 
-.back-close text {
+.back-close-text {
 	font-size: 38rpx;
 	line-height: 1;
 	color: $text-secondary;
@@ -601,7 +694,8 @@ export default {
 .back-body {
 	flex: 1;
 	min-height: 0;
-	padding: 22rpx 24rpx 0;
+	padding: 22rpx 0 0;
+	box-sizing: border-box;
 }
 
 .back-loading {
@@ -612,10 +706,12 @@ export default {
 }
 
 .back-section {
-	margin-bottom: 22rpx;
-	padding: 22rpx 24rpx;
-	border-radius: $radius-sm;
-	background: $bg-muted;
+	margin: 0 24rpx 22rpx;
+	padding: 22rpx 20rpx;
+	border-radius: 22rpx;
+	background: rgba(255, 255, 255, 0.74);
+	border: 2rpx solid rgba(232, 224, 215, 0.72);
+	box-sizing: border-box;
 }
 
 .spec-block + .spec-block {
@@ -626,7 +722,8 @@ export default {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	margin-bottom: 14rpx;
+	gap: 20rpx;
+	margin-bottom: 16rpx;
 }
 
 .spec-title {
@@ -634,6 +731,8 @@ export default {
 	font-size: 26rpx;
 	font-weight: 600;
 	color: $text-primary;
+	flex: 1;
+	min-width: 0;
 }
 
 .spec-rule {
@@ -642,16 +741,18 @@ export default {
 	color: $text-tertiary;
 	white-space: nowrap;
 	flex-shrink: 0;
-	margin-right: 16rpx;
+	text-align: right;
 }
 
 .spec-options {
 	display: flex;
 	flex-wrap: wrap;
+	align-items: center;
 	gap: 14rpx;
 }
 
 .spec-chip {
+	min-height: 64rpx;
 	padding: 12rpx 22rpx;
 	border-radius: 999rpx;
 	background: $bg-card;
@@ -659,12 +760,14 @@ export default {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	justify-content: center;
 	box-sizing: border-box;
 }
 
 .spec-chip-active {
-	background: $accent-primary-soft;
-	border-color: rgba(111, 78, 55, 0.32);
+	background: $accent-primary;
+	border-color: $accent-primary;
+	box-shadow: 0 10rpx 20rpx rgba(111, 78, 55, 0.14);
 }
 
 .spec-chip-name {
@@ -672,6 +775,13 @@ export default {
 	font-size: 24rpx;
 	font-weight: 600;
 	color: $text-primary;
+	line-height: 1.2;
+	text-align: center;
+}
+
+.spec-chip-active .spec-chip-name,
+.spec-chip-active .spec-chip-price {
+	color: #ffffff;
 }
 
 .spec-chip-price {
@@ -679,41 +789,31 @@ export default {
 	font-family: $font-family;
 	font-size: 20rpx;
 	color: $text-secondary;
+	line-height: 1.1;
+	text-align: center;
 }
 
-.info-row {
+.cart-inline-stepper {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
-}
-
-.info-label {
-	font-family: $font-family;
-	font-size: 28rpx;
-	font-weight: 600;
-	color: $text-primary;
-}
-
-.quantity-stepper {
-	display: flex;
-	align-items: center;
-	gap: 16rpx;
+	gap: 10rpx;
+	flex-shrink: 0;
 }
 
 .quantity-btn {
-	width: 56rpx;
-	height: 56rpx;
+	width: 48rpx;
+	height: 48rpx;
 	border-radius: 50%;
 	background: $bg-card;
-	border: 2rpx solid $border-subtle;
+	border: 2rpx solid rgba(111, 78, 55, 0.14);
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	box-sizing: border-box;
 }
 
-.quantity-btn text {
-	font-size: 32rpx;
+.quantity-btn-text {
+	font-size: 28rpx;
 	font-weight: 600;
 	color: $text-primary;
 	margin-top: -4rpx;
@@ -722,18 +822,20 @@ export default {
 .quantity-btn-disabled { opacity: 0.4; }
 
 .quantity-value {
-	min-width: 48rpx;
+	min-width: 36rpx;
 	text-align: center;
 	font-family: $font-family;
-	font-size: 30rpx;
+	font-size: 28rpx;
 	font-weight: 600;
 }
 
 .selected-spec-box {
-	margin-top: 18rpx;
-	padding: 14rpx 18rpx;
+	margin: 0 24rpx 22rpx;
+	padding: 16rpx 20rpx;
 	border-radius: $radius-sm;
-	background: $bg-card;
+	background: rgba(111, 78, 55, 0.06);
+	border: 2rpx solid rgba(111, 78, 55, 0.08);
+	box-sizing: border-box;
 }
 
 .selected-spec-label {
@@ -749,31 +851,17 @@ export default {
 	line-height: 1.6;
 }
 
-.back-image-section {
-	margin-bottom: 22rpx;
-	border-radius: $radius-sm;
-	overflow: hidden;
-	background: $bg-muted;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
-.back-product-image {
-	width: 100%;
-	display: block;
-}
-
 .back-bottom-padding { height: 24rpx; }
 
 .back-bottom {
-	padding: 18rpx 32rpx 22rpx;
-	background: $bg-bottom;
-	border-top: 2rpx solid rgba(232, 224, 215, 0.84);
+	padding: 16rpx 24rpx 22rpx;
+	background: rgba(255, 255, 255, 0.92);
+	border-top: 2rpx solid rgba(232, 224, 215, 0.72);
+	backdrop-filter: blur(18rpx);
+	-webkit-backdrop-filter: blur(18rpx);
 	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 16rpx;
+	flex-direction: column;
+	gap: 14rpx;
 	flex-shrink: 0;
 }
 
@@ -800,37 +888,40 @@ export default {
 }
 
 .bottom-actions {
+	width: 100%;
 	display: flex;
 	align-items: center;
-	gap: 12rpx;
-	flex-shrink: 0;
+	gap: 14rpx;
 }
 
 .bottom-btn {
 	height: 76rpx;
-	padding: 0 24rpx;
+	flex: 1;
+	padding: 0;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	border-radius: 999rpx;
+	border-radius: $radius-sm;
 	background: $accent-primary;
-	min-width: 168rpx;
+	min-width: 0;
 	box-sizing: border-box;
+	box-shadow: 0 10rpx 20rpx rgba(111, 78, 55, 0.16);
 }
 
 .bottom-btn-secondary {
-	background: $bg-card;
-	border: 2rpx solid rgba(111, 78, 55, 0.2);
+	background: rgba(111, 78, 55, 0.08);
+	border: 2rpx solid rgba(111, 78, 55, 0.14);
+	box-shadow: none;
 }
 
-.bottom-btn text {
+.bottom-btn-text {
 	font-family: $font-family;
 	font-size: 24rpx;
 	font-weight: 600;
 	color: #ffffff;
 }
 
-.bottom-btn-secondary text {
+.bottom-btn-secondary .bottom-btn-text {
 	color: $accent-primary;
 }
 

@@ -31,41 +31,26 @@
 			>
 				<view class="product-list">
 					<view
-					v-for="(prod, index) in products"
-					:key="prod.productId || index"
+						v-for="(prod, index) in products"
+						:key="prod.productId || index"
 						class="product-list-item"
-				>
-					<immersive-product-card
-						:product="prod"
-						:flipped="false"
-						:compact="true"
-						:shop-id="shopId"
-						:table-no="tableNo"
-						@flip="onCardFlip"
-						@close="onCardBackClose"
-						@quick-add="onQuickAdd"
-						@play-video="onPlayVideo"
-						@added="loadCartList"
-						@checkout="goConfirmAfterAdd"
-					/>
+					>
+						<immersive-product-card
+							:product="prod"
+							:flipped="isFlipped(prod)"
+							:active-card="isFlipped(prod)"
+							:shop-id="shopId"
+							:table-no="tableNo"
+							@flip="onCardFlip"
+							@close="onCardBackClose"
+							@quick-add="onQuickAdd"
+							@play-video="onPlayVideo"
+							@added="onProductAdded"
+							@checkout="goConfirmAfterAdd"
+						/>
 					</view>
 				</view>
 			</scroll-view>
-
-			<view v-if="flippedProduct" class="active-flip-overlay">
-				<immersive-product-card
-					:product="flippedProduct"
-					:flipped="overlayFlipped"
-					:shop-id="shopId"
-					:table-no="tableNo"
-					@flip="onCardFlip"
-					@close="onCardBackClose"
-					@quick-add="onQuickAdd"
-					@play-video="onPlayVideo"
-					@added="loadCartList"
-					@checkout="goConfirmAfterAdd"
-				/>
-			</view>
 
 			<view v-if="products.length" class="page-progress">
 				<text>共 {{ products.length }} 款</text>
@@ -112,8 +97,17 @@
 			</scroll-view>
 		</view>
 
+		<view
+			v-for="dot in flyDots"
+			:key="dot.id"
+			class="fly-cart-dot"
+			:style="dot.style"
+		>
+			<text>+</text>
+		</view>
+
 		<view class="cart-bar">
-			<view class="cart-icon" :class="{ 'cart-icon-empty': cartTotalQuantity <= 0 }" @tap="toggleCart">
+			<view class="cart-icon cart-bag-target" :class="{ 'cart-icon-empty': cartTotalQuantity <= 0 }" @tap="toggleCart">
 				<text>袋</text>
 			</view>
 			<view class="cart-copy" @tap="toggleCart">
@@ -167,21 +161,13 @@ export default {
 			cartTotalAmount: '0.00',
 			cartExpanded: false,
 			updatingCartId: null,
-			overlayFlipped: false
+			flyDots: [],
+			flyDotSeq: 0
 		}
 	},
 	computed: {
 		hasScanContext() {
 			return !!(this.tableNo || this.shopName !== '咖啡门店')
-		},
-		flippedProduct() {
-			if (this.flippedKey === null || this.flippedKey === undefined) return null
-			for (let i = 0; i < this.products.length; i++) {
-				if (this.productKey(this.products[i]) === this.flippedKey) {
-					return this.products[i]
-				}
-			}
-			return null
 		}
 	},
 	onLoad(options = {}) {
@@ -207,6 +193,7 @@ export default {
 		this.closeVideoIfOpen()
 	},
 	onUnload() {
+		this.clearFlyDots()
 		this.closeVideoIfOpen()
 	},
 	methods: {
@@ -369,18 +356,9 @@ export default {
 		onCardFlip(product) {
 			const key = this.productKey(product)
 			if (key === null) return
-			this.overlayFlipped = false
 			this.flippedKey = key
-			this.$nextTick(() => {
-				setTimeout(() => {
-					if (this.flippedKey === key) {
-						this.overlayFlipped = true
-					}
-				}, 240)
-			})
 		},
 		onCardBackClose() {
-			this.overlayFlipped = false
 			this.flippedKey = null
 			this.closeVideoIfOpen()
 		},
@@ -388,6 +366,119 @@ export default {
 			const url = payload && payload.videoUrl
 			if (!url) return
 			this.$refs.videoPlayer && this.$refs.videoPlayer.open(url)
+		},
+		onProductAdded(payload) {
+			if (!payload || payload.action !== 'decrease') {
+				this.playFlyCartAnimation(payload && payload.flyFrom)
+			}
+			this.loadCartList()
+		},
+		getCartBagPoint() {
+			return new Promise((resolve) => {
+				uni.createSelectorQuery()
+					.in(this)
+					.select('.cart-bag-target')
+					.boundingClientRect(function (rect) {
+						if (!rect) {
+							resolve(null)
+							return
+						}
+						resolve({
+							x: rect.left + rect.width / 2,
+							y: rect.top + rect.height / 2
+						})
+					})
+					.exec()
+			})
+		},
+		buildFlyDotStyle(dot) {
+			return 'left:' + Number(dot.left || 0) + 'px;'
+				+ 'top:' + Number(dot.top || 0) + 'px;'
+				+ 'opacity:' + Number(dot.opacity || 0) + ';'
+				+ 'transform:translate3d(' + Number(dot.moveX || 0) + 'px, '
+				+ Number(dot.moveY || 0) + 'px, 0) scale(' + Number(dot.scale || 0.72) + ');'
+		},
+		clearFlyDots() {
+			this.flyDots.forEach(function (dot) {
+				;(dot.timers || []).forEach(function (timer) {
+					clearTimeout(timer)
+				})
+			})
+			this.flyDots = []
+		},
+		updateFlyDot(id, patch) {
+			this.flyDots = this.flyDots.map((dot) => {
+				if (dot.id !== id) return dot
+				const next = Object.assign({}, dot, patch)
+				next.style = this.buildFlyDotStyle(next)
+				return next
+			})
+		},
+		playFlyCartAnimation(flyFrom) {
+			this.getCartBagPoint().then((bagPoint) => {
+				const fallbackFrom = {
+					x: uni.getSystemInfoSync().windowWidth * 0.72,
+					y: uni.getSystemInfoSync().windowHeight * 0.55
+				}
+				const fallbackTo = {
+					x: 74,
+					y: uni.getSystemInfoSync().windowHeight - 112
+				}
+				const from = flyFrom || fallbackFrom
+				const to = bagPoint || fallbackTo
+				const dotHalf = uni.getSystemInfoSync().windowWidth * 27 / 750
+				const startX = from.x - dotHalf
+				const startY = from.y - dotHalf
+				const jumpY = -34
+				const flyX = to.x - from.x
+				const flyY = to.y - from.y - 14
+				const id = ++this.flyDotSeq
+				const dot = {
+					id: id,
+					left: startX,
+					top: startY,
+					moveX: 0,
+					moveY: 0,
+					opacity: 0,
+					scale: 0.72,
+					timers: [],
+					style: ''
+				}
+				dot.style = this.buildFlyDotStyle(dot)
+				this.flyDots.push(dot)
+				this.$nextTick(() => {
+					const timers = [
+						setTimeout(() => {
+							this.updateFlyDot(id, {
+								moveX: 0,
+								moveY: jumpY,
+								opacity: 1,
+								scale: 1.08
+							})
+						}, 40),
+						setTimeout(() => {
+							this.updateFlyDot(id, {
+								moveX: flyX,
+								moveY: flyY,
+								opacity: 1,
+								scale: 0.46
+							})
+						}, 260),
+						setTimeout(() => {
+							this.updateFlyDot(id, {
+								opacity: 0,
+								scale: 0.24
+							})
+						}, 1280),
+						setTimeout(() => {
+							this.flyDots = this.flyDots.filter(function (item) {
+								return item.id !== id
+							})
+						}, 1500)
+					]
+					this.updateFlyDot(id, { timers: timers })
+				})
+			})
 		},
 		async onQuickAdd(product) {
 			if (!product) return
@@ -563,10 +654,9 @@ export default {
 	display: flex;
 	flex-direction: column;
 	background:
-		radial-gradient(circle at top right, rgba(162, 122, 92, 0.16), transparent 36%),
-		linear-gradient(180deg, #f7f0e8 0%, #f5eee6 28%, #fbf7f2 100%);
-	// 与下方 cart-drawer 的偏移保持一致(118rpx = cart-bar 实际占位)
-	padding-bottom: calc(#{$bottom-nav-shell-height} + 118rpx + env(safe-area-inset-bottom));
+		radial-gradient(circle at 18% 8%, rgba(244, 210, 139, 0.28), transparent 34%),
+		radial-gradient(circle at 88% 22%, rgba(111, 78, 55, 0.22), transparent 30%),
+		linear-gradient(180deg, #2b211c 0%, #6f4e37 42%, #f4eee8 100%);
 	box-sizing: border-box;
 	overflow: hidden;
 }
@@ -587,11 +677,19 @@ export default {
 }
 
 .scan-context-card {
-	@include card(16rpx 22rpx, $radius-sm);
+	position: relative;
+	z-index: 6;
 	display: flex;
 	justify-content: space-between;
 	gap: 20rpx;
-	margin: 0 $space-page 16rpx;
+	margin: 0 $space-page 8rpx;
+	padding: 14rpx 22rpx;
+	border-radius: 999rpx;
+	background: rgba(255, 255, 255, 0.16);
+	border: 2rpx solid rgba(255, 255, 255, 0.2);
+	backdrop-filter: blur(20rpx);
+	-webkit-backdrop-filter: blur(20rpx);
+	box-sizing: border-box;
 }
 
 .scan-context-item {
@@ -609,7 +707,7 @@ export default {
 	font-family: $font-family;
 	font-size: 19rpx;
 	font-weight: 500;
-	color: $text-tertiary;
+	color: rgba(255, 255, 255, 0.62);
 }
 
 .scan-context-value {
@@ -617,45 +715,26 @@ export default {
 	font-family: $font-family;
 	font-size: 26rpx;
 	font-weight: 600;
-	color: $text-primary;
+	color: #ffffff;
 }
 
 .immersive-shell {
 	flex: 1;
 	min-height: 0;
 	position: relative;
-}
-
-.active-flip-overlay {
-	position: absolute;
-	left: 16rpx;
-	right: 16rpx;
-	top: 0;
-	bottom: -118rpx;
-	z-index: 30;
-	pointer-events: auto;
-	animation: overlay-appear 0.24s ease-out both;
-}
-
-@keyframes overlay-appear {
-	0% {
-		opacity: 0;
-		transform: scale(0.96);
-	}
-	100% {
-		opacity: 1;
-		transform: scale(1);
-	}
+	padding-top: 0;
 }
 
 .product-scroll {
 	width: 100%;
 	height: 100%;
 	box-sizing: border-box;
+	position: relative;
+	z-index: 2;
 }
 
 .product-list {
-	padding: 12rpx 16rpx 170rpx;
+	padding: 0 24rpx 224rpx;
 	display: flex;
 	flex-direction: column;
 	gap: 28rpx;
@@ -668,21 +747,7 @@ export default {
 }
 
 .page-progress {
-	position: absolute;
-	right: 40rpx;
-	top: 28rpx;
-	padding: 8rpx 22rpx;
-	border-radius: 999rpx;
-	background: rgba(32, 26, 23, 0.55);
-	pointer-events: none;
-}
-
-.page-progress text {
-	font-family: $font-family;
-	font-size: 22rpx;
-	font-weight: 600;
-	color: #ffffff;
-	letter-spacing: 1rpx;
+	display: none;
 }
 
 .empty-main {
@@ -715,14 +780,15 @@ export default {
 	position: fixed;
 	left: 0;
 	right: 0;
-	bottom: calc(#{$bottom-nav-shell-height} + env(safe-area-inset-bottom));
+	bottom: $bottom-nav-shell-height;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: 18rpx;
-	padding: 14rpx $space-page 20rpx;
-	background: $bg-bottom;
-	border-top: 2rpx solid rgba(232, 224, 215, 0.84);
+	height: 112rpx;
+	padding: 14rpx $space-page;
+	background: rgba(255, 255, 255, 0.92);
+	border-top: 2rpx solid rgba(255, 255, 255, 0.72);
 	backdrop-filter: blur(24rpx);
 	-webkit-backdrop-filter: blur(24rpx);
 	z-index: 25;
@@ -734,8 +800,10 @@ export default {
 	left: 0;
 	right: 0;
 	top: 0;
-	bottom: calc(#{$bottom-nav-shell-height} + 118rpx + env(safe-area-inset-bottom));
-	background: rgba(32, 26, 23, 0.2);
+	bottom: calc(#{$bottom-nav-shell-height} + 112rpx);
+	background: rgba(32, 26, 23, 0.32);
+	backdrop-filter: blur(6rpx);
+	-webkit-backdrop-filter: blur(6rpx);
 	z-index: 23;
 }
 
@@ -743,15 +811,42 @@ export default {
 	position: fixed;
 	left: 0;
 	right: 0;
-	bottom: calc(#{$bottom-nav-shell-height} + 118rpx + env(safe-area-inset-bottom));
+	bottom: calc(#{$bottom-nav-shell-height} + 112rpx);
 	max-height: 560rpx;
 	padding: 22rpx $space-page;
 	border-radius: $radius-md $radius-md 0 0;
-	background: $bg-card;
-	border-top: 2rpx solid rgba(232, 224, 215, 0.92);
-	box-shadow: 0 22rpx 56rpx rgba(32, 26, 23, 0.16);
+	background: rgba(255, 255, 255, 0.96);
+	border-top: 2rpx solid rgba(255, 255, 255, 0.82);
+	box-shadow: 0 -22rpx 56rpx rgba(32, 26, 23, 0.18);
+	backdrop-filter: blur(22rpx);
+	-webkit-backdrop-filter: blur(22rpx);
 	z-index: 24;
 	box-sizing: border-box;
+}
+
+.fly-cart-dot {
+	position: fixed;
+	width: 54rpx;
+	height: 54rpx;
+	border-radius: 50%;
+	background: $accent-primary;
+	color: #ffffff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 40;
+	pointer-events: none;
+	box-shadow: 0 12rpx 28rpx rgba(111, 78, 55, 0.24);
+	will-change: transform, opacity;
+	transition: transform 1.08s cubic-bezier(0.2, 0.82, 0.18, 1),
+		opacity 0.22s ease-out;
+}
+
+.fly-cart-dot text {
+	font-family: $font-family;
+	font-size: 30rpx;
+	font-weight: 800;
+	line-height: 1;
 }
 
 .cart-drawer-head {

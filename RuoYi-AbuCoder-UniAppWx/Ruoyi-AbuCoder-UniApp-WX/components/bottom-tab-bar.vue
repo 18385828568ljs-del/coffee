@@ -81,6 +81,7 @@ export default {
 
 .bottom-nav {
 	@include bottom-tab-shell;
+	z-index: 60;
 }
 
 .nav-bar {
