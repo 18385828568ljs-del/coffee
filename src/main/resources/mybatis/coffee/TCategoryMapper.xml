@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.coffee.category.mapper.TCategoryMapper">
+    
+    <resultMap type="TCategory" id="TCategoryResult">
+        <result property="categoryId"    column="category_id"    />
+        <result property="categoryName"    column="category_name"    />
+        <result property="sortOrder"    column="sort_order"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectTCategoryVo">
+        select category_id, category_name, sort_order, create_by, create_time, update_by, update_time, remark from t_category
+    </sql>
+
+    <select id="selectTCategoryList" parameterType="TCategory" resultMap="TCategoryResult">
+        <include refid="selectTCategoryVo"/>
+        <where>  
+            <if test="categoryName != null  and categoryName != ''"> and category_name like concat('%', #{categoryName}, '%')</if>
+            <if test="sortOrder != null "> and sort_order = #{sortOrder}</if>
+        </where>
+        order by
+        case when sort_order is null then 1 else 0 end,
+        sort_order asc,
+        category_id asc
+    </select>
+
+    <select id="countByCategoryName" resultType="int">
+        select count(1)
+        from t_category
+        where category_name = #{categoryName}
+        <if test="excludeCategoryId != null">
+            and category_id <![CDATA[<>]]> #{excludeCategoryId}
+        </if>
+    </select>
+    
+    <select id="selectTCategoryByCategoryId" parameterType="Long" resultMap="TCategoryResult">
+        <include refid="selectTCategoryVo"/>
+        where category_id = #{categoryId}
+    </select>
+        
+    <insert id="insertTCategory" parameterType="TCategory" useGeneratedKeys="true" keyProperty="categoryId">
+        insert into t_category
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="categoryName != null and categoryName != ''">category_name,</if>
+            <if test="sortOrder != null">sort_order,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="categoryName != null and categoryName != ''">#{categoryName},</if>
+            <if test="sortOrder != null">#{sortOrder},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateTCategory" parameterType="TCategory">
+        update t_category
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="categoryName != null and categoryName != ''">category_name = #{categoryName},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where category_id = #{categoryId}
+    </update>
+
+    <delete id="deleteTCategoryByCategoryId" parameterType="Long">
+        delete from t_category where category_id = #{categoryId}
+    </delete>
+
+    <delete id="deleteTCategoryByCategoryIds" parameterType="String">
+        delete from t_category where category_id in 
+        <foreach item="categoryId" collection="array" open="(" separator="," close=")">
+            #{categoryId}
+        </foreach>
+    </delete>
+
+</mapper>

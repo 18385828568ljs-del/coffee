@@ -1,0 +1,17 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+
+logging:
+  level:
+    com.ruoyi: warn
+    org.springframework: warn
+
+wx:
+  miniapp:
+    app-id: test-app-id
+    app-secret: test-app-secret
+    token-secret: test-token-secret
+    subscribe:
+      pickup-template-id: test-template-id
+

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <th:block th:include="include :: header('充值记录列表')" />
+</head>
+<body class="gray-bg">
+     <div class="container-div">
+        <div class="row">
+            <div class="col-sm-12 search-collapse">
+                <form id="formId">
+                    <div class="select-list">
+                        <ul>
+                            <li>
+                                <label>用户ID：</label>
+                                <input type="text" name="userId"/>
+                            </li>
+                            <li>
+                                <label>充值单号：</label>
+                                <input type="text" name="rechargeNo"/>
+                            </li>
+                            <li>
+                                <label>状态：</label>
+                                <select name="status">
+                                    <option value="">全部</option>
+                                    <option value="0">待支付</option>
+                                    <option value="1">成功</option>
+                                    <option value="2">失败</option>
+                                </select>
+                            </li>
+                            <li>
+                                <a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+                                <a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+                            </li>
+                        </ul>
+                    </div>
+                </form>
+            </div>
+
+            <div class="col-sm-12 select-table table-striped">
+                <table id="bootstrap-table"></table>
+            </div>
+        </div>
+    </div>
+    <th:block th:include="include :: footer" />
+    <script th:inline="javascript">
+        var prefix = ctx + "coffee/rechargeRecord";
+
+        $(function() {
+            var options = {
+                url: prefix + "/list",
+                modalName: "充值记录",
+                columns: [{
+                    checkbox: true
+                },
+                {
+                    field: 'recordId',
+                    title: '记录ID',
+                    visible: false
+                },
+                {
+                    field: 'userId',
+                    title: '用户ID',
+                    width: 90
+                },
+                {
+                    field: 'rechargeNo',
+                    title: '充值单号',
+                    width: 220
+                },
+                {
+                    field: 'payAmount',
+                    title: '支付金额',
+                    width: 110,
+                    align: 'right',
+                    formatter: function(v) { return '¥' + parseFloat(v).toFixed(2); }
+                },
+                {
+                    field: 'giftAmount',
+                    title: '赠送金额',
+                    width: 110,
+                    align: 'right',
+                    formatter: function(v) { return '¥' + parseFloat(v).toFixed(2); }
+                },
+                {
+                    field: 'totalAmount',
+                    title: '到账总金额',
+                    width: 120,
+                    align: 'right',
+                    formatter: function(v) { return '¥' + parseFloat(v).toFixed(2); }
+                },
+                {
+                    field: 'status',
+                    title: '状态',
+                    width: 90,
+                    align: 'center',
+                    formatter: function(v) {
+                        var map = {0: '<span class="badge badge-warning">待支付</span>',
+                                   1: '<span class="badge badge-success">成功</span>',
+                                   2: '<span class="badge badge-danger">失败</span>'};
+                        return map[v] || '未知';
+                    }
+                },
+                {
+                    field: 'createTime',
+                    title: '创建时间',
+                    width: 160
+                },
+                {
+                    field: 'payTime',
+                    title: '支付时间',
+                    width: 160
+                }]
+            };
+            $.table.init(options);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <th:block th:include="include :: header('余额流水列表')" />
+</head>
+<body class="gray-bg">
+     <div class="container-div">
+        <div class="row">
+            <div class="col-sm-12 search-collapse">
+                <form id="formId">
+                    <div class="select-list">
+                        <ul>
+                            <li>
+                                <label>用户ID：</label>
+                                <input type="text" name="userId"/>
+                            </li>
+                            <li>
+                                <label>类型：</label>
+                                <select name="type">
+                                    <option value="">全部</option>
+                                    <option value="1">充值入账</option>
+                                    <option value="2">消费扣款</option>
+                                    <option value="3">退款返还</option>
+                                    <option value="4">赠送</option>
+                                </select>
+                            </li>
+                            <li>
+                                <a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+                                <a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+                            </li>
+                        </ul>
+                    </div>
+                </form>
+            </div>
+
+            <div class="col-sm-12 select-table table-striped">
+                <table id="bootstrap-table"></table>
+            </div>
+        </div>
+    </div>
+    <th:block th:include="include :: footer" />
+    <script th:inline="javascript">
+        var prefix = ctx + "coffee/walletLog";
+
+        $(function() {
+            var options = {
+                url: prefix + "/list",
+                modalName: "余额流水",
+                columns: [{
+                    checkbox: true
+                },
+                {
+                    field: 'logId',
+                    title: '流水ID',
+                    visible: false
+                },
+                {
+                    field: 'userId',
+                    title: '用户ID',
+                    width: 90
+                },
+                {
+                    field: 'type',
+                    title: '类型',
+                    width: 100,
+                    align: 'center',
+                    formatter: function(v) {
+                        var map = {1: '<span class="badge badge-success">充值入账</span>',
+                                   2: '<span class="badge badge-warning">消费扣款</span>',
+                                   3: '<span class="badge badge-info">退款返还</span>',
+                                   4: '<span class="badge badge-primary">赠送</span>'};
+                        return map[v] || '未知';
+                    }
+                },
+                {
+                    field: 'amount',
+                    title: '变动金额',
+                    width: 120,
+                    align: 'right',
+                    formatter: function(v) {
+                        var num = parseFloat(v);
+                        var color = num >= 0 ? 'green' : 'red';
+                        var prefix = num >= 0 ? '+' : '';
+                        return '<span style="color:' + color + '">' + prefix + num.toFixed(2) + '</span>';
+                    }
+                },
+                {
+                    field: 'balanceBefore',
+                    title: '变动前余额',
+                    width: 120,
+                    align: 'right',
+                    formatter: function(v) { return '¥' + parseFloat(v).toFixed(2); }
+                },
+                {
+                    field: 'balanceAfter',
+                    title: '变动后余额',
+                    width: 120,
+                    align: 'right',
+                    formatter: function(v) { return '¥' + parseFloat(v).toFixed(2); }
+                },
+                {
+                    field: 'relatedOrderNo',
+                    title: '关联单号',
+                    width: 220
+                },
+                {
+                    field: 'remark',
+                    title: '备注',
+                    width: 200,
+                    formatter: function(v) { return $.common.nullToStr(v); }
+                },
+                {
+                    field: 'createTime',
+                    title: '时间',
+                    width: 160
+                }]
+            };
+            $.table.init(options);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad3" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#F5F0E9" />
+    </linearGradient>
+    <linearGradient id="grad3_light" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F8F4EF" />
+      <stop offset="100%" stop-color="#E8D7C8" />
+    </linearGradient>
+  </defs>
+  <ellipse cx="50" cy="85" rx="30" ry="3" fill="#EFEAE3" />
+  <rect x="18" y="38" width="46" height="34" rx="4" fill="url(#grad3)" stroke="#8A6448" stroke-width="2" />
+  <path d="M 18 42 A 4 4 0 0 1 22 38 L 60 38 L 64 42 L 64 50 Q 41 56 18 50 Z" fill="white" fill-opacity="0.25" />
+  <line x1="28" y1="38" x2="28" y2="72" stroke="#8A6448" stroke-width="1.5" opacity="0.22" />
+  <line x1="38" y1="38" x2="38" y2="72" stroke="#8A6448" stroke-width="1.5" opacity="0.22" />
+  <line x1="48" y1="38" x2="48" y2="72" stroke="#8A6448" stroke-width="1.5" opacity="0.22" />
+  <path d="M 62 48 L 74 48 Q 80 48 82 56 L 82 72 L 62 72 Z" fill="url(#grad3_light)" stroke="#8A6448" stroke-width="2" />
+  <path d="M 66 52 L 74 52 Q 77 52 78 56 L 78 58 L 66 58 Z" fill="#F8FAFC" />
+  <rect x="22" y="70" width="56" height="4" fill="#5A3F2C" opacity="0.2" />
+  <circle cx="32" cy="74" r="7" fill="#5A3F2C" />
+  <circle cx="32" cy="74" r="2.5" fill="#F6EFE8" />
+  <circle cx="70" cy="74" r="7" fill="#5A3F2C" />
+  <circle cx="70" cy="74" r="2.5" fill="#F6EFE8" />
+  <line x1="6" y1="48" x2="14" y2="48" stroke="#D8C2AE" stroke-width="2" stroke-linecap="round" opacity="0.9" />
+  <line x1="10" y1="56" x2="16" y2="56" stroke="#D8C2AE" stroke-width="2" stroke-linecap="round" opacity="0.9" />
+  <line x1="4" y1="64" x2="12" y2="64" stroke="#D8C2AE" stroke-width="2" stroke-linecap="round" opacity="0.9" />
+</svg>

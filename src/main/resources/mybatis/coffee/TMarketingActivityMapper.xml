@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.coffee.activity.mapper.TMarketingActivityMapper">
+    
+    <resultMap type="TMarketingActivity" id="TMarketingActivityResult">
+        <result property="activityId"    column="activity_id"    />
+        <result property="title"    column="title"    />
+        <result property="type"    column="type"    />
+        <result property="targetType"    column="target_type"    />
+        <result property="scopeType"    column="scope_type"    />
+        <result property="conditionMinAmount"    column="condition_min_amount"    />
+        <result property="conditionMinQuantity"    column="condition_min_quantity"    />
+        <result property="conditionNewUserOnly"    column="condition_new_user_only"    />
+        <result property="effectMode"    column="effect_mode"    />
+        <result property="effectValue"    column="effect_value"    />
+        <result property="giftProductId"    column="gift_product_id"    />
+        <result property="giftQuantity"    column="gift_quantity"    />
+        <result property="shippingBaseFreight"    column="shipping_base_freight"    />
+        <result property="status"    column="status"    />
+        <result property="startTime"    column="start_time"    />
+        <result property="endTime"    column="end_time"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectTMarketingActivityVo">
+        select activity_id, title, type, target_type, scope_type, condition_min_amount, condition_min_quantity,
+               condition_new_user_only, effect_mode, effect_value, gift_product_id, gift_quantity,
+               shipping_base_freight, status, start_time, end_time,
+               create_by, create_time, update_by, update_time, remark
+        from t_marketing_activity
+    </sql>
+
+    <select id="selectTMarketingActivityList" parameterType="TMarketingActivity" resultMap="TMarketingActivityResult">
+        <include refid="selectTMarketingActivityVo"/>
+        <where>
+            <if test="title != null  and title != ''"> and title = #{title}</if>
+            <if test="type != null "> and type = #{type}</if>
+            <if test="targetType != null and targetType != ''"> and target_type = #{targetType}</if>
+            <if test="scopeType != null "> and scope_type = #{scopeType}</if>
+            <if test="status != null "> and status = #{status}</if>
+            <if test="startTime != null "> and start_time = #{startTime}</if>
+            <if test="endTime != null "> and end_time = #{endTime}</if>
+        </where>
+        order by
+        case when create_time is null then 1 else 0 end,
+        create_time desc,
+        activity_id desc
+    </select>
+    
+    <select id="selectTMarketingActivityByActivityId" parameterType="Long" resultMap="TMarketingActivityResult">
+        <include refid="selectTMarketingActivityVo"/>
+        where activity_id = #{activityId}
+    </select>
+        
+    <insert id="insertTMarketingActivity" parameterType="TMarketingActivity" useGeneratedKeys="true" keyProperty="activityId">
+        insert into t_marketing_activity
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="title != null and title != ''">title,</if>
+            <if test="type != null">type,</if>
+            <if test="targetType != null and targetType != ''">target_type,</if>
+            <if test="scopeType != null">scope_type,</if>
+            <if test="conditionMinAmount != null">condition_min_amount,</if>
+            <if test="conditionMinQuantity != null">condition_min_quantity,</if>
+            <if test="conditionNewUserOnly != null">condition_new_user_only,</if>
+            <if test="effectMode != null and effectMode != ''">effect_mode,</if>
+            <if test="effectValue != null">effect_value,</if>
+            <if test="giftProductId != null">gift_product_id,</if>
+            <if test="giftQuantity != null">gift_quantity,</if>
+            <if test="shippingBaseFreight != null">shipping_base_freight,</if>
+            <if test="status != null">status,</if>
+            <if test="startTime != null">start_time,</if>
+            <if test="endTime != null">end_time,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="title != null and title != ''">#{title},</if>
+            <if test="type != null">#{type},</if>
+            <if test="targetType != null and targetType != ''">#{targetType},</if>
+            <if test="scopeType != null">#{scopeType},</if>
+            <if test="conditionMinAmount != null">#{conditionMinAmount},</if>
+            <if test="conditionMinQuantity != null">#{conditionMinQuantity},</if>
+            <if test="conditionNewUserOnly != null">#{conditionNewUserOnly},</if>
+            <if test="effectMode != null and effectMode != ''">#{effectMode},</if>
+            <if test="effectValue != null">#{effectValue},</if>
+            <if test="giftProductId != null">#{giftProductId},</if>
+            <if test="giftQuantity != null">#{giftQuantity},</if>
+            <if test="shippingBaseFreight != null">#{shippingBaseFreight},</if>
+            <if test="status != null">#{status},</if>
+            <if test="startTime != null">#{startTime},</if>
+            <if test="endTime != null">#{endTime},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateTMarketingActivity" parameterType="TMarketingActivity">
+        update t_marketing_activity
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="title != null and title != ''">title = #{title},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="targetType != null and targetType != ''">target_type = #{targetType},</if>
+            <if test="scopeType != null">scope_type = #{scopeType},</if>
+            <if test="conditionMinAmount != null">condition_min_amount = #{conditionMinAmount},</if>
+            <if test="conditionMinQuantity != null">condition_min_quantity = #{conditionMinQuantity},</if>
+            <if test="conditionNewUserOnly != null">condition_new_user_only = #{conditionNewUserOnly},</if>
+            <if test="effectMode != null and effectMode != ''">effect_mode = #{effectMode},</if>
+            <if test="effectValue != null">effect_value = #{effectValue},</if>
+            <if test="giftProductId != null">gift_product_id = #{giftProductId},</if>
+            <if test="giftQuantity != null">gift_quantity = #{giftQuantity},</if>
+            <if test="shippingBaseFreight != null">shipping_base_freight = #{shippingBaseFreight},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where activity_id = #{activityId}
+    </update>
+
+    <delete id="deleteTMarketingActivityByActivityId" parameterType="Long">
+        delete from t_marketing_activity where activity_id = #{activityId}
+    </delete>
+
+    <delete id="deleteTMarketingActivityByActivityIds" parameterType="String">
+        delete from t_marketing_activity where activity_id in 
+        <foreach item="activityId" collection="array" open="(" separator="," close=")">
+            #{activityId}
+        </foreach>
+    </delete>
+
+    <resultMap type="TMarketingActivityScope" id="TMarketingActivityScopeResult">
+        <result property="scopeId" column="scope_id" />
+        <result property="activityId" column="activity_id" />
+        <result property="scopeType" column="scope_type" />
+        <result property="scopeTargetId" column="scope_target_id" />
+    </resultMap>
+
+    <select id="selectTMarketingActivityScopesByActivityIds" resultMap="TMarketingActivityScopeResult">
+        select scope_id, activity_id, scope_type, scope_target_id
+        from t_marketing_activity_scope
+        where activity_id in
+        <foreach item="activityId" collection="activityIds" open="(" separator="," close=")">
+            #{activityId}
+        </foreach>
+        order by activity_id asc, scope_id asc
+    </select>
+
+    <delete id="deleteTMarketingActivityScopeByActivityId" parameterType="Long">
+        delete from t_marketing_activity_scope where activity_id = #{activityId}
+    </delete>
+
+    <delete id="deleteTMarketingActivityScopeByActivityIds" parameterType="String">
+        delete from t_marketing_activity_scope where activity_id in
+        <foreach item="activityId" collection="array" open="(" separator="," close=")">
+            #{activityId}
+        </foreach>
+    </delete>
+
+    <insert id="batchInsertTMarketingActivityScopes">
+        insert into t_marketing_activity_scope (activity_id, scope_type, scope_target_id)
+        values
+        <foreach item="scope" collection="scopes" separator=",">
+            (#{scope.activityId}, #{scope.scopeType}, #{scope.scopeTargetId})
+        </foreach>
+    </insert>
+
+</mapper>

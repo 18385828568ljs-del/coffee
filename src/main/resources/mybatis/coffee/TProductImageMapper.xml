@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.coffee.product.mapper.TProductImageMapper">
+
+    <resultMap type="TProductImage" id="TProductImageResult">
+        <result property="imageId" column="image_id" />
+        <result property="productId" column="product_id" />
+        <result property="imageUrl" column="image_url" />
+        <result property="sortOrder" column="sort_order" />
+        <result property="isMain" column="is_main" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <select id="selectTProductImageByProductId" parameterType="Long" resultMap="TProductImageResult">
+        select image_id, product_id, image_url, sort_order, is_main, create_by, create_time, update_by, update_time, remark
+        from t_product_image
+        where product_id = #{productId}
+        order by is_main desc, sort_order asc, image_id asc
+    </select>
+
+    <select id="selectTProductImageByProductIds" resultMap="TProductImageResult">
+        select image_id, product_id, image_url, sort_order, is_main, create_by, create_time, update_by, update_time, remark
+        from t_product_image
+        where product_id in
+        <foreach item="productId" collection="productIds" open="(" separator="," close=")">
+            #{productId}
+        </foreach>
+        order by product_id asc, is_main desc, sort_order asc, image_id asc
+    </select>
+
+    <insert id="batchInsertTProductImage">
+        insert into t_product_image(product_id, image_url, sort_order, is_main, create_by, create_time, update_by, update_time, remark)
+        values
+        <foreach item="image" collection="images" separator=",">
+            (#{image.productId}, #{image.imageUrl}, #{image.sortOrder}, #{image.isMain},
+             #{image.createBy}, #{image.createTime}, #{image.updateBy}, #{image.updateTime}, #{image.remark})
+        </foreach>
+    </insert>
+
+    <delete id="deleteTProductImageByProductId" parameterType="Long">
+        delete from t_product_image where product_id = #{productId}
+    </delete>
+
+    <delete id="deleteTProductImageByProductIds">
+        delete from t_product_image where product_id in
+        <foreach item="productId" collection="array" open="(" separator="," close=")">
+            #{productId}
+        </foreach>
+    </delete>
+
+</mapper>

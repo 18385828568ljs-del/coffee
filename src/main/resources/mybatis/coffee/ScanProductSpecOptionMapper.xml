@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.coffee.scanOrder.mapper.ScanProductSpecOptionMapper">
+
+    <resultMap type="ScanProductSpecOption" id="ScanProductSpecOptionResult">
+        <result property="optionId"   column="option_id"   />
+        <result property="specId"     column="spec_id"     />
+        <result property="productId"  column="product_id"  />
+        <result property="optionName" column="option_name" />
+        <result property="extraPrice" column="extra_price" />
+        <result property="isDefault"  column="is_default"  />
+        <result property="sortOrder"  column="sort_order"  />
+        <result property="createTime" column="create_time" />
+    </resultMap>
+
+    <sql id="selectScanProductSpecOptionVo">
+        select option_id, spec_id, product_id, option_name, extra_price,
+               is_default, sort_order, create_time
+        from t_scan_product_spec_option
+    </sql>
+
+    <select id="selectOptionListByProductId" parameterType="Long" resultMap="ScanProductSpecOptionResult">
+        <include refid="selectScanProductSpecOptionVo"/>
+        where product_id = #{productId}
+        order by spec_id asc,
+        case when sort_order is null then 1 else 0 end,
+        sort_order asc,
+        option_id asc
+    </select>
+
+    <select id="selectOptionListBySpecId" parameterType="Long" resultMap="ScanProductSpecOptionResult">
+        <include refid="selectScanProductSpecOptionVo"/>
+        where spec_id = #{specId}
+        order by
+        case when sort_order is null then 1 else 0 end,
+        sort_order asc,
+        option_id asc
+    </select>
+
+    <select id="selectOptionListByIds" parameterType="java.util.List" resultMap="ScanProductSpecOptionResult">
+        <include refid="selectScanProductSpecOptionVo"/>
+        where option_id in
+        <foreach collection="list" item="optionId" open="(" separator="," close=")">
+            #{optionId}
+        </foreach>
+        order by option_id asc
+    </select>
+
+    <delete id="deleteOptionByProductIds" parameterType="String">
+        delete from t_scan_product_spec_option where product_id in
+        <foreach collection="array" item="productId" open="(" separator="," close=")">
+            #{productId}
+        </foreach>
+    </delete>
+
+</mapper>

@@ -1,0 +1,522 @@
+- generic [ref=e695]:
+  - banner [ref=e696]:
+    - generic [ref=e697]:
+      - generic [ref=e701]:
+        - link "OpenClaw" [ref=e702] [cursor=pointer]:
+          - /url: /overview
+        - generic [ref=e703]: ›
+        - generic [ref=e704]: 聊天
+      - generic [ref=e705]:
+        - button "打开命令面板" [ref=e706] [cursor=pointer]:
+          - generic [ref=e707]: 搜索
+          - generic [ref=e708]: ⌘K
+        - group "颜色模式" [ref=e710]:
+          - button "颜色模式：系统" [pressed] [ref=e711] [cursor=pointer]:
+            - img [ref=e712]
+          - button "颜色模式：浅睡" [ref=e714] [cursor=pointer]:
+            - img [ref=e715]
+          - button "颜色模式：深色" [ref=e721] [cursor=pointer]:
+            - img [ref=e722]
+  - complementary [ref=e725]:
+    - generic [ref=e726]:
+      - generic [ref=e727]:
+        - generic [ref=e728]:
+          - img "OpenClaw" [ref=e729]
+          - generic [ref=e730]:
+            - generic [ref=e731]: 控制
+            - generic [ref=e732]: OpenClaw
+        - button "折叠侧边栏" [ref=e733] [cursor=pointer]:
+          - img [ref=e735]
+      - navigation [ref=e739]:
+        - generic [ref=e740]:
+          - button "聊天" [expanded] [ref=e741] [cursor=pointer]:
+            - generic [ref=e742]: 聊天
+            - img [ref=e744]
+          - link "聊天" [ref=e747] [cursor=pointer]:
+            - /url: /chat
+            - img [ref=e749]
+            - generic [ref=e751]: 聊天
+        - generic [ref=e752]:
+          - button "控制" [expanded] [ref=e753] [cursor=pointer]:
+            - generic [ref=e754]: 控制
+            - img [ref=e756]
+          - generic [ref=e758]:
+            - link "概览" [ref=e759] [cursor=pointer]:
+              - /url: /overview
+              - img [ref=e761]
+              - generic [ref=e762]: 概览
+            - link "频道" [ref=e763] [cursor=pointer]:
+              - /url: /channels
+              - img [ref=e765]
+              - generic [ref=e768]: 频道
+            - link "实例" [ref=e769] [cursor=pointer]:
+              - /url: /instances
+              - img [ref=e771]
+              - generic [ref=e774]: 实例
+            - link "会话" [ref=e775] [cursor=pointer]:
+              - /url: /sessions
+              - img [ref=e777]
+              - generic [ref=e780]: 会话
+            - link "使用情况" [ref=e781] [cursor=pointer]:
+              - /url: /usage
+              - img [ref=e783]
+              - generic [ref=e784]: 使用情况
+            - link "定时任务" [ref=e785] [cursor=pointer]:
+              - /url: /cron
+              - img [ref=e787]
+              - generic [ref=e792]: 定时任务
+        - generic [ref=e793]:
+          - button "代理" [expanded] [ref=e794] [cursor=pointer]:
+            - generic [ref=e795]: 代理
+            - img [ref=e797]
+          - generic [ref=e799]:
+            - link "代理" [ref=e800] [cursor=pointer]:
+              - /url: /agents
+              - img [ref=e802]
+              - generic [ref=e804]: 代理
+            - link "Skills" [ref=e805] [cursor=pointer]:
+              - /url: /skills
+              - img [ref=e807]
+              - generic [ref=e809]: Skills
+            - link "节点" [ref=e810] [cursor=pointer]:
+              - /url: /nodes
+              - img [ref=e812]
+              - generic [ref=e814]: 节点
+            - link "梦境" [ref=e815] [cursor=pointer]:
+              - /url: /dreaming
+              - img [ref=e817]
+              - generic [ref=e819]: 梦境
+        - generic [ref=e820]:
+          - button "设置" [expanded] [ref=e821] [cursor=pointer]:
+            - generic [ref=e822]: 设置
+            - img [ref=e824]
+          - generic [ref=e826]:
+            - link "配置" [ref=e827] [cursor=pointer]:
+              - /url: /config
+              - img [ref=e829]
+              - generic [ref=e832]: 配置
+            - link "通信" [ref=e833] [cursor=pointer]:
+              - /url: /communications
+              - img [ref=e835]
+              - generic [ref=e838]: 通信
+            - link "外观与设置" [ref=e839] [cursor=pointer]:
+              - /url: /appearance
+              - img [ref=e841]
+              - generic [ref=e843]: 外观与设置
+            - link "自动化" [ref=e844] [cursor=pointer]:
+              - /url: /automation
+              - img [ref=e846]
+              - generic [ref=e848]: 自动化
+            - link "基础设施" [ref=e849] [cursor=pointer]:
+              - /url: /infrastructure
+              - img [ref=e851]
+              - generic [ref=e854]: 基础设施
+            - link "AI 与代理" [ref=e855] [cursor=pointer]:
+              - /url: /ai-agents
+              - img [ref=e857]
+              - generic [ref=e867]: AI 与代理
+            - link "调试" [ref=e868] [cursor=pointer]:
+              - /url: /debug
+              - img [ref=e870]
+              - generic [ref=e879]: 调试
+            - link "日志" [ref=e880] [cursor=pointer]:
+              - /url: /logs
+              - img [ref=e882]
+              - generic [ref=e885]: 日志
+      - generic [ref=e887]:
+        - link "文档" [ref=e888] [cursor=pointer]:
+          - /url: https://docs.openclaw.ai
+          - img [ref=e890]
+          - generic [ref=e892]: 文档
+          - img [ref=e894]
+        - generic "v2026.5.2" [ref=e897]:
+          - generic [ref=e898]: 版本
+          - generic [ref=e899]: v2026.5.2
+          - img "Gateway 状态：在线" [ref=e900]
+  - main [ref=e901]:
+    - alert [ref=e902]:
+      - strong [ref=e903]: 有可用更新：
+      - text: v2026.5.7 (正在运行 v2026.5.2).
+      - button "立即更新" [ref=e904] [cursor=pointer]
+      - button "关闭更新横幅" [ref=e905] [cursor=pointer]:
+        - img [ref=e906]
+    - generic [ref=e909]:
+      - generic [ref=e911]:
+        - combobox [ref=e913] [cursor=pointer]:
+          - option "dashboard:cb4f7d44-63fa-4535-ba4d-59627a0b4249" [selected]
+          - option "main"
+          - option "dashboard:2e6eda83-a712-4871-94ff-021bd07bf948"
+          - option "dashboard:56237ffb-ffbc-4f6b-b48f-a301ac00a7e9"
+          - option "feishu:g-agent-main-feishu-direct-ou_7e3512a6528787c4239ce9566d9acfea"
+          - option "dashboard:72bb4ccc-4213-4163-9c88-63244f6d2cac"
+          - option "dashboard:571a3cc2-994a-4a20-a850-efe79925be19"
+        - combobox "Chat model" [disabled] [ref=e915] [cursor=pointer]:
+          - option "Default (gpt-5.4 (Custom Provider))"
+          - option "gpt-5.4 (Custom Provider)"
+          - option "GLM-4.5 (Zhipu)" [selected]
+        - combobox "Chat thinking level" [disabled] [ref=e917] [cursor=pointer]:
+          - option "Default (off)" [selected]
+          - option "off"
+          - option "minimal"
+          - option "low"
+          - option "medium"
+          - option "high"
+      - generic [ref=e919]:
+        - button "刷新聊天数据" [disabled] [ref=e920]:
+          - img [ref=e921]
+          - text: 刷新聊天数据
+        - generic [ref=e924]: "|"
+        - button "切换助手思考/工作输出" [pressed] [ref=e925] [cursor=pointer]:
+          - img [ref=e926]
+          - text: 切换助手思考/工作输出
+        - button "切换工具调用和工具结果" [pressed] [ref=e936] [cursor=pointer]:
+          - img [ref=e937]
+          - text: 切换工具调用和工具结果
+        - button "切换专注模式 (隐藏侧边栏 + 页面页眉)" [ref=e939] [cursor=pointer]:
+          - img [ref=e940]
+          - text: 切换专注模式 (隐藏侧边栏 + 页面页眉)
+        - button "显示定时任务会话" [pressed] [ref=e946] [cursor=pointer]:
+          - img [ref=e948]
+          - text: 显示定时任务会话
+    - generic [ref=e951]:
+      - log [ref=e954]:
+        - generic [ref=e955]:
+          - generic [ref=e1250]:
+            - img [ref=e1252]
+            - generic [ref=e1255]:
+              - paragraph [ref=e1258]: 帮我查一下“儿童保温杯”这个品类最近的中文公开评测、新闻和消费趋势，只看中文公开网页，不要查电商商品页
+              - generic [ref=e1259]:
+                - generic [ref=e1260]: You
+                - time [ref=e1261]: 2026年5月10日 21:44
+                - generic [ref=e1262]:
+                  - button "Delete message":
+                    - img
+          - generic [ref=e1263]:
+            - img [ref=e1265]
+            - generic [ref=e1267]:
+              - generic [ref=e1268]:
+                - generic:
+                  - button "Open in canvas":
+                    - generic:
+                      - img
+                  - button "Copy as markdown":
+                    - generic:
+                      - generic:
+                        - img
+                      - generic:
+                        - img
+                - paragraph [ref=e1270]: 我来帮您搜索"儿童保温杯"相关的中文公开评测、新闻和消费趋势信息。
+                - button "▸ Tool call zhipu-web-search__web_search_prime" [ref=e1273] [cursor=pointer]:
+                  - text: ▸
+                  - img [ref=e1275]
+                  - generic [ref=e1277]: Tool call
+                  - generic [ref=e1278]: zhipu-web-search__web_search_prime
+              - button "▸ Tool output zhipu-web-search__web_search_prime" [ref=e1281] [cursor=pointer]:
+                - text: ▸
+                - img [ref=e1283]
+                - generic [ref=e1285]: Tool output
+                - generic [ref=e1286]: zhipu-web-search__web_search_prime
+              - button "▸ Tool call zhipu-web-reader__webReader" [ref=e1290] [cursor=pointer]:
+                - text: ▸
+                - img [ref=e1292]
+                - generic [ref=e1294]: Tool call
+                - generic [ref=e1295]: zhipu-web-reader__webReader
+              - button "▸ Tool output zhipu-web-reader__webReader" [ref=e1298] [cursor=pointer]:
+                - text: ▸
+                - img [ref=e1300]
+                - generic [ref=e1302]: Tool output
+                - generic [ref=e1303]: zhipu-web-reader__webReader
+              - button "▸ Tool call zhipu-web-reader__webReader" [ref=e1307] [cursor=pointer]:
+                - text: ▸
+                - img [ref=e1309]
+                - generic [ref=e1311]: Tool call
+                - generic [ref=e1312]: zhipu-web-reader__webReader
+              - button "▸ Tool output zhipu-web-reader__webReader" [ref=e1315] [cursor=pointer]:
+                - text: ▸
+                - img [ref=e1317]
+                - generic [ref=e1319]: Tool output
+                - generic [ref=e1320]: zhipu-web-reader__webReader
+              - button "▸ Tool call zhipu-web-reader__webReader" [ref=e1324] [cursor=pointer]:
+                - text: ▸
+                - img [ref=e1326]
+                - generic [ref=e1328]: Tool call
+                - generic [ref=e1329]: zhipu-web-reader__webReader
+              - button "▸ Tool output zhipu-web-reader__webReader" [ref=e1332] [cursor=pointer]:
+                - text: ▸
+                - img [ref=e1334]
+                - generic [ref=e1336]: Tool output
+                - generic [ref=e1337]: zhipu-web-reader__webReader
+              - generic [ref=e1338]:
+                - generic [ref=e1339]: Tool
+                - time [ref=e1340]: 2026年5月10日 21:44
+                - group [ref=e1341]:
+                  - generic "Context" [ref=e1342] [cursor=pointer]:
+                    - img [ref=e1344]
+                    - generic [ref=e1346]: Context
+                - generic [ref=e1347]:
+                  - button "Delete message":
+                    - img
+          - generic [ref=e1348]:
+            - img "阿布" [ref=e1349]
+            - generic [ref=e1350]:
+              - generic [ref=e1351]:
+                - generic:
+                  - button "Open in canvas":
+                    - generic:
+                      - img
+                  - button "Copy as markdown":
+                    - generic:
+                      - generic:
+                        - img
+                      - generic:
+                        - img
+                - generic [ref=e1352]:
+                  - paragraph [ref=e1353]: 根据我搜索到的最新中文公开评测、新闻和消费趋势信息，以下是关于"儿童保温杯"品类的综合分析：
+                  - heading "📊 2026年儿童保温杯品牌评测与市场趋势" [level=2] [ref=e1354]:
+                    - text: 📊
+                    - strong [ref=e1355]: 2026年儿童保温杯品牌评测与市场趋势
+                  - heading "🏆 十大热门品牌排名（2026年最新）" [level=3] [ref=e1356]:
+                    - strong [ref=e1357]: 🏆 十大热门品牌排名（2026年最新）
+                  - paragraph [ref=e1358]:
+                    - strong [ref=e1359]: TOP 1：咕咚智伴（Guplbud）
+                  - list [ref=e1360]:
+                    - listitem [ref=e1361]: 采用医疗级不锈钢材质，通过FDA认证
+                    - listitem [ref=e1362]: 指纹识别技术，0.8秒快速解锁，成功率98%
+                    - listitem [ref=e1363]: 双凹槽防滑设计，适合儿童抓握
+                    - listitem [ref=e1364]: 容量：550ml（3-6岁）、600ml（6岁以上）
+                  - paragraph [ref=e1365]:
+                    - strong [ref=e1366]: TOP 2：贝安智伴（Guoard）
+                  - list [ref=e1367]:
+                    - listitem [ref=e1368]: 304不锈钢内胆，保温6小时，保冷12小时
+                    - listitem [ref=e1369]: 支持录入5组指纹，全家共用
+                    - listitem [ref=e1370]: 杯口抗菌银离子处理，医用硅胶吸管
+                    - listitem [ref=e1371]: 价格区间：300-400元
+                  - paragraph [ref=e1372]:
+                    - strong [ref=e1373]: TOP 3：迪士尼联名系列
+                  - list [ref=e1374]:
+                    - listitem [ref=e1375]: 经典IP形象（冰雪奇缘、蜘蛛侠等）
+                    - listitem [ref=e1376]: AR动画解锁功能，结合娱乐与饮水习惯培养
+                    - listitem [ref=e1377]: 航天级真空隔热技术，保热12小时
+                  - paragraph [ref=e1378]:
+                    - strong [ref=e1379]: TOP 4：虎牌（TIGER）
+                  - list [ref=e1380]:
+                    - listitem [ref=e1381]: 日本老牌，2026年"魔法保温杯"
+                    - listitem [ref=e1382]: 真空断热层+相变材料复合技术，保冷36小时
+                    - listitem [ref=e1383]: 重力感应防漏系统，倒置不漏水
+                  - paragraph [ref=e1384]:
+                    - strong [ref=e1385]: TOP 5：膳魔师（THERMOS）
+                  - list [ref=e1386]:
+                    - listitem [ref=e1387]: 中科院研发"AI温感算法"
+                    - listitem [ref=e1388]: 紫外线消毒仓，手机APP预约杀菌
+                    - listitem [ref=e1389]: 保温性能误差±1℃，行业领先
+                  - heading "🔥 2025-2026年技术发展趋势" [level=3] [ref=e1390]:
+                    - strong [ref=e1391]: 🔥 2025-2026年技术发展趋势
+                  - heading "1. 智能化升级" [level=4] [ref=e1392]:
+                    - strong [ref=e1393]: 1. 智能化升级
+                  - list [ref=e1394]:
+                    - listitem [ref=e1395]:
+                      - strong [ref=e1396]: 指纹识别技术
+                      - text: ：咕咚智伴、贝安智伴等品牌已普及
+                    - listitem [ref=e1397]:
+                      - strong [ref=e1398]: 温度显示功能
+                      - text: ：LED屏实时显示水温，防烫伤
+                    - listitem [ref=e1399]:
+                      - strong [ref=e1400]: AI语音助手
+                      - text: ：部分高端型号集成语音交互
+                    - listitem [ref=e1401]:
+                      - strong [ref=e1402]: 饮水提醒系统
+                      - text: ：根据儿童体重和活动量个性化提醒
+                  - heading "2. 材料安全革新" [level=4] [ref=e1403]:
+                    - strong [ref=e1404]: 2. 材料安全革新
+                  - list [ref=e1405]:
+                    - listitem [ref=e1406]:
+                      - strong [ref=e1407]: 316L不锈钢普及
+                      - text: ：医用级材料，重金属迁移量仅为国标1/5
+                    - listitem [ref=e1408]:
+                      - strong [ref=e1409]: PPSU材质应用
+                      - text: ：耐高温180℃，不含双酚A
+                    - listitem [ref=e1410]:
+                      - strong [ref=e1411]: 抗菌涂层技术
+                      - text: ：银离子等抗菌处理，抑菌率99.9%
+                  - heading "3. 交互体验创新" [level=4] [ref=e1412]:
+                    - strong [ref=e1413]: 3. 交互体验创新
+                  - list [ref=e1414]:
+                    - listitem [ref=e1415]:
+                      - strong [ref=e1416]: AR/VR技术应用
+                      - text: ：迪士尼联名款AR动画解锁
+                    - listitem [ref=e1417]:
+                      - strong [ref=e1418]: 游戏化设计
+                      - text: ：虚拟宠物养成、饮水成就系统
+                    - listitem [ref=e1419]:
+                      - strong [ref=e1420]: 亲子互联功能
+                      - text: ：家长远程设置喝水闹钟，微信小程序互动
+                  - heading "⚠️ 安全评测重要发现" [level=3] [ref=e1421]:
+                    - strong [ref=e1422]: ⚠️ 安全评测重要发现
+                  - heading "材质安全警示" [level=4] [ref=e1423]:
+                    - strong [ref=e1424]: 材质安全警示
+                  - list [ref=e1425]:
+                    - listitem [ref=e1426]:
+                      - strong [ref=e1427]: 禁用201材质
+                      - text: ：锰含量高，长期使用可能导致锰元素析出
+                    - listitem [ref=e1428]:
+                      - strong [ref=e1429]: 推荐304/316材质
+                      - text: ：符合GB 4806.9-2023国家标准
+                    - listitem [ref=e1430]:
+                      - strong [ref=e1431]: 北京市消协测评
+                      - text: ：50种保温杯中19种因重金属超标不合格
+                  - heading "选购指南（4步法）" [level=4] [ref=e1432]:
+                    - strong [ref=e1433]: 选购指南（4步法）
+                  - list [ref=e1434]:
+                    - listitem [ref=e1435]:
+                      - strong [ref=e1436]: 看标签标识
+                      - text: ：确认"304""316"钢印，"食品接触用"标识
+                    - listitem [ref=e1437]:
+                      - strong [ref=e1438]: 闻有无异味
+                      - text: ：优质产品无异嗅异味或气味轻微易散
+                    - listitem [ref=e1439]:
+                      - strong [ref=e1440]: 查整体外观
+                      - text: ：色泽均匀，无裂纹，印刷清晰
+                    - listitem [ref=e1441]:
+                      - strong [ref=e1442]: 测保温性能
+                      - text: ：装开水2-3分钟手握无明显升温
+                  - heading "📈 消费趋势分析" [level=3] [ref=e1443]:
+                    - strong [ref=e1444]: 📈 消费趋势分析
+                  - heading "价格区间分布" [level=4] [ref=e1445]:
+                    - strong [ref=e1446]: 价格区间分布
+                  - list [ref=e1447]:
+                    - listitem [ref=e1448]:
+                      - strong [ref=e1449]: 高端市场
+                      - text: （300-400元）：智能功能齐全，材质安全
+                    - listitem [ref=e1450]:
+                      - strong [ref=e1451]: 中端市场
+                      - text: （200-300元）：基础智能功能，性价比高
+                    - listitem [ref=e1452]:
+                      - strong [ref=e1453]: 入门市场
+                      - text: （200元以下）：基础保温功能，传统设计
+                  - heading "消费者关注重点" [level=4] [ref=e1454]:
+                    - strong [ref=e1455]: 消费者关注重点
+                  - list [ref=e1456]:
+                    - listitem [ref=e1457]:
+                      - strong [ref=e1458]: 安全性
+                      - text: ：材质安全、防烫伤、防漏设计
+                    - listitem [ref=e1459]:
+                      - strong [ref=e1460]: 智能功能
+                      - text: ：温度显示、饮水提醒、APP互联
+                    - listitem [ref=e1461]:
+                      - strong [ref=e1462]: 品牌信任
+                      - text: ：国际品牌（虎牌、膳魔师）vs 国产品牌
+                    - listitem [ref=e1463]:
+                      - strong [ref=e1464]: 外观设计
+                      - text: ：IP联名、儿童喜爱的卡通形象
+                  - heading "使用场景细分" [level=4] [ref=e1465]:
+                    - strong [ref=e1466]: 使用场景细分
+                  - list [ref=e1467]:
+                    - listitem [ref=e1468]:
+                      - strong [ref=e1469]: 学龄前儿童
+                      - text: （3-6岁）：500ml容量，防漏防烫优先
+                    - listitem [ref=e1470]:
+                      - strong [ref=e1471]: 小学生
+                      - text: （6-12岁）：550ml以上，智能教育功能
+                    - listitem [ref=e1472]:
+                      - strong [ref=e1473]: 户外活动
+                      - text: ：保冷性能要求高，防摔设计
+                  - heading "🚫 使用注意事项" [level=3] [ref=e1474]:
+                    - strong [ref=e1475]: 🚫 使用注意事项
+                  - paragraph [ref=e1476]:
+                    - strong [ref=e1477]: 不宜盛装的6类饮品：
+                  - list [ref=e1478]:
+                    - listitem [ref=e1479]:
+                      - strong [ref=e1480]: 茶叶
+                      - text: ：破坏维生素，茶香油挥发
+                    - listitem [ref=e1481]:
+                      - strong [ref=e1482]: 牛奶
+                      - text: ：易滋生微生物，导致腐败
+                    - listitem [ref=e1483]:
+                      - strong [ref=e1484]: 豆浆
+                      - text: ：蛋白质变质，影响健康
+                    - listitem [ref=e1485]:
+                      - strong [ref=e1486]: 碳酸饮料
+                      - text: ：酸性物质腐蚀金属
+                    - listitem [ref=e1487]:
+                      - strong [ref=e1488]: 果汁
+                      - text: ：果糖残留，滋生细菌
+                    - listitem [ref=e1489]:
+                      - strong [ref=e1490]: 中药
+                      - text: ：酸性物质与金属反应，影响药效
+                  - paragraph [ref=e1491]:
+                    - strong [ref=e1492]: 儿童使用特别提醒：
+                  - list [ref=e1493]:
+                    - listitem [ref=e1494]: 家长监护，避免盛装超过50℃液体
+                    - listitem [ref=e1495]: 不要装太满，低于瓶口2厘米
+                    - listitem [ref=e1496]: 避免剧烈摇晃，防止杯内增压
+                  - heading "📊 市场前景预测" [level=3] [ref=e1497]:
+                    - strong [ref=e1498]: 📊 市场前景预测
+                  - paragraph [ref=e1499]: 根据行业报告显示：
+                  - list [ref=e1500]:
+                    - listitem [ref=e1501]:
+                      - strong [ref=e1502]: 市场规模
+                      - text: ：2024-2032年复合年增长率约5.57%
+                    - listitem [ref=e1503]:
+                      - strong [ref=e1504]: 技术方向
+                      - text: ：材料革新、交互升级、健康管理
+                    - listitem [ref=e1505]:
+                      - strong [ref=e1506]: 消费升级
+                      - text: ：从基础保温向智能健康管理转变
+                  - paragraph [ref=e1507]: 这些信息反映了儿童保温杯市场正在向智能化、安全化、个性化方向发展，家长对产品安全性和功能性要求不断提高，智能交互和健康管理成为新的增长点。
+              - generic [ref=e1508]:
+                - generic [ref=e1509]: 阿布
+                - time [ref=e1510]: 2026年5月10日 21:45
+                - group [ref=e1511]:
+                  - generic "Context" [ref=e1512] [cursor=pointer]:
+                    - img [ref=e1514]
+                    - generic [ref=e1516]: Context
+                - generic [ref=e1517]:
+                  - button "Delete message":
+                    - img
+          - generic [ref=e1518]:
+            - img [ref=e1520]
+            - generic [ref=e1523]:
+              - paragraph [ref=e1526]: 请明确使用 zhipu-web-search 和 zhipu-web-reader 搜索“儿童保温杯 评测 新闻 消费趋势”，只返回中文公开网页结果，并在回答里注明你实际搜索到的网页标题和来源站点。
+              - generic [ref=e1527]:
+                - generic [ref=e1528]: You
+                - time [ref=e1529]: 2026年5月10日 21:47
+                - generic [ref=e1530]:
+                  - button "Delete message":
+                    - img
+          - generic [ref=e1539]:
+            - img [ref=e1541]
+            - generic [ref=e1543]:
+              - button "▸ Tool call zhipu-web-search__web_search_prime" [ref=e1546] [cursor=pointer]:
+                - text: ▸
+                - img [ref=e1548]
+                - generic [ref=e1550]: Tool call
+                - generic [ref=e1551]: zhipu-web-search__web_search_prime
+              - button "▸ Tool call zhipu-web-reader__webreader" [ref=e1554] [cursor=pointer]:
+                - text: ▸
+                - img [ref=e1556]
+                - generic [ref=e1558]: Tool call
+                - generic [ref=e1559]: zhipu-web-reader__webreader
+              - generic [ref=e1560]:
+                - generic [ref=e1561]: Tool
+                - time [ref=e1562]: 2026年5月10日 21:47
+                - generic [ref=e1563]:
+                  - button "Delete message":
+                    - img
+          - img "阿布" [ref=e1532]
+      - generic [ref=e1135]:
+        - generic [ref=e1136]:
+          - textbox "Message 阿布 (Enter to send)" [active] [ref=e1137]
+          - status [ref=e1138]
+        - generic [ref=e1139]:
+          - generic [ref=e1140]:
+            - button "Attach file" [ref=e1141] [cursor=pointer]:
+              - img [ref=e1142]
+            - button "Start Talk" [ref=e1144] [cursor=pointer]:
+              - img [ref=e1145]
+          - generic [ref=e1148]:
+            - button "Export chat" [ref=e1151] [cursor=pointer]:
+              - img [ref=e1152]
+            - button "Queue message" [ref=e1193] [cursor=pointer]:
+              - img [ref=e1194]
+            - button "Stop generating" [ref=e1197] [cursor=pointer]:
+              - img [ref=e1198]

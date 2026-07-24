@@ -1,0 +1,417 @@
+- generic [ref=e66]:
+  - banner [ref=e67]:
+    - generic [ref=e68]:
+      - generic [ref=e72]:
+        - link "OpenClaw" [ref=e73] [cursor=pointer]:
+          - /url: /overview
+        - generic [ref=e74]: ›
+        - generic [ref=e75]: 聊天
+      - generic [ref=e76]:
+        - button "打开命令面板" [ref=e77] [cursor=pointer]:
+          - generic [ref=e78]: 搜索
+          - generic [ref=e79]: ⌘K
+        - group "颜色模式" [ref=e81]:
+          - button "颜色模式：系统" [pressed] [ref=e82] [cursor=pointer]:
+            - img [ref=e83]
+          - button "颜色模式：浅睡" [ref=e85] [cursor=pointer]:
+            - img [ref=e86]
+          - button "颜色模式：深色" [ref=e92] [cursor=pointer]:
+            - img [ref=e93]
+  - complementary [ref=e96]:
+    - generic [ref=e97]:
+      - generic [ref=e98]:
+        - generic [ref=e99]:
+          - img "OpenClaw" [ref=e100]
+          - generic [ref=e101]:
+            - generic [ref=e102]: 控制
+            - generic [ref=e103]: OpenClaw
+        - button "折叠侧边栏" [ref=e104] [cursor=pointer]:
+          - img [ref=e106]
+      - navigation [ref=e110]:
+        - generic [ref=e111]:
+          - button "聊天" [expanded] [ref=e112] [cursor=pointer]:
+            - generic [ref=e113]: 聊天
+            - img [ref=e115]
+          - link "聊天" [ref=e118] [cursor=pointer]:
+            - /url: /chat
+            - img [ref=e120]
+            - generic [ref=e122]: 聊天
+        - generic [ref=e123]:
+          - button "控制" [expanded] [ref=e124] [cursor=pointer]:
+            - generic [ref=e125]: 控制
+            - img [ref=e127]
+          - generic [ref=e129]:
+            - link "概览" [ref=e130] [cursor=pointer]:
+              - /url: /overview
+              - img [ref=e132]
+              - generic [ref=e133]: 概览
+            - link "频道" [ref=e134] [cursor=pointer]:
+              - /url: /channels
+              - img [ref=e136]
+              - generic [ref=e139]: 频道
+            - link "实例" [ref=e140] [cursor=pointer]:
+              - /url: /instances
+              - img [ref=e142]
+              - generic [ref=e145]: 实例
+            - link "会话" [ref=e146] [cursor=pointer]:
+              - /url: /sessions
+              - img [ref=e148]
+              - generic [ref=e151]: 会话
+            - link "使用情况" [ref=e152] [cursor=pointer]:
+              - /url: /usage
+              - img [ref=e154]
+              - generic [ref=e155]: 使用情况
+            - link "定时任务" [ref=e156] [cursor=pointer]:
+              - /url: /cron
+              - img [ref=e158]
+              - generic [ref=e163]: 定时任务
+        - generic [ref=e164]:
+          - button "代理" [expanded] [ref=e165] [cursor=pointer]:
+            - generic [ref=e166]: 代理
+            - img [ref=e168]
+          - generic [ref=e170]:
+            - link "代理" [ref=e171] [cursor=pointer]:
+              - /url: /agents
+              - img [ref=e173]
+              - generic [ref=e175]: 代理
+            - link "Skills" [ref=e176] [cursor=pointer]:
+              - /url: /skills
+              - img [ref=e178]
+              - generic [ref=e180]: Skills
+            - link "节点" [ref=e181] [cursor=pointer]:
+              - /url: /nodes
+              - img [ref=e183]
+              - generic [ref=e185]: 节点
+            - link "梦境" [ref=e186] [cursor=pointer]:
+              - /url: /dreaming
+              - img [ref=e188]
+              - generic [ref=e190]: 梦境
+        - generic [ref=e191]:
+          - button "设置" [expanded] [ref=e192] [cursor=pointer]:
+            - generic [ref=e193]: 设置
+            - img [ref=e195]
+          - generic [ref=e197]:
+            - link "配置" [ref=e198] [cursor=pointer]:
+              - /url: /config
+              - img [ref=e200]
+              - generic [ref=e203]: 配置
+            - link "通信" [ref=e204] [cursor=pointer]:
+              - /url: /communications
+              - img [ref=e206]
+              - generic [ref=e209]: 通信
+            - link "外观与设置" [ref=e210] [cursor=pointer]:
+              - /url: /appearance
+              - img [ref=e212]
+              - generic [ref=e214]: 外观与设置
+            - link "自动化" [ref=e215] [cursor=pointer]:
+              - /url: /automation
+              - img [ref=e217]
+              - generic [ref=e219]: 自动化
+            - link "基础设施" [ref=e220] [cursor=pointer]:
+              - /url: /infrastructure
+              - img [ref=e222]
+              - generic [ref=e225]: 基础设施
+            - link "AI 与代理" [ref=e226] [cursor=pointer]:
+              - /url: /ai-agents
+              - img [ref=e228]
+              - generic [ref=e238]: AI 与代理
+            - link "调试" [ref=e239] [cursor=pointer]:
+              - /url: /debug
+              - img [ref=e241]
+              - generic [ref=e250]: 调试
+            - link "日志" [ref=e251] [cursor=pointer]:
+              - /url: /logs
+              - img [ref=e253]
+              - generic [ref=e256]: 日志
+      - generic [ref=e258]:
+        - link "文档" [ref=e259] [cursor=pointer]:
+          - /url: https://docs.openclaw.ai
+          - img [ref=e261]
+          - generic [ref=e263]: 文档
+          - img [ref=e265]
+        - generic "v2026.5.2" [ref=e268]:
+          - generic [ref=e269]: 版本
+          - generic [ref=e270]: v2026.5.2
+          - img "Gateway 状态：在线" [ref=e271]
+  - main [ref=e272]:
+    - alert [ref=e273]:
+      - strong [ref=e274]: 有可用更新：
+      - text: v2026.5.7 (正在运行 v2026.5.2).
+      - button "立即更新" [ref=e275] [cursor=pointer]
+      - button "关闭更新横幅" [ref=e276] [cursor=pointer]:
+        - img [ref=e277]
+    - generic [ref=e280]:
+      - generic [ref=e282]:
+        - combobox [ref=e284] [cursor=pointer]:
+          - option "main" [selected]
+          - option "dashboard:72bb4ccc-4213-4163-9c88-63244f6d2cac"
+          - option "dashboard:571a3cc2-994a-4a20-a850-efe79925be19"
+          - option "dashboard:faa52b09-828b-4c80-be4e-10f0fc7e1356"
+          - option "dashboard:c58579aa-b20e-4979-8490-dc1454425f38"
+          - option "feishu:g-agent-main-feishu-direct-ou_7e3512a6528787c4239ce9566d9acfea"
+        - combobox "Chat model" [ref=e286] [cursor=pointer]:
+          - option "Default (gpt-5.4 (Custom Provider))"
+          - option "gpt-5.4 (Custom Provider)" [selected]
+        - combobox "Chat thinking level" [ref=e288] [cursor=pointer]:
+          - option "Default (off)"
+          - option "off"
+          - option "minimal"
+          - option "low" [selected]
+          - option "medium"
+          - option "high"
+      - generic [ref=e290]:
+        - button "刷新聊天数据" [ref=e291] [cursor=pointer]:
+          - img [ref=e292]
+          - text: 刷新聊天数据
+        - generic [ref=e295]: "|"
+        - button "切换助手思考/工作输出" [pressed] [ref=e296] [cursor=pointer]:
+          - img [ref=e297]
+          - text: 切换助手思考/工作输出
+        - button "切换工具调用和工具结果" [pressed] [ref=e307] [cursor=pointer]:
+          - img [ref=e308]
+          - text: 切换工具调用和工具结果
+        - button "切换专注模式 (隐藏侧边栏 + 页面页眉)" [ref=e310] [cursor=pointer]:
+          - img [ref=e311]
+          - text: 切换专注模式 (隐藏侧边栏 + 页面页眉)
+        - button "显示定时任务会话" [pressed] [ref=e317] [cursor=pointer]:
+          - img [ref=e319]
+          - text: 显示定时任务会话
+    - generic [ref=e322]:
+      - log [ref=e325]:
+        - generic [ref=e326]:
+          - generic [ref=e327]:
+            - img [ref=e329]
+            - generic [ref=e332]:
+              - paragraph [ref=e335]: 帮我安装这个skills：npx clawhub@latest install shellbot-creative
+              - generic [ref=e336]:
+                - generic [ref=e337]: You
+                - time [ref=e338]: 2026年5月10日 17:27
+                - generic [ref=e339]:
+                  - button "Delete message":
+                    - img
+          - generic [ref=e340]:
+            - img "阿布" [ref=e341]
+            - generic [ref=e342]:
+              - generic [ref=e343]:
+                - generic:
+                  - button "Open in canvas":
+                    - generic:
+                      - img
+                  - button "Copy as markdown":
+                    - generic:
+                      - generic:
+                        - img
+                      - generic:
+                        - img
+                - paragraph [ref=e345]: "[assistant turn failed before producing content]"
+              - generic [ref=e346]:
+                - generic [ref=e347]: 阿布
+                - time [ref=e348]: 2026年5月10日 17:27
+                - group [ref=e349]:
+                  - generic "Context" [ref=e350] [cursor=pointer]:
+                    - img [ref=e352]
+                    - generic [ref=e354]: Context
+                - generic [ref=e355]:
+                  - button "Delete message":
+                    - img
+          - generic [ref=e356]:
+            - img [ref=e358]
+            - generic [ref=e360]:
+              - button "▸ Tool call exec" [ref=e364] [cursor=pointer]:
+                - text: ▸
+                - img [ref=e366]
+                - generic [ref=e368]: Tool call
+                - generic [ref=e369]: exec
+              - button "▸ Tool output exec" [ref=e372] [cursor=pointer]:
+                - text: ▸
+                - img [ref=e374]
+                - generic [ref=e376]: Tool output
+                - generic [ref=e377]: exec
+              - generic [ref=e378]:
+                - generic [ref=e379]: Tool
+                - time [ref=e380]: 2026年5月10日 17:28
+                - group [ref=e381]:
+                  - generic "Context" [ref=e382] [cursor=pointer]:
+                    - img [ref=e384]
+                    - generic [ref=e386]: Context
+                - generic [ref=e387]:
+                  - button "Delete message":
+                    - img
+          - generic [ref=e388]:
+            - img "阿布" [ref=e389]
+            - generic [ref=e390]:
+              - generic [ref=e391]:
+                - generic:
+                  - button "Open in canvas":
+                    - generic:
+                      - img
+                  - button "Copy as markdown":
+                    - generic:
+                      - generic:
+                        - img
+                      - generic:
+                        - img
+                - paragraph [ref=e393]: 我先跑安装，等它出结果。
+              - generic [ref=e394]:
+                - generic [ref=e395]: 阿布
+                - time [ref=e396]: 2026年5月10日 17:28
+                - group [ref=e397]:
+                  - generic "Context" [ref=e398] [cursor=pointer]:
+                    - img [ref=e400]
+                    - generic [ref=e402]: Context
+                - generic [ref=e403]:
+                  - button "Delete message":
+                    - img
+          - separator [ref=e404]:
+            - generic [ref=e406]: Compaction
+          - separator [ref=e408]:
+            - generic [ref=e410]: Compaction
+          - generic [ref=e412]:
+            - img [ref=e414]
+            - generic [ref=e417]:
+              - paragraph [ref=e420]: 请查看一下有什么skills技能
+              - generic [ref=e421]:
+                - generic [ref=e422]: You
+                - time [ref=e423]: 2026年5月10日 18:36
+                - generic [ref=e424]:
+                  - button "Delete message":
+                    - img
+          - generic [ref=e425]:
+            - img [ref=e427]
+            - generic [ref=e429]:
+              - generic [ref=e431]:
+                - button "▸ Tool call read" [ref=e433] [cursor=pointer]:
+                  - text: ▸
+                  - img [ref=e435]
+                  - generic [ref=e437]: Tool call
+                  - generic [ref=e438]: read
+                - button "▸ Tool call process" [ref=e440] [cursor=pointer]:
+                  - text: ▸
+                  - img [ref=e442]
+                  - generic [ref=e444]: Tool call
+                  - generic [ref=e445]: process
+              - button "▸ Tool output read" [ref=e448] [cursor=pointer]:
+                - text: ▸
+                - img [ref=e450]
+                - generic [ref=e452]: Tool output
+                - generic [ref=e453]: read
+              - button "▸ Tool output process" [ref=e456] [cursor=pointer]:
+                - text: ▸
+                - img [ref=e458]
+                - generic [ref=e460]: Tool output
+                - generic [ref=e461]: process
+              - button "▸ Tool call exec" [ref=e465] [cursor=pointer]:
+                - text: ▸
+                - img [ref=e467]
+                - generic [ref=e469]: Tool call
+                - generic [ref=e470]: exec
+              - button "▸ Tool output exec" [ref=e473] [cursor=pointer]:
+                - text: ▸
+                - img [ref=e475]
+                - generic [ref=e477]: Tool output
+                - generic [ref=e478]: exec
+              - generic [ref=e479]:
+                - generic [ref=e480]: Tool
+                - time [ref=e481]: 2026年5月10日 19:05
+                - group [ref=e482]:
+                  - generic "Context" [ref=e483] [cursor=pointer]:
+                    - img [ref=e485]
+                    - generic [ref=e487]: Context
+                - generic [ref=e488]:
+                  - button "Delete message":
+                    - img
+          - generic [ref=e489]:
+            - img "阿布" [ref=e490]
+            - generic [ref=e491]:
+              - generic [ref=e492]:
+                - generic [ref=e493]:
+                  - button "Open in canvas" [ref=e494] [cursor=pointer]:
+                    - img [ref=e496]
+                  - button "Copy as markdown" [ref=e499] [cursor=pointer]:
+                    - generic [ref=e500]:
+                      - img [ref=e502]
+                      - img [ref=e506]
+                - generic [ref=e508]:
+                  - paragraph [ref=e509]:
+                    - text: 主人，现在能看到的 skills 挺多的，
+                    - code [ref=e510]: shellbot-creative
+                    - text: 也已经在本地技能目录里了，说明安装大概率已经好了 ✅
+                  - paragraph [ref=e511]: 我帮你分两类看：
+                  - paragraph [ref=e512]:
+                    - strong [ref=e513]: 你工作区里的自定义 skills
+                  - list [ref=e514]:
+                    - listitem [ref=e515]: cn-ecommerce-search-v2
+                    - listitem [ref=e516]: ecommerce-analyzer
+                    - listitem [ref=e517]: ecommerce-copy-humanizer-zh
+                    - listitem [ref=e518]: ecommerce-copywriter
+                    - listitem [ref=e519]: ecommerce-customer-service-pro
+                    - listitem [ref=e520]: ecommerce-data-export
+                    - listitem [ref=e521]: ecommerce-image-asset-generator
+                    - listitem [ref=e522]: ecommerce-landing-page-conversion-audit
+                    - listitem [ref=e523]: ecommerce-price-comparison
+                    - listitem [ref=e524]: ecommerce-video-ai
+                    - listitem [ref=e525]: github
+                    - listitem [ref=e526]: kling-video
+                    - listitem [ref=e527]: nano-banana-pro-image
+                    - listitem [ref=e528]: shellbot-creative
+                    - listitem [ref=e529]: taobao-listing-generator
+                  - paragraph [ref=e530]:
+                    - strong [ref=e531]: 系统内置 / 全局可用 skills
+                  - list [ref=e532]:
+                    - listitem [ref=e533]: browser-automation
+                    - listitem [ref=e534]: github
+                    - listitem [ref=e535]: healthcheck
+                    - listitem [ref=e536]: node-connect
+                    - listitem [ref=e537]: skill-creator
+                    - listitem [ref=e538]: taskflow
+                    - listitem [ref=e539]: taskflow-inbox-triage
+                    - listitem [ref=e540]: tmux
+                    - listitem [ref=e541]: weather
+                  - paragraph [ref=e542]: 另外还发现一大批扩展技能，比如：
+                  - list [ref=e543]:
+                    - listitem [ref=e544]: 1password
+                    - listitem [ref=e545]: apple-notes
+                    - listitem [ref=e546]: bear-notes
+                    - listitem [ref=e547]: discord
+                    - listitem [ref=e548]: notion
+                    - listitem [ref=e549]: slack
+                    - listitem [ref=e550]: spotify-player
+                    - listitem [ref=e551]: trello
+                    - listitem [ref=e552]: voice-call
+                    - listitem [ref=e553]: xurl
+                    - listitem [ref=e554]: …等等
+                  - paragraph [ref=e555]: 如果你愿意，我下一步可以直接帮你做两件事之一：
+                  - list [ref=e556]:
+                    - listitem [ref=e557]:
+                      - strong [ref=e558]: 列出每个 skill 是干什么的
+                    - listitem [ref=e559]:
+                      - strong [ref=e560]:
+                        - text: 重点给你介绍
+                        - code [ref=e561]: shellbot-creative
+                        - text: 怎么用
+              - generic [ref=e562]:
+                - generic [ref=e563]: 阿布
+                - time [ref=e564]: 2026年5月10日 20:34
+                - group [ref=e565]:
+                  - generic "Context" [ref=e566] [cursor=pointer]:
+                    - img [ref=e568]
+                    - generic [ref=e570]: Context
+                - button "Delete message" [ref=e572] [cursor=pointer]:
+                  - img [ref=e573]
+      - generic [ref=e576]:
+        - generic [ref=e577]:
+          - textbox "Message 阿布 (Enter to send)" [ref=e578]
+          - status [ref=e579]
+        - generic [ref=e580]:
+          - generic [ref=e581]:
+            - button "Attach file" [ref=e582] [cursor=pointer]:
+              - img [ref=e583]
+            - button "Start Talk" [ref=e585] [cursor=pointer]:
+              - img [ref=e586]
+          - generic [ref=e589]:
+            - button "New session" [ref=e590] [cursor=pointer]:
+              - img [ref=e591]
+            - button "Export chat" [ref=e592] [cursor=pointer]:
+              - img [ref=e593]
+            - button "Send message" [ref=e596] [cursor=pointer]:
+              - img [ref=e597]

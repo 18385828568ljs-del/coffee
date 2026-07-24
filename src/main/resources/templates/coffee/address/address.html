@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <th:block th:include="include :: header('收货地址列表')" />
+</head>
+<body class="gray-bg">
+     <div class="container-div">
+        <div class="row">
+            <div class="col-sm-12 search-collapse">
+                <form id="formId">
+                    <div class="select-list">
+                        <ul>
+                            <li>
+                                <label>用户ID：</label>
+                                <input type="text" name="userId"/>
+                            </li>
+                            <li>
+                                <label>收货人姓名：</label>
+                                <input type="text" name="receiverName"/>
+                            </li>
+                            <li>
+                                <label>收货人电话：</label>
+                                <input type="text" name="receiverPhone"/>
+                            </li>
+                            <li>
+                                <label>省份：</label>
+                                <input type="text" name="province"/>
+                            </li>
+                            <li>
+                                <label>城市：</label>
+                                <input type="text" name="city"/>
+                            </li>
+                            <li style="clear: left;">
+                                <label>区县：</label>
+                                <input type="text" name="district"/>
+                            </li>
+                            <li>
+                                <label>默认地址：</label>
+                                <select name="isDefault">
+                                    <option value="">全部</option>
+                                    <option value="1">是</option>
+                                    <option value="0">否</option>
+                                </select>
+                            </li>
+                            <li>
+                                <a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+                                <a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+                            </li>
+                        </ul>
+                    </div>
+                </form>
+            </div>
+
+            <div class="btn-group-sm" id="toolbar" role="group">
+                <a class="btn btn-success" onclick="$.operate.add()" shiro:hasPermission="coffee:address:add">
+                    <i class="fa fa-plus"></i> 添加
+                </a>
+                <a class="btn btn-primary single disabled" onclick="$.operate.edit()" shiro:hasPermission="coffee:address:edit">
+                    <i class="fa fa-edit"></i> 修改
+                </a>
+                <a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="coffee:address:remove">
+                    <i class="fa fa-remove"></i> 删除
+                </a>
+                <a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="coffee:address:export">
+                    <i class="fa fa-download"></i> 导出
+                </a>
+            </div>
+            <div class="col-sm-12 select-table table-striped">
+                <table id="bootstrap-table"></table>
+            </div>
+        </div>
+    </div>
+    <th:block th:include="include :: footer" />
+    <script th:inline="javascript">
+        var editFlag = [[${@permission.hasPermi('coffee:address:edit')}]];
+        var removeFlag = [[${@permission.hasPermi('coffee:address:remove')}]];
+        var prefix = ctx + "coffee/address";
+
+        $(function() {
+            var options = {
+                url: prefix + "/list",
+                createUrl: prefix + "/add",
+                updateUrl: prefix + "/edit/{id}",
+                removeUrl: prefix + "/remove",
+                exportUrl: prefix + "/export",
+                modalName: "收货地址",
+                columns: [{
+                    checkbox: true
+                },
+                {
+                    field: 'addressId',
+                    title: '地址ID',
+                    visible: false
+                },
+                {
+                    field: 'userId',
+                    title: '用户ID',
+                    width: 90
+                },
+                {
+                    field: 'receiverName',
+                    title: '收货人姓名',
+                    width: 130
+                },
+                {
+                    field: 'receiverPhone',
+                    title: '收货人电话',
+                    width: 150
+                },
+                {
+                    field: 'province',
+                    title: '省份',
+                    width: 120
+                },
+                {
+                    field: 'city',
+                    title: '城市',
+                    width: 120
+                },
+                {
+                    field: 'district',
+                    title: '区县',
+                    width: 120
+                },
+                {
+                    field: 'detailAddress',
+                    title: '详细地址',
+                    width: 260,
+                    formatter: function(value) {
+                        return $.common.nullToStr(value);
+                    }
+                },
+                {
+                    field: 'isDefault',
+                    title: '默认地址',
+                    width: 120,
+                    align: 'center',
+                    formatter: function(value) {
+                        return String(value) === '1'
+                            ? '<span class="label label-primary">默认</span>'
+                            : '<span class="label label-default">否</span>';
+                    }
+                },
+                {
+                    title: '操作',
+                    align: 'center',
+                    formatter: function(value, row, index) {
+                        var actions = [];
+                        actions.push("<a class='btn btn-success btn-xs " + editFlag + "' href='javascript:void(0)' onclick=\"$.operate.edit('" + row.addressId + "')\"><i class='fa fa-edit'></i>编辑</a> ");
+                        actions.push("<a class='btn btn-danger btn-xs " + removeFlag + "' href='javascript:void(0)' onclick=\"$.operate.remove('" + row.addressId + "')\"><i class='fa fa-remove'></i>删除</a>");
+                        return actions.join('');
+                    }
+                }]
+            };
+            $.table.init(options);
+        });
+    </script>
+</body>
+</html>

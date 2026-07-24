@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('修改点单商品')" />
+    <link th:href="@{/ruoyi/css/simple-upload.css?v=1.0.0}" rel="stylesheet"/>
+</head>
+<body class="white-bg">
+<div class="wrapper wrapper-content animated fadeInRight ibox-content">
+    <form class="form-horizontal m" id="form-scanProduct-edit" th:object="${scanProduct}">
+        <input name="productId" th:field="*{productId}" type="hidden">
+        <div class="form-group">
+            <label class="col-sm-3 control-label is-required">商品分类：</label>
+            <div class="col-sm-8">
+                <select name="categoryId" class="form-control m-b" required>
+                    <option value="">请选择商品分类</option>
+                    <option th:each="category : ${categories}"
+                            th:value="${category.categoryId}"
+                            th:selected="${category.categoryId == scanProduct.categoryId}"
+                            th:text="${category.categoryName}"></option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label is-required">商品名称：</label>
+            <div class="col-sm-8">
+                <input name="productName" th:field="*{productName}" class="form-control" type="text" required>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">副标题：</label>
+            <div class="col-sm-8">
+                <input name="subTitle" th:field="*{subTitle}" class="form-control" type="text">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">商品主图：</label>
+            <div class="col-sm-8">
+                <input type="hidden" name="imageUrl" id="imageUrl" th:field="*{imageUrl}">
+                <div class="ruoyi-upload-card" id="imageUrlCard">
+                    <input id="imageUrlFile" accept="image/*" name="file" type="file">
+                    <div class="ruoyi-upload-empty">
+                        <i class="fa fa-cloud-upload"></i>
+                        <strong>拖拽图片到这里，或点击上传</strong>
+                        <p>支持 JPG、PNG、GIF，上传后会立即预览</p>
+                    </div>
+                    <div class="ruoyi-upload-preview">
+                        <img alt="点单商品主图预览" src="">
+                        <div class="ruoyi-upload-actions">
+                            <button class="btn btn-primary btn-sm" data-upload-action="change" type="button">重新上传</button>
+                            <button class="btn btn-default btn-sm" data-upload-action="remove" type="button">移除图片</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">商品讲解视频：</label>
+            <div class="col-sm-8">
+                <input type="hidden" name="videoUrl" id="videoUrl" th:field="*{videoUrl}">
+                <div class="ruoyi-upload-card" id="videoUrlCard">
+                    <input id="videoUrlFile" accept="video/mp4,video/quicktime,video/x-m4v" name="file" type="file">
+                    <div class="ruoyi-upload-empty">
+                        <i class="fa fa-cloud-upload"></i>
+                        <strong>拖拽视频到这里，或点击上传</strong>
+                        <p>支持 MP4、MOV、M4V，上传后会立即保存</p>
+                    </div>
+                    <div class="ruoyi-upload-preview">
+                        <div class="ruoyi-upload-file">
+                            <i class="fa fa-file-video-o"></i>
+                            <span>视频已上传</span>
+                            <small></small>
+                        </div>
+                        <div class="ruoyi-upload-actions">
+                            <button class="btn btn-primary btn-sm" data-upload-action="change" type="button">重新上传</button>
+                            <button class="btn btn-default btn-sm" data-upload-action="remove" type="button">移除视频</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label is-required">价格：</label>
+            <div class="col-sm-8">
+                <input name="price" th:field="*{price}" class="form-control" type="number" min="0" step="0.01" required>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">月售：</label>
+            <div class="col-sm-8">
+                <input name="monthSales" th:field="*{monthSales}" class="form-control" type="number" min="0" step="1">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">标签：</label>
+            <div class="col-sm-8">
+                <input name="tag" th:field="*{tag}" class="form-control" type="text" placeholder="如：新品 / 招牌 / 热销">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">状态：</label>
+            <div class="col-sm-8">
+                <select name="status" class="form-control m-b">
+                    <option value="1" th:selected="${scanProduct.status == 1}">上架</option>
+                    <option value="0" th:selected="${scanProduct.status == 0}">下架</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">排序：</label>
+            <div class="col-sm-8">
+                <input name="sortOrder" th:field="*{sortOrder}" class="form-control" type="number" min="0" step="1">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">备注：</label>
+            <div class="col-sm-8">
+                <textarea name="remark" class="form-control">[[*{remark}]]</textarea>
+            </div>
+        </div>
+    </form>
+</div>
+<th:block th:include="include :: footer" />
+<script th:src="@{/ruoyi/js/simple-upload.js?v=1.0.0}"></script>
+<script th:inline="javascript">
+    var prefix = ctx + "coffee/scanProduct";
+    $("#form-scanProduct-edit").validate({
+        focusCleanup: true
+    });
+
+    function submitHandler() {
+        if ($.validate.form()) {
+            $.operate.save(prefix + "/edit", $('#form-scanProduct-edit').serialize());
+        }
+    }
+
+    var imageUrl = [[${scanProduct.imageUrl}]];
+    RuoYiSimpleUpload.init({
+        card: "#imageUrlCard",
+        fileInput: "#imageUrlFile",
+        targetInput: "#imageUrl",
+        previewType: "image",
+        initialUrl: imageUrl
+    });
+
+    var videoUrl = [[${scanProduct.videoUrl}]];
+    RuoYiSimpleUpload.init({
+        card: "#videoUrlCard",
+        fileInput: "#videoUrlFile",
+        targetInput: "#videoUrl",
+        previewType: "file",
+        allowedExtensions: ["mp4", "mov", "m4v"],
+        invalidText: "请选择 MP4、MOV 或 M4V 视频文件",
+        initialUrl: videoUrl
+    });
+</script>
+</body>
+</html>

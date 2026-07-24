@@ -1,0 +1,18 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="nav_home_inactive" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#CFC4B8" />
+      <stop offset="100%" stop-color="#A79C90" />
+    </linearGradient>
+    <linearGradient id="nav_home_inactive_dark" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#9E9286" />
+      <stop offset="100%" stop-color="#7F7469" />
+    </linearGradient>
+  </defs>
+  <!-- 房子主体 -->
+  <path d="M 50 18 L 16 48 L 26 48 L 26 78 A 4 4 0 0 0 30 82 L 70 82 A 4 4 0 0 0 74 78 L 74 48 L 84 48 Z" fill="url(#nav_home_inactive)" />
+  <!-- 门 -->
+  <rect x="40" y="56" width="20" height="26" fill="url(#nav_home_inactive_dark)" />
+  <!-- 屋顶反光高光 -->
+  <path d="M 50 18 L 16 48 L 84 48 Z" fill="rgba(255,255,255,0.3)" />
+</svg>

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.coffee.item.mapper.TOrderItemMapper">
+    
+    <resultMap type="TOrderItem" id="TOrderItemResult">
+        <result property="itemId"    column="item_id"    />
+        <result property="orderId"    column="order_id"    />
+        <result property="productId"    column="product_id"    />
+        <result property="productName"    column="product_name"    />
+        <result property="productImage"    column="product_image"    />
+        <result property="price"    column="price"    />
+        <result property="spec"    column="spec"    />
+        <result property="quantity"    column="quantity"    />
+        <result property="totalPrice"    column="total_price"    />
+    </resultMap>
+
+    <sql id="selectTOrderItemVo">
+        select oi.item_id,
+               oi.order_id,
+               oi.product_id,
+               case
+                   when p.product_name is not null and p.product_name != '' then p.product_name
+                   else oi.product_name
+               end as product_name,
+               case
+                   when p.image_url is not null and p.image_url != '' then p.image_url
+                   else oi.product_image
+               end as product_image,
+               oi.price,
+               case
+                   when oi.spec is not null and oi.spec != '' then oi.spec
+                   else p.remark
+               end as spec,
+               oi.quantity,
+               oi.total_price
+        from t_order_item oi
+        left join t_product p on oi.product_id = p.product_id
+    </sql>
+
+    <select id="selectTOrderItemList" parameterType="TOrderItem" resultMap="TOrderItemResult">
+        <include refid="selectTOrderItemVo"/>
+        <where>  
+            <if test="orderId != null "> and oi.order_id = #{orderId}</if>
+            <if test="productId != null "> and oi.product_id = #{productId}</if>
+            <if test="productName != null  and productName != ''"> and oi.product_name like concat('%', #{productName}, '%')</if>
+            <if test="productImage != null  and productImage != ''"> and oi.product_image = #{productImage}</if>
+            <if test="price != null "> and oi.price = #{price}</if>
+            <if test="spec != null and spec != ''"> and oi.spec = #{spec}</if>
+            <if test="quantity != null "> and oi.quantity = #{quantity}</if>
+            <if test="totalPrice != null "> and oi.total_price = #{totalPrice}</if>
+        </where>
+        order by oi.item_id asc
+    </select>
+
+    <select id="selectTOrderItemListByOrderIds" resultMap="TOrderItemResult">
+        <include refid="selectTOrderItemVo"/>
+        where oi.order_id in
+        <foreach item="orderId" collection="orderIds" open="(" separator="," close=")">
+            #{orderId}
+        </foreach>
+        order by oi.order_id desc, oi.item_id asc
+    </select>
+    
+    <select id="selectTOrderItemByItemId" parameterType="Long" resultMap="TOrderItemResult">
+        <include refid="selectTOrderItemVo"/>
+        where oi.item_id = #{itemId}
+    </select>
+        
+    <insert id="insertTOrderItem" parameterType="TOrderItem" useGeneratedKeys="true" keyProperty="itemId">
+        insert into t_order_item
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="orderId != null">order_id,</if>
+            <if test="productId != null">product_id,</if>
+            <if test="productName != null and productName != ''">product_name,</if>
+            <if test="productImage != null">product_image,</if>
+            <if test="price != null">price,</if>
+            <if test="spec != null and spec != ''">spec,</if>
+            <if test="quantity != null">quantity,</if>
+            <if test="totalPrice != null">total_price,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="orderId != null">#{orderId},</if>
+            <if test="productId != null">#{productId},</if>
+            <if test="productName != null and productName != ''">#{productName},</if>
+            <if test="productImage != null">#{productImage},</if>
+            <if test="price != null">#{price},</if>
+            <if test="spec != null and spec != ''">#{spec},</if>
+            <if test="quantity != null">#{quantity},</if>
+            <if test="totalPrice != null">#{totalPrice},</if>
+         </trim>
+    </insert>
+
+    <update id="updateTOrderItem" parameterType="TOrderItem">
+        update t_order_item
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="orderId != null">order_id = #{orderId},</if>
+            <if test="productId != null">product_id = #{productId},</if>
+            <if test="productName != null and productName != ''">product_name = #{productName},</if>
+            <if test="productImage != null">product_image = #{productImage},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="spec != null and spec != ''">spec = #{spec},</if>
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="totalPrice != null">total_price = #{totalPrice},</if>
+        </trim>
+        where item_id = #{itemId}
+    </update>
+
+    <delete id="deleteTOrderItemByItemId" parameterType="Long">
+        delete from t_order_item where item_id = #{itemId}
+    </delete>
+
+    <delete id="deleteTOrderItemByItemIds" parameterType="String">
+        delete from t_order_item where item_id in 
+        <foreach item="itemId" collection="array" open="(" separator="," close=")">
+            #{itemId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteTOrderItemByOrderId" parameterType="Long">
+        delete from t_order_item where order_id = #{orderId}
+    </delete>
+
+    <delete id="deleteTOrderItemByOrderIds" parameterType="String">
+        delete from t_order_item where order_id in
+        <foreach item="orderId" collection="array" open="(" separator="," close=")">
+            #{orderId}
+        </foreach>
+    </delete>
+
+</mapper>

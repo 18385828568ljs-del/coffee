@@ -1,0 +1,35 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="boxBody" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#F5F0E9" />
+    </linearGradient>
+    <linearGradient id="boxFlap" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#D9C8B8" />
+      <stop offset="100%" stop-color="#A88568" />
+    </linearGradient>
+  </defs>
+  <ellipse cx="50" cy="85" rx="24" ry="3" fill="#EFE9E2" />
+
+  <polygon points="34,36 66,36 66,50 34,50" fill="#B08D72" opacity="0.22" />
+  <polygon points="24,50 34,36 34,50" fill="#A17C60" opacity="0.26" />
+  <polygon points="76,50 66,36 66,50" fill="#A17C60" opacity="0.22" />
+  <rect x="34" y="46" width="32" height="4" fill="#8A6448" opacity="0.12" />
+
+  <polygon points="34,36 66,36 60,20 40,20" fill="url(#boxFlap)" stroke="#8A6448" stroke-width="1.2" stroke-linejoin="round" />
+  <polygon points="24,50 34,36 18,30 8,44" fill="url(#boxFlap)" stroke="#8A6448" stroke-width="1.2" stroke-linejoin="round" />
+  <polygon points="76,50 66,36 82,30 92,44" fill="url(#boxFlap)" stroke="#8A6448" stroke-width="1.2" stroke-linejoin="round" />
+
+  <path d="M 24 50 L 76 50 L 76 78 A 3 3 0 0 1 73 81 L 27 81 A 3 3 0 0 1 24 78 Z" fill="url(#boxBody)" stroke="#8A6448" stroke-width="2" />
+  <polygon points="24,50 76,50 72,66 28,66" fill="#D9C8B8" opacity="0.5" />
+
+  <path d="M 24 54 A 4 4 0 0 1 28 50 L 72 50 A 4 4 0 0 1 76 54 L 76 61 Q 50 66 24 61 Z" fill="#FFFFFF" fill-opacity="0.62" />
+  <line x1="24" y1="50" x2="76" y2="50" stroke="#E7DED5" stroke-width="1.5" stroke-linecap="round" />
+
+  <rect x="40" y="58" width="20" height="12" rx="1" fill="#FFFFFF" opacity="0.96" />
+  <line x1="44" y1="62" x2="56" y2="62" stroke="#D2C7BD" stroke-width="1.5" stroke-linecap="round" />
+  <line x1="44" y1="66" x2="52" y2="66" stroke="#D2C7BD" stroke-width="1.5" stroke-linecap="round" />
+
+  <circle cx="76" cy="24" r="11" fill="#FFFFFF" stroke="#8A6448" stroke-width="2" />
+  <text x="76" y="29" font-size="14" font-weight="bold" fill="#8A6448" text-anchor="middle" font-family="Arial, sans-serif">0</text>
+</svg>

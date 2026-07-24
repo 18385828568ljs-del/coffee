@@ -1,0 +1,102 @@
+.ruoyi-upload-card {
+    border: 1px dashed #d0d7de;
+    border-radius: 8px;
+    cursor: pointer;
+    min-height: 220px;
+    overflow: hidden;
+    position: relative;
+    transition: border-color .2s ease, background-color .2s ease;
+}
+
+.ruoyi-upload-card:hover,
+.ruoyi-upload-card.is-dragover {
+    background: #f8fbff;
+    border-color: #1c84c6;
+}
+
+.ruoyi-upload-card input[type="file"] {
+    display: none;
+}
+
+.ruoyi-upload-empty,
+.ruoyi-upload-preview {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 218px;
+    padding: 24px;
+    text-align: center;
+}
+
+.ruoyi-upload-empty i {
+    color: #1c84c6;
+    font-size: 30px;
+    margin-bottom: 12px;
+}
+
+.ruoyi-upload-empty strong {
+    color: #333;
+    display: block;
+    font-size: 15px;
+    margin-bottom: 6px;
+}
+
+.ruoyi-upload-empty p {
+    color: #888;
+    margin: 0;
+}
+
+.ruoyi-upload-preview {
+    display: none;
+    padding: 12px;
+}
+
+.ruoyi-upload-card.has-file .ruoyi-upload-empty {
+    display: none;
+}
+
+.ruoyi-upload-card.has-file .ruoyi-upload-preview {
+    display: flex;
+}
+
+.ruoyi-upload-preview img {
+    border-radius: 6px;
+    height: 180px;
+    max-width: 100%;
+    object-fit: cover;
+}
+
+.ruoyi-upload-file {
+    align-items: center;
+    color: #555;
+    display: flex;
+    flex-direction: column;
+    min-height: 120px;
+    justify-content: center;
+}
+
+.ruoyi-upload-file i {
+    color: #1c84c6;
+    font-size: 34px;
+    margin-bottom: 10px;
+}
+
+.ruoyi-upload-file small {
+    color: #888;
+    margin-top: 6px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ruoyi-upload-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.ruoyi-upload-actions .btn {
+    min-width: 88px;
+}

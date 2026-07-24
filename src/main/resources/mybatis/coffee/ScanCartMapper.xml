@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.coffee.scanOrder.mapper.ScanCartMapper">
+
+    <resultMap type="ScanCart" id="ScanCartResult">
+        <result property="id"           column="id"            />
+        <result property="userId"       column="user_id"       />
+        <result property="openid"       column="openid"        />
+        <result property="shopId"       column="shop_id"       />
+        <result property="tableNo"      column="table_no"      />
+        <result property="productId"    column="product_id"    />
+        <result property="productName"  column="product_name"  />
+        <result property="productImage" column="product_image" />
+        <result property="price"        column="price"         />
+        <result property="quantity"     column="quantity"      />
+        <result property="specText"     column="spec_text"     />
+        <result property="specJson"     column="spec_json"     />
+        <result property="selected"     column="selected"      />
+        <result property="status"       column="status"        />
+        <result property="createTime"   column="create_time"   />
+        <result property="updateTime"   column="update_time"   />
+        <result property="delFlag"      column="del_flag"      />
+    </resultMap>
+
+    <sql id="selectScanCartVo">
+        select id, user_id, openid, shop_id, table_no,
+               product_id, product_name, product_image, price, quantity,
+               spec_text, spec_json, selected, status,
+               create_time, update_time, del_flag
+        from t_scan_cart
+    </sql>
+
+    <select id="selectScanCartById" parameterType="Long" resultMap="ScanCartResult">
+        <include refid="selectScanCartVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectScanCartList" parameterType="ScanCart" resultMap="ScanCartResult">
+        <include refid="selectScanCartVo"/>
+        <where>
+            del_flag = 0
+            <if test="userId != null"> and user_id = #{userId}</if>
+            <if test="openid != null and openid != ''"> and openid = #{openid}</if>
+            <if test="shopId != null"> and shop_id = #{shopId}</if>
+            <if test="tableNo != null and tableNo != ''"> and table_no = #{tableNo}</if>
+            <if test="productId != null"> and product_id = #{productId}</if>
+            <if test="status != null"> and status = #{status}</if>
+        </where>
+        order by
+        case when create_time is null then 1 else 0 end,
+        create_time desc,
+        id desc
+    </select>
+
+    <!--
+        匹配同一加购键:同用户(userId 或 openid 任一命中)、同门店、同桌号、同商品、同规格JSON。
+        userId 和 openid 至少一项非空,优先 userId。
+    -->
+    <select id="selectMatchingCart" parameterType="ScanCart" resultMap="ScanCartResult">
+        <include refid="selectScanCartVo"/>
+        <where>
+            del_flag = 0
+            and status = 1
+            and product_id = #{productId}
+            <if test="shopId != null"> and shop_id = #{shopId}</if>
+            <if test="tableNo != null and tableNo != ''"> and table_no = #{tableNo}</if>
+            <choose>
+                <when test="userId != null"> and user_id = #{userId}</when>
+                <when test="openid != null and openid != ''">
+                    and (user_id is null or user_id = 0) and openid = #{openid}
+                </when>
+                <otherwise>
+                    and (user_id is null or user_id = 0)
+                    and (openid is null or openid = '')
+                </otherwise>
+            </choose>
+            <choose>
+                <when test="specJson != null and specJson != ''">
+                    and spec_json = #{specJson}
+                </when>
+                <otherwise>
+                    and (spec_json is null or spec_json = '')
+                </otherwise>
+            </choose>
+        </where>
+        order by id asc
+        limit 1
+    </select>
+
+    <insert id="insertScanCart" parameterType="ScanCart" useGeneratedKeys="true" keyProperty="id">
+        insert into t_scan_cart
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="openid != null and openid != ''">openid,</if>
+            <if test="shopId != null">shop_id,</if>
+            <if test="tableNo != null and tableNo != ''">table_no,</if>
+            <if test="productId != null">product_id,</if>
+            <if test="productName != null and productName != ''">product_name,</if>
+            <if test="productImage != null">product_image,</if>
+            <if test="price != null">price,</if>
+            <if test="quantity != null">quantity,</if>
+            <if test="specText != null">spec_text,</if>
+            <if test="specJson != null">spec_json,</if>
+            <if test="selected != null">selected,</if>
+            <if test="status != null">status,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="delFlag != null">del_flag,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="openid != null and openid != ''">#{openid},</if>
+            <if test="shopId != null">#{shopId},</if>
+            <if test="tableNo != null and tableNo != ''">#{tableNo},</if>
+            <if test="productId != null">#{productId},</if>
+            <if test="productName != null and productName != ''">#{productName},</if>
+            <if test="productImage != null">#{productImage},</if>
+            <if test="price != null">#{price},</if>
+            <if test="quantity != null">#{quantity},</if>
+            <if test="specText != null">#{specText},</if>
+            <if test="specJson != null">#{specJson},</if>
+            <if test="selected != null">#{selected},</if>
+            <if test="status != null">#{status},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="delFlag != null">#{delFlag},</if>
+        </trim>
+    </insert>
+
+    <update id="updateScanCart" parameterType="ScanCart">
+        update t_scan_cart
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="openid != null">openid = #{openid},</if>
+            <if test="shopId != null">shop_id = #{shopId},</if>
+            <if test="tableNo != null">table_no = #{tableNo},</if>
+            <if test="productId != null">product_id = #{productId},</if>
+            <if test="productName != null">product_name = #{productName},</if>
+            <if test="productImage != null">product_image = #{productImage},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="specText != null">spec_text = #{specText},</if>
+            <if test="specJson != null">spec_json = #{specJson},</if>
+            <if test="selected != null">selected = #{selected},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="delFlag != null">del_flag = #{delFlag},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <update id="logicDeleteById" parameterType="Long">
+        update t_scan_cart
+        set del_flag = 1, update_time = now()
+        where id = #{id}
+          and del_flag = 0
+    </update>
+
+    <update id="logicDeleteByOwnerAndTable" parameterType="ScanCart">
+        update t_scan_cart
+        set del_flag = 1, update_time = now()
+        <where>
+            del_flag = 0
+            <if test="shopId != null"> and shop_id = #{shopId}</if>
+            <if test="tableNo != null and tableNo != ''"> and table_no = #{tableNo}</if>
+            <choose>
+                <when test="userId != null"> and user_id = #{userId}</when>
+                <when test="openid != null and openid != ''">
+                    and openid = #{openid}
+                </when>
+                <otherwise>
+                    and 1 = 0
+                </otherwise>
+            </choose>
+        </where>
+    </update>
+
+</mapper>

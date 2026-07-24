@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <th:block th:include="include :: header('会员列表')" />
+    <style>
+        .level-config-panel {
+            margin: 12px 0 16px;
+            padding: 14px 18px;
+            background: #fff;
+            border: 1px solid #e7eaec;
+            border-radius: 4px;
+        }
+        .level-config-panel .panel-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .level-config-panel .panel-tip {
+            font-size: 12px;
+            color: #999;
+            font-weight: normal;
+            margin-left: 8px;
+        }
+        .level-config-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 0;
+            flex-wrap: wrap;
+        }
+        .level-config-row .level-tag {
+            min-width: 36px;
+            font-weight: 600;
+            color: #444;
+        }
+        .level-config-row .name-input {
+            width: 150px;
+            height: 28px;
+            padding: 2px 8px;
+            border: 1px solid #d2d6de;
+            border-radius: 2px;
+        }
+        .level-config-row .threshold-input {
+            width: 100px;
+            height: 28px;
+            padding: 2px 8px;
+            border: 1px solid #d2d6de;
+            border-radius: 2px;
+            text-align: right;
+        }
+        .level-config-row .threshold-input[disabled] {
+            background: #f4f4f4;
+            color: #999;
+        }
+        .level-config-row .rate-input {
+            width: 90px;
+            height: 28px;
+            padding: 2px 8px;
+            border: 1px solid #d2d6de;
+            border-radius: 2px;
+            text-align: center;
+        }
+        .level-config-row .field-label {
+            color: #888;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body class="gray-bg">
+     <div class="container-div">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="level-config-panel" shiro:hasPermission="coffee:member:edit">
+                    <div class="panel-title">
+                        会员等级配置
+                        <span class="panel-tip">名称最多 16 字; 升级阈值单位元, Lv1 固定为 0 不可改, 阈值必须逐级递增; 折扣率填 0~1 小数 (如 0.95 = 95 折); 改完点对应「保存」立即对所有同等级用户生效, 全表会按新规则重新评估等级</span>
+                    </div>
+                    <div>
+                        <div class="level-config-row" th:each="row : ${levelRows}">
+                            <span class="level-tag" th:text="'Lv' + ${row.level}">Lv1</span>
+                            <input type="text" maxlength="16" placeholder="等级名称"
+                                   class="name-input"
+                                   th:id="'name-input-' + ${row.level}"
+                                   th:value="${row.levelName}" />
+                            <input type="number" step="1" min="0" placeholder="升级阈值"
+                                   class="threshold-input"
+                                   th:id="'threshold-input-' + ${row.level}"
+                                   th:value="${row.threshold}"
+                                   th:disabled="${row.level == 1}" />
+                            <span class="field-label">元升级</span>
+                            <input type="number" step="0.01" min="0.01" max="1" placeholder="折扣率"
+                                   class="rate-input"
+                                   th:id="'rate-input-' + ${row.level}"
+                                   th:value="${row.rate}" />
+                            <span class="field-label">折扣率</span>
+                            <button type="button" class="btn btn-primary btn-sm"
+                                    th:onclick="'saveLevelConfig(' + ${row.level} + ')'">保存</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-12 select-table table-striped">
+                <table id="bootstrap-table"></table>
+            </div>
+        </div>
+    </div>
+    <th:block th:include="include :: footer" />
+    <script th:inline="javascript">
+        var prefix = ctx + "coffee/member";
+
+        $(function() {
+            var options = {
+                url: prefix + "/list",
+                modalName: "会员",
+                columns: [{
+                    checkbox: true
+                },
+                {
+                    field: 'memberId',
+                    title: '会员ID',
+                    visible: false
+                },
+                {
+                    field: 'userId',
+                    title: '用户ID',
+                    width: 100
+                },
+                {
+                    field: 'level',
+                    title: '等级',
+                    width: 80,
+                    align: 'center',
+                    formatter: function(value) {
+                        var cls = ['', 'badge-default', 'badge-info', 'badge-warning', 'badge-danger'];
+                        return '<span class="badge ' + (cls[value] || '') + '">Lv' + value + '</span>';
+                    }
+                },
+                {
+                    field: 'levelName',
+                    title: '等级名称',
+                    width: 120
+                },
+                {
+                    field: 'discountRate',
+                    title: '折扣率',
+                    width: 90,
+                    align: 'center',
+                    formatter: function(value) {
+                        if (value == 1 || value == '1.00') return '不打折';
+                        return (value * 100).toFixed(0) + '折';
+                    }
+                },
+                {
+                    field: 'totalSpending',
+                    title: '累计消费(元)',
+                    width: 120,
+                    align: 'right',
+                    formatter: function(value) {
+                        return '¥' + parseFloat(value || 0).toFixed(2);
+                    }
+                },
+                {
+                    field: 'createTime',
+                    title: '加入时间',
+                    width: 160
+                }]
+            };
+            $.table.init(options);
+        });
+
+        function saveLevelConfig(level) {
+            var name = ($('#name-input-' + level).val() || '').trim();
+            var rate = ($('#rate-input-' + level).val() || '').trim();
+            var threshold = ($('#threshold-input-' + level).val() || '').trim();
+            if (!name) {
+                $.modal.alertWarning('请填写等级名称');
+                return;
+            }
+            if (name.length > 16) {
+                $.modal.alertWarning('等级名称最多 16 个字符');
+                return;
+            }
+            if (!rate) {
+                $.modal.alertWarning('请填写折扣率');
+                return;
+            }
+            var rateNum = parseFloat(rate);
+            if (isNaN(rateNum) || rateNum <= 0 || rateNum > 1) {
+                $.modal.alertWarning('折扣率必须在 (0, 1] 之间');
+                return;
+            }
+            if (level > 1) {
+                if (!threshold) {
+                    $.modal.alertWarning('请填写升级阈值');
+                    return;
+                }
+                var thresholdNum = parseFloat(threshold);
+                if (isNaN(thresholdNum) || thresholdNum <= 0) {
+                    $.modal.alertWarning('升级阈值必须大于 0');
+                    return;
+                }
+            }
+            $.modal.loading('正在保存...');
+            $.ajax({
+                url: prefix + '/saveLevelConfig',
+                type: 'POST',
+                data: {
+                    level: level,
+                    levelName: name,
+                    threshold: level === 1 ? '0' : threshold,
+                    rate: rate
+                },
+                success: function(res) {
+                    $.modal.closeLoading();
+                    if (res && res.code === 0) {
+                        $.modal.msgSuccess(res.msg || '保存成功');
+                        // 全表重算后,刷新列表看到新名称/折扣/可能的等级变化
+                        if ($.table && typeof $.table.refresh === 'function') {
+                            $.table.refresh();
+                        }
+                    } else {
+                        $.modal.alertError((res && res.msg) || '保存失败');
+                    }
+                },
+                error: function() {
+                    $.modal.closeLoading();
+                    $.modal.alertError('保存失败,请稍后重试');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

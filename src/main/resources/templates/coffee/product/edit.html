@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" >
+<head>
+    <th:block th:include="include :: header('修改商品')" />
+    <th:block th:include="include :: select2-css" />
+    <style>
+        .coffee-search-field {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+            background-position: 10px center;
+            background-repeat: no-repeat;
+            background-size: 14px 14px;
+            padding-left: 32px !important;
+        }
+        .product-select-dropdown {
+            z-index: 3000;
+        }
+        .product-select-dropdown.select2-dropdown--above {
+            border-top: 0;
+            border-bottom: 1px solid #66afe9;
+        }
+        .product-select-dropdown .select2-search--dropdown {
+            padding: 8px;
+        }
+        .product-select-dropdown .select2-search__field {
+            height: 32px;
+            border-radius: 4px;
+        }
+        .product-select-dropdown .select2-results > .select2-results__options {
+            max-height: 260px;
+            overflow-y: auto;
+        }
+        .product-images-manager input[type="file"] {
+            display: none;
+        }
+        .product-images-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .product-image-item {
+            background: #fff;
+            border: 1px solid #e5e6e7;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            width: 146px;
+        }
+        .product-image-item img {
+            display: block;
+            height: 110px;
+            object-fit: cover;
+            width: 100%;
+        }
+        .product-image-main {
+            background: rgba(28, 132, 198, .95);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 12px;
+            left: 8px;
+            line-height: 20px;
+            padding: 0 8px;
+            position: absolute;
+            top: 8px;
+        }
+        .product-image-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 8px;
+        }
+        .product-image-add {
+            border-style: dashed;
+            min-width: 146px;
+        }
+    </style>
+</head>
+<body class="white-bg">
+    <div class="wrapper wrapper-content animated fadeInRight ibox-content">
+        <form class="form-horizontal m" id="form-product-edit" th:object="${tProduct}">
+            <input name="productId" th:field="*{productId}" type="hidden">
+            <h4 class="form-header h4">基础信息</h4>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label is-required">商品分类：</label>
+                        <div class="col-sm-8">
+                            <select name="categoryId" class="form-control m-b product-searchable-select" data-placeholder="请选择商品分类" required>
+                                <option value="">请选择商品分类</option>
+                                <option th:each="category : ${categories}"
+                                        th:value="${category.categoryId}"
+                                        th:selected="${category.categoryId == tProduct.categoryId}"
+                                        th:text="${category.categoryName}"></option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label is-required">商品名称：</label>
+                        <div class="col-sm-8">
+                            <input name="productName" th:field="*{productName}" class="form-control" type="text" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label is-required">价格：</label>
+                        <div class="col-sm-8">
+                            <input name="price" th:field="*{price}" class="form-control" type="number" min="0" step="0.01" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label is-required">库存：</label>
+                        <div class="col-sm-8">
+                            <input name="stock" th:field="*{stock}" class="form-control" type="number" min="0" step="1" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">规格：</label>
+                        <div class="col-sm-8">
+                            <input name="remark" th:field="*{remark}" class="form-control" type="text" placeholder="例如：227g/包">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4 class="form-header h4">咖啡属性</h4>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">产地：</label>
+                        <div class="col-sm-8">
+                            <select name="origin" class="form-control m-b coffee-attribute-select" data-placeholder="请选择或搜索产地">
+                                <option value="">请选择产地</option>
+                                <option th:each="option : ${originOptions}" th:value="${option}" th:text="${option}" th:selected="${tProduct.origin == option}"></option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">处理法：</label>
+                        <div class="col-sm-8">
+                            <select name="processingMethod" class="form-control m-b coffee-attribute-select" data-placeholder="请选择或搜索处理法">
+                                <option value="">请选择处理法</option>
+                                <option th:each="option : ${processingMethodOptions}" th:value="${option}" th:text="${option}" th:selected="${tProduct.processingMethod == option}"></option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">烘焙度：</label>
+                        <div class="col-sm-8">
+                            <select name="roastLevel" class="form-control m-b coffee-attribute-select" data-placeholder="请选择或搜索烘焙度">
+                                <option value="">请选择烘焙度</option>
+                                <option th:each="option : ${roastLevelOptions}" th:value="${option}" th:text="${option}" th:selected="${tProduct.roastLevel == option}"></option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">风味：</label>
+                        <div class="col-sm-8">
+                            <select name="flavorNotes" class="form-control m-b coffee-attribute-select" data-placeholder="请选择或搜索风味">
+                                <option value="">请选择风味</option>
+                                <option th:each="option : ${flavorOptions}" th:value="${option}" th:text="${option}" th:selected="${tProduct.flavorNotes == option}"></option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <label class="col-xs-2 control-label">描述：</label>
+                        <div class="col-xs-10">
+                            <textarea name="description" class="form-control" rows="4">[[*{description}]]</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4 class="form-header h4">图片与状态</h4>
+            <div class="form-group">
+                        <label class="col-sm-3 control-label">商品图片：</label>
+                        <div class="col-sm-8">
+                            <input type="hidden" name="imageUrl" th:field="*{imageUrl}">
+                    <input type="hidden" name="imageUrlsText" id="imageUrlsText">
+                    <div class="product-images-manager" id="productImagesManager">
+                        <input id="imageUrlFile" accept="image/*" name="file" type="file">
+                        <div class="product-images-list" id="productImagesList"></div>
+                        <button class="btn btn-default product-image-add" id="addProductImage" type="button">
+                            <i class="fa fa-plus"></i> 上传图片
+                        </button>
+                        <p class="help-block">最多 6 张，第一张为主图。可调整顺序或移除图片。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">商品状态：</label>
+                <div class="col-sm-8">
+                    <select name="status" class="form-control m-b product-searchable-select" data-placeholder="请选择商品状态">
+                        <option value="1" th:selected="${tProduct.status == 1}">上架</option>
+                        <option value="0" th:selected="${tProduct.status == 0}">下架</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+    </div>
+    <th:block th:include="include :: footer" />
+    <th:block th:include="include :: select2-js" />
+    <script th:inline="javascript">
+        var prefix = ctx + "coffee/product";
+        var productImages = [[${tProduct.imageUrls}]];
+        var productSelectPositionEvent = "scroll.productSelectPosition resize.productSelectPosition";
+        var $productSelectScrollParents = $();
+
+        function positionDropdownBelow($select, focusSearch) {
+            var applyPosition = function() {
+                var $container = $select.next(".select2-container");
+                var $selection = $container.find(".select2-selection");
+                var $dropdownWrap = $(".select2-container--open").has(".select2-dropdown").last();
+                if (!$selection.length || !$dropdownWrap.length) {
+                    return;
+                }
+
+                var offset = $selection.offset();
+                $dropdownWrap.css({
+                    top: offset.top + $selection.outerHeight(),
+                    left: offset.left,
+                    width: $selection.outerWidth()
+                });
+                $dropdownWrap
+                    .removeClass("select2-container--above")
+                    .addClass("select2-container--below");
+                $dropdownWrap.find(".select2-dropdown")
+                    .addClass("product-select-dropdown")
+                    .removeClass("select2-dropdown--above")
+                    .addClass("select2-dropdown--below");
+                var $search = $(".select2-container--open .select2-search__field")
+                    .addClass("coffee-search-field")
+                    .attr("placeholder", "输入关键词搜索");
+                if (focusSearch) {
+                    $search.trigger("focus");
+                }
+            };
+
+            window.setTimeout(applyPosition, 0);
+            window.setTimeout(applyPosition, 30);
+            if (window.requestAnimationFrame) {
+                window.requestAnimationFrame(applyPosition);
+            }
+        }
+
+        function unbindDropdownPositionEvents() {
+            $(window).off(productSelectPositionEvent);
+            $(document).off(productSelectPositionEvent);
+            $productSelectScrollParents.off(productSelectPositionEvent);
+            $productSelectScrollParents = $();
+        }
+
+        function bindDropdownPositionEvents($select) {
+            unbindDropdownPositionEvents();
+            $productSelectScrollParents = $select.parents().filter(function() {
+                var overflow = $(this).css("overflow") + $(this).css("overflow-y") + $(this).css("overflow-x");
+                return /(auto|scroll)/.test(overflow);
+            });
+            $(window).on(productSelectPositionEvent, function() {
+                positionDropdownBelow($select, false);
+            });
+            $(document).on(productSelectPositionEvent, function() {
+                positionDropdownBelow($select, false);
+            });
+            $productSelectScrollParents.on(productSelectPositionEvent, function() {
+                positionDropdownBelow($select, false);
+            });
+        }
+
+        function initProductSelects($selects, allowClear) {
+            $selects.select2({
+                theme: "bootstrap",
+                width: "100%",
+                allowClear: !!allowClear,
+                dropdownAutoWidth: false,
+                minimumResultsForSearch: 0,
+                placeholder: function() {
+                    return $(this).data("placeholder") || $(this).find("option:first").text() || "请选择";
+                },
+                language: {
+                    noResults: function() {
+                        return "没有找到匹配的选项";
+                    },
+                    searching: function() {
+                        return "搜索中...";
+                    }
+                }
+            }).on("select2:open", function() {
+                var $currentSelect = $(this);
+                bindDropdownPositionEvents($currentSelect);
+                positionDropdownBelow($currentSelect, true);
+            }).on("select2:close", function() {
+                unbindDropdownPositionEvents();
+            });
+        }
+
+        initProductSelects($(".product-searchable-select"), false);
+        initProductSelects($(".coffee-attribute-select"), true);
+
+        function initProductImagesManager(initialImages) {
+            var maxImages = 6;
+            var images = [];
+            var $fileInput = $("#imageUrlFile");
+            var $list = $("#productImagesList");
+            var $imageUrl = $("input[name='imageUrl']");
+            var $imageUrlsText = $("#imageUrlsText");
+
+            function normalize(url) {
+                return $.trim(url || "");
+            }
+
+            function escapeAttr(value) {
+                return String(value || "")
+                    .replace(/&/g, "&amp;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;");
+            }
+
+            function syncInputs() {
+                $imageUrl.val(images[0] || "");
+                $imageUrlsText.val(JSON.stringify(images));
+            }
+
+            function render() {
+                $list.empty();
+                images.forEach(function(url, index) {
+                    var $item = $('<div class="product-image-item"></div>');
+                    $item.append('<img src="' + escapeAttr(url) + '" alt="商品图片">');
+                    if (index === 0) {
+                        $item.append('<span class="product-image-main">主图</span>');
+                    }
+                    var $actions = $('<div class="product-image-actions"></div>');
+                    $actions.append('<button type="button" class="btn btn-white btn-xs image-up" ' + (index === 0 ? 'disabled' : '') + '>上移</button>');
+                    $actions.append('<button type="button" class="btn btn-white btn-xs image-down" ' + (index === images.length - 1 ? 'disabled' : '') + '>下移</button>');
+                    $actions.append('<button type="button" class="btn btn-danger btn-xs image-remove">移除</button>');
+                    $item.append($actions);
+                    $item.data("index", index);
+                    $list.append($item);
+                });
+                $("#addProductImage").prop("disabled", images.length >= maxImages);
+                syncInputs();
+            }
+
+            function addImage(url) {
+                url = normalize(url);
+                if (!url) {
+                    return;
+                }
+                if (images.indexOf(url) !== -1) {
+                    $.modal.alertWarning("这张图片已经添加过了");
+                    return;
+                }
+                if (images.length >= maxImages) {
+                    $.modal.alertWarning("最多只能上传 6 张图片");
+                    return;
+                }
+                images.push(url);
+                render();
+            }
+
+            function upload(file) {
+                if (!file) {
+                    return;
+                }
+                var ext = (file.name || "").split(".").pop().toLowerCase();
+                if ($.inArray(ext, ["jpg", "jpeg", "png", "gif"]) === -1) {
+                    $.modal.alertWarning("请选择正确格式的图片");
+                    $fileInput.val("");
+                    return;
+                }
+                var formData = new FormData();
+                formData.append("file", file);
+                $.modal.loading("图片上传中，请稍候...");
+                $.ajax({
+                    url: (window.ctx || "") + "common/upload",
+                    type: "post",
+                    data: formData,
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    success: function(result) {
+                        $.modal.closeLoading();
+                        if (result.code === 0 && result.url) {
+                            addImage(result.url);
+                            $.modal.msgSuccess("图片上传成功");
+                            return;
+                        }
+                        $.modal.alertError(result.msg || "图片上传失败");
+                    },
+                    error: function() {
+                        $.modal.closeLoading();
+                        $.modal.alertError("图片上传失败，请重试");
+                    },
+                    complete: function() {
+                        $fileInput.val("");
+                    }
+                });
+            }
+
+            (initialImages || []).forEach(addImage);
+            render();
+
+            $("#addProductImage").on("click", function() {
+                if (images.length >= maxImages) {
+                    $.modal.alertWarning("最多只能上传 6 张图片");
+                    return;
+                }
+                $fileInput.trigger("click");
+            });
+            $fileInput.on("change", function() {
+                if (this.files && this.files.length) {
+                    upload(this.files[0]);
+                }
+            });
+            $list.on("click", ".image-remove", function() {
+                var index = $(this).closest(".product-image-item").data("index");
+                images.splice(index, 1);
+                render();
+            });
+            $list.on("click", ".image-up", function() {
+                var index = $(this).closest(".product-image-item").data("index");
+                if (index > 0) {
+                    var temp = images[index - 1];
+                    images[index - 1] = images[index];
+                    images[index] = temp;
+                    render();
+                }
+            });
+            $list.on("click", ".image-down", function() {
+                var index = $(this).closest(".product-image-item").data("index");
+                if (index < images.length - 1) {
+                    var temp = images[index + 1];
+                    images[index + 1] = images[index];
+                    images[index] = temp;
+                    render();
+                }
+            });
+        }
+
+        initProductImagesManager(productImages || []);
+
+        $("#form-product-edit").validate({
+            focusCleanup: true
+        });
+
+        function submitHandler() {
+            if ($.validate.form()) {
+                $.operate.save(prefix + "/edit", $('#form-product-edit').serialize());
+            }
+        }
+    </script>
+</body>
+</html>

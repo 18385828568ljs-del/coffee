@@ -1,0 +1,25 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="orderClip" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#F5F0E9" />
+    </linearGradient>
+    <linearGradient id="orderClipDark" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#BFA791" />
+      <stop offset="100%" stop-color="#8A6448" />
+    </linearGradient>
+  </defs>
+  <ellipse cx="50" cy="85" rx="22" ry="3" fill="#EFE9E2" />
+  <rect x="26" y="32" width="48" height="48" rx="4" fill="url(#orderClip)" stroke="#8A6448" stroke-width="2" />
+  <rect x="40" y="26" width="20" height="10" rx="3" fill="url(#orderClipDark)" />
+  <circle cx="50" cy="31" r="2" fill="#6F4E37" opacity="0.22" />
+  <rect x="30" y="40" width="40" height="36" rx="2" fill="#FFFFFF" />
+  <polygon points="70,66 70,76 60,76" fill="#E8DED5" />
+  <path d="M 26 36 A 4 4 0 0 1 30 32 L 70 32 A 4 4 0 0 1 74 36 L 74 46 Q 50 52 26 46 Z" fill="#FFFFFF" fill-opacity="0.62" />
+  <circle cx="50" cy="54" r="7" fill="none" stroke="#B7A79A" stroke-width="2" />
+  <line x1="55" y1="59" x2="60" y2="64" stroke="#B7A79A" stroke-width="2" stroke-linecap="round" />
+  <line x1="48" y1="52" x2="52" y2="56" stroke="#B7A79A" stroke-width="1.5" stroke-linecap="round" />
+  <line x1="52" y1="52" x2="48" y2="56" stroke="#B7A79A" stroke-width="1.5" stroke-linecap="round" />
+  <circle cx="74" cy="24" r="11" fill="#FFFFFF" stroke="#8A6448" stroke-width="2" />
+  <text x="74" y="29" font-size="14" font-weight="bold" fill="#8A6448" text-anchor="middle" font-family="Arial, sans-serif">0</text>
+</svg>

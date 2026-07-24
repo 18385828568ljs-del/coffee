@@ -1,0 +1,21 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="nav_cart_active" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#A27A5C" />
+      <stop offset="100%" stop-color="#6F4E37" />
+    </linearGradient>
+    <linearGradient id="nav_cart_active_dark" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#8C6548" />
+      <stop offset="100%" stop-color="#5A3F2C" />
+    </linearGradient>
+  </defs>
+  <!-- 购物车提手与支架 -->
+  <path d="M 22 24 L 32 24 L 42 68 L 76 68" fill="none" stroke="url(#nav_cart_active_dark)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+  <!-- 车轮 -->
+  <circle cx="46" cy="80" r="7" fill="url(#nav_cart_active_dark)" />
+  <circle cx="70" cy="80" r="7" fill="url(#nav_cart_active_dark)" />
+  <!-- 极简车筐 -->
+  <path d="M 36 34 L 84 34 L 76 56 L 40 56 Z" fill="url(#nav_cart_active)" />
+  <!-- 车筐反光高光 -->
+  <path d="M 36 34 L 84 34 L 80 44 L 39 44 Z" fill="rgba(255,255,255,0.3)" />
+</svg>

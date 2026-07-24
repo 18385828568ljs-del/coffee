@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.coffee.scanOrder.mapper.ScanCategoryMapper">
+
+    <resultMap type="ScanCategory" id="ScanCategoryResult">
+        <result property="categoryId"   column="category_id"   />
+        <result property="categoryName" column="category_name" />
+        <result property="icon"         column="icon"          />
+        <result property="sortOrder"    column="sort_order"    />
+        <result property="status"       column="status"        />
+        <result property="createBy"     column="create_by"     />
+        <result property="createTime"   column="create_time"   />
+        <result property="updateBy"     column="update_by"     />
+        <result property="updateTime"   column="update_time"   />
+        <result property="remark"       column="remark"        />
+    </resultMap>
+
+    <sql id="selectScanCategoryVo">
+        select category_id, category_name, icon, sort_order, status,
+               create_by, create_time, update_by, update_time, remark
+        from t_scan_category
+    </sql>
+
+    <select id="selectScanCategoryById" parameterType="Long" resultMap="ScanCategoryResult">
+        <include refid="selectScanCategoryVo"/>
+        where category_id = #{categoryId}
+    </select>
+
+    <select id="selectScanCategoryList" parameterType="ScanCategory" resultMap="ScanCategoryResult">
+        <include refid="selectScanCategoryVo"/>
+        <where>
+            <if test="categoryName != null and categoryName != ''">
+                and category_name like concat('%', #{categoryName}, '%')
+            </if>
+            <if test="status != null"> and status = #{status}</if>
+        </where>
+        order by
+        case when sort_order is null then 1 else 0 end,
+        sort_order asc,
+        category_id asc
+    </select>
+
+    <insert id="insertScanCategory" parameterType="ScanCategory" useGeneratedKeys="true" keyProperty="categoryId">
+        insert into t_scan_category
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            category_name,
+            <if test="icon != null and icon != ''">icon,</if>
+            <if test="sortOrder != null">sort_order,</if>
+            <if test="status != null">status,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{categoryName},
+            <if test="icon != null and icon != ''">#{icon},</if>
+            <if test="sortOrder != null">#{sortOrder},</if>
+            <if test="status != null">#{status},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateScanCategory" parameterType="ScanCategory">
+        update t_scan_category
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="categoryName != null and categoryName != ''">category_name = #{categoryName},</if>
+            <if test="icon != null">icon = #{icon},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where category_id = #{categoryId}
+    </update>
+
+    <delete id="deleteScanCategoryByIds" parameterType="String">
+        delete from t_scan_category where category_id in
+        <foreach collection="array" item="categoryId" open="(" separator="," close=")">
+            #{categoryId}
+        </foreach>
+    </delete>
+
+</mapper>

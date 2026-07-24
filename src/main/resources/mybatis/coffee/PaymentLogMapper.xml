@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.coffee.payment.mapper.PaymentLogMapper">
+
+    <resultMap type="com.ruoyi.project.coffee.payment.domain.PaymentLog" id="PaymentLogResult">
+        <id property="logId" column="log_id" />
+        <result property="businessType" column="business_type" />
+        <result property="businessNo" column="business_no" />
+        <result property="userId" column="user_id" />
+        <result property="payType" column="pay_type" />
+        <result property="payChannel" column="pay_channel" />
+        <result property="amount" column="amount" />
+        <result property="status" column="status" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <select id="selectPaymentLogList" parameterType="com.ruoyi.project.coffee.payment.domain.PaymentLog"
+            resultMap="PaymentLogResult">
+        select log_id, business_type, business_no, user_id, pay_type, pay_channel, amount, status,
+               create_time, update_time
+        from t_payment_log
+        <where>
+            <if test="businessType != null and businessType != ''">
+                and business_type = #{businessType}
+            </if>
+            <if test="businessNo != null and businessNo != ''">
+                and business_no like concat('%', #{businessNo}, '%')
+            </if>
+            <if test="userId != null">
+                and user_id = #{userId}
+            </if>
+            <if test="payType != null and payType != ''">
+                and pay_type = #{payType}
+            </if>
+            <if test="payChannel != null and payChannel != ''">
+                and pay_channel = #{payChannel}
+            </if>
+            <if test="status != null and status != ''">
+                and status = #{status}
+            </if>
+        </where>
+        order by create_time desc, log_id desc
+    </select>
+
+    <insert id="insertPaymentLog" parameterType="com.ruoyi.project.coffee.payment.domain.PaymentLog"
+            useGeneratedKeys="true" keyProperty="logId">
+        insert into t_payment_log (
+            business_type, business_no, user_id, pay_type, pay_channel, amount, status,
+            create_time, update_time
+        ) values (
+            #{businessType}, #{businessNo}, #{userId}, #{payType}, #{payChannel}, #{amount}, #{status},
+            #{createTime}, #{updateTime}
+        )
+    </insert>
+</mapper>

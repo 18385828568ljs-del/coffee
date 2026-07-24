@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c 'import pathlib,re; root=pathlib.Path\\(\"d:/a-xcx/xcx-ruoyi-uniapp-wx/sql\"\\); pat=re.compile\\(r\"CREATE\\\\s+TABLE|INSERT\\\\s+INTO\\\\s+[`]?sys_menu[`]?|ALTER\\\\s+TABLE|DROP\\\\s+TABLE|UPDATE\\\\s+[`]?sys_menu[`]?|DELETE\\\\s+FROM\\\\s+[`]?sys_menu[`]?\", re.I\\); *)"
+    ]
+  }
+}
