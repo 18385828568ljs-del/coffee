@@ -14,6 +14,7 @@ import com.ruoyi.framework.web.controller.BaseController;
 import com.ruoyi.framework.web.domain.AjaxResult;
 import com.ruoyi.project.coffee.cart.domain.TCart;
 import com.ruoyi.project.coffee.auth.WxUserAuthContext;
+import com.ruoyi.project.coffee.behavior.service.UserBehaviorEventService;
 import com.ruoyi.project.coffee.cart.service.ITCartService;
 
 /**
@@ -25,6 +26,9 @@ public class CartApiController extends BaseController
 {
     @Autowired
     private ITCartService cartService;
+
+    @Autowired
+    private UserBehaviorEventService userBehaviorEventService;
 
     @GetMapping("/list")
     public AjaxResult getCartList()
@@ -62,11 +66,19 @@ public class CartApiController extends BaseController
         {
             TCart existCart = existList.get(0);
             existCart.setQuantity(existCart.getQuantity() + cart.getQuantity());
-            cartService.updateTCart(existCart);
+            if (cartService.updateTCart(existCart) > 0)
+            {
+                userBehaviorEventService.recordFirstCartAdd(userId,
+                    UserBehaviorEventService.SCENE_MALL, existCart.getProductId(), null, existCart.getCartId());
+            }
             return AjaxResult.success("已更新购物车数量");
         }
 
-        cartService.insertTCart(cart);
+        if (cartService.insertTCart(cart) > 0)
+        {
+            userBehaviorEventService.recordFirstCartAdd(userId,
+                UserBehaviorEventService.SCENE_MALL, cart.getProductId(), null, cart.getCartId());
+        }
         return AjaxResult.success("已添加到购物车");
     }
 

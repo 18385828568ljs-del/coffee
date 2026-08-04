@@ -11,6 +11,7 @@ import java.util.Collections;
 import com.ruoyi.framework.web.domain.AjaxResult;
 import com.ruoyi.project.abucoder.wxuser.domain.AbucoderWxuser;
 import com.ruoyi.project.coffee.auth.WxUserAuthContext;
+import com.ruoyi.project.coffee.behavior.service.UserBehaviorEventService;
 import com.ruoyi.project.coffee.cart.domain.TCart;
 import com.ruoyi.project.coffee.cart.service.ITCartService;
 import org.junit.jupiter.api.AfterEach;
@@ -28,12 +29,16 @@ class CartApiControllerTest
     @Mock
     private ITCartService cartService;
 
+    @Mock
+    private UserBehaviorEventService userBehaviorEventService;
+
     @BeforeEach
     void setUp()
     {
         MockitoAnnotations.openMocks(this);
         controller = new CartApiController();
         ReflectionTestUtils.setField(controller, "cartService", cartService);
+        ReflectionTestUtils.setField(controller, "userBehaviorEventService", userBehaviorEventService);
         bindUser(10L);
     }
 
@@ -86,6 +91,8 @@ class CartApiControllerTest
         TCart incoming = new TCart();
         incoming.setProductId(5L);
         incoming.setQuantity(2L);
+        incoming.setCartId(30L);
+        when(cartService.insertTCart(incoming)).thenReturn(1);
         when(cartService.selectTCartList(any(TCart.class))).thenReturn(Collections.emptyList());
 
         AjaxResult result = controller.addToCart(incoming);
@@ -94,6 +101,8 @@ class CartApiControllerTest
         assertEquals(10L, incoming.getUserId());
         assertEquals("", incoming.getSpec());
         verify(cartService).insertTCart(incoming);
+        verify(userBehaviorEventService).recordFirstCartAdd(10L, UserBehaviorEventService.SCENE_MALL,
+            5L, null, 30L);
     }
 
     @Test

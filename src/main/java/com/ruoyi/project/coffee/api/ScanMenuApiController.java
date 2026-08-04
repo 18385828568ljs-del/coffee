@@ -3,6 +3,7 @@ package com.ruoyi.project.coffee.api;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.framework.web.controller.BaseController;
 import com.ruoyi.framework.web.domain.AjaxResult;
+import com.ruoyi.project.coffee.auth.WxUserTokenService;
+import com.ruoyi.project.coffee.behavior.service.UserBehaviorEventService;
 import com.ruoyi.project.coffee.scanOrder.domain.ScanCategory;
 import com.ruoyi.project.coffee.scanOrder.domain.ScanProduct;
 import com.ruoyi.project.coffee.scanOrder.domain.ScanTableQrcode;
@@ -35,6 +38,12 @@ public class ScanMenuApiController extends BaseController
 
     @Autowired
     private IScanTableQrcodeService scanTableQrcodeService;
+
+    @Autowired
+    private WxUserTokenService wxUserTokenService;
+
+    @Autowired
+    private UserBehaviorEventService userBehaviorEventService;
 
     @GetMapping("/categories")
     public AjaxResult getCategoryList()
@@ -62,7 +71,7 @@ public class ScanMenuApiController extends BaseController
     }
 
     @GetMapping("/products/{productId}")
-    public AjaxResult getProductDetail(@PathVariable Long productId)
+    public AjaxResult getProductDetail(@PathVariable Long productId, HttpServletRequest request)
     {
         if (productId == null)
         {
@@ -77,6 +86,9 @@ public class ScanMenuApiController extends BaseController
         {
             return AjaxResult.error("商品已下架");
         }
+        Long userId = wxUserTokenService.resolveUserId(request);
+        userBehaviorEventService.recordProductView(userId, UserBehaviorEventService.SCENE_SCAN,
+            product.getProductId(), product.getCategoryId());
         return AjaxResult.success(product);
     }
 
