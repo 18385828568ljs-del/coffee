@@ -1,11 +1,11 @@
 /*
  ============================================================================
- 咖啡商城完整业务表结构 - 合并版本
+ 咖啡商城完整业务表结构 - 非破坏性初始化版本
  ============================================================================
 
  项目名称: 咖啡商城扫码点单系统
  创建日期: 2024
- 最后更新: 2026-06-28
+ 最后更新: 2026-08-04
 
  【执行顺序】
  1. ry_20210924.sql      - 若依框架基础表（系统表）
@@ -38,16 +38,19 @@
    - sys_job 定时任务配置
 
  【注意事项】
- 1. 本脚本会删除并重建所有表，生产环境请谨慎执行
- 2. 执行前请备份数据库
- 3. 确保已先执行 ry_20210924.sql 和 quartz.sql
- 4. 字符集统一使用 utf8mb4
+ 1. 本脚本可重复执行，不删除已有表和业务数据
+ 2. 已存在的表不会由 CREATE TABLE IF NOT EXISTS 自动补充字段，结构升级请使用独立迁移脚本
+ 3. 执行前仍建议备份数据库
+ 4. 确保已先执行 ry_20210924.sql 和 quartz.sql
+ 5. 字符集统一使用 utf8mb4
 
  【版本历史】
  - v1.0: 初始版本
  - v2.0: 添加线下活动功能
  - v3.0: 完善扫码点单履约流程（取餐号、催单等）
  - v4.0: 合并所有业务SQL文件
+ - v5.0: 改为保留已有数据的可重复执行初始化脚本
+ - v5.1: 统一扫码点单菜单 ID 与后台权限标识
 
  ============================================================================
 */
@@ -55,28 +58,7 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
-DROP TABLE IF EXISTS `t_wallet_log`;
-DROP TABLE IF EXISTS `t_payment_log`;
-DROP TABLE IF EXISTS `t_recharge_record`;
-DROP TABLE IF EXISTS `t_recharge_template`;
-DROP TABLE IF EXISTS `t_wallet`;
-DROP TABLE IF EXISTS `t_member`;
-DROP TABLE IF EXISTS `t_marketing_activity_scope`;
-DROP TABLE IF EXISTS `t_marketing_activity`;
-DROP TABLE IF EXISTS `t_offline_activity_signup`;
-DROP TABLE IF EXISTS `t_offline_activity`;
-DROP TABLE IF EXISTS `t_order_item`;
-DROP TABLE IF EXISTS `t_order`;
-DROP TABLE IF EXISTS `t_address`;
-DROP TABLE IF EXISTS `t_cart`;
-DROP TABLE IF EXISTS `t_user_behavior_event`;
-DROP TABLE IF EXISTS `t_product_image`;
-DROP TABLE IF EXISTS `t_product`;
-DROP TABLE IF EXISTS `t_category`;
-DROP TABLE IF EXISTS `t_banner`;
-DROP TABLE IF EXISTS `t_wxuser`;
-
-CREATE TABLE `t_category` (
+CREATE TABLE IF NOT EXISTS `t_category` (
   `category_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '分类ID',
   `category_name` VARCHAR(100) NOT NULL COMMENT '分类名称',
   `sort_order` INT DEFAULT 0 COMMENT '排序序号',
@@ -88,7 +70,7 @@ CREATE TABLE `t_category` (
   PRIMARY KEY (`category_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品分类';
 
-CREATE TABLE `t_product` (
+CREATE TABLE IF NOT EXISTS `t_product` (
   `product_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '商品ID',
   `category_id` BIGINT NOT NULL COMMENT '分类ID',
   `product_name` VARCHAR(200) NOT NULL COMMENT '商品名称',
@@ -111,7 +93,7 @@ CREATE TABLE `t_product` (
   KEY `idx_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品';
 
-CREATE TABLE `t_product_image` (
+CREATE TABLE IF NOT EXISTS `t_product_image` (
   `image_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '图片ID',
   `product_id` BIGINT NOT NULL COMMENT '商品ID',
   `image_url` VARCHAR(500) NOT NULL COMMENT '图片地址',
@@ -128,11 +110,19 @@ CREATE TABLE `t_product_image` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品图片';
 
 INSERT INTO `t_product_image` (`product_id`, `image_url`, `sort_order`, `is_main`, `create_by`, `create_time`)
-SELECT `product_id`, `image_url`, 0, 1, `create_by`, COALESCE(`create_time`, NOW())
-FROM `t_product`
-WHERE `image_url` IS NOT NULL AND `image_url` <> '';
+SELECT p.`product_id`, p.`image_url`, 0, 1, p.`create_by`, COALESCE(p.`create_time`, NOW())
+FROM `t_product` p
+WHERE p.`image_url` IS NOT NULL
+  AND p.`image_url` <> ''
+  AND NOT EXISTS (
+    SELECT 1
+    FROM `t_product_image` pi
+    WHERE pi.`product_id` = p.`product_id`
+      AND pi.`image_url` = p.`image_url`
+      AND pi.`is_main` = 1
+  );
 
-CREATE TABLE `t_cart` (
+CREATE TABLE IF NOT EXISTS `t_cart` (
   `cart_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '购物车ID',
   `user_id` BIGINT NOT NULL COMMENT '用户ID',
   `product_id` BIGINT NOT NULL COMMENT '商品ID',
@@ -145,7 +135,7 @@ CREATE TABLE `t_cart` (
   KEY `idx_product_id` (`product_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='购物车';
 
-CREATE TABLE `t_user_behavior_event` (
+CREATE TABLE IF NOT EXISTS `t_user_behavior_event` (
   `event_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '行为证据ID',
   `user_id` BIGINT NOT NULL COMMENT '微信用户ID',
   `event_type` VARCHAR(32) NOT NULL COMMENT '行为类型(PRODUCT_VIEW/CART_ADD)',
@@ -161,7 +151,7 @@ CREATE TABLE `t_user_behavior_event` (
   KEY `idx_behavior_scene_product` (`scene`, `product_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户非交易行为证据';
 
-CREATE TABLE `t_address` (
+CREATE TABLE IF NOT EXISTS `t_address` (
   `address_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '地址ID',
   `user_id` BIGINT NOT NULL COMMENT '用户ID',
   `receiver_name` VARCHAR(100) NOT NULL COMMENT '收货人姓名',
@@ -177,7 +167,7 @@ CREATE TABLE `t_address` (
   KEY `idx_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='收货地址';
 
-CREATE TABLE `t_order` (
+CREATE TABLE IF NOT EXISTS `t_order` (
   `order_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '订单ID',
   `order_no` VARCHAR(50) NOT NULL COMMENT '订单号',
   `user_id` BIGINT NOT NULL COMMENT '用户ID',
@@ -211,7 +201,7 @@ CREATE TABLE `t_order` (
   KEY `idx_create_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单';
 
-CREATE TABLE `t_order_item` (
+CREATE TABLE IF NOT EXISTS `t_order_item` (
   `item_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '明细ID',
   `order_id` BIGINT NOT NULL COMMENT '订单ID',
   `product_id` BIGINT NOT NULL COMMENT '商品ID',
@@ -226,7 +216,7 @@ CREATE TABLE `t_order_item` (
   KEY `idx_product_id` (`product_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单明细';
 
-CREATE TABLE `t_banner` (
+CREATE TABLE IF NOT EXISTS `t_banner` (
   `id` INT NOT NULL AUTO_INCREMENT COMMENT 'ID',
   `banner_title` VARCHAR(255) DEFAULT NULL COMMENT '轮播图标题',
   `banner_url` VARCHAR(255) DEFAULT NULL COMMENT '轮播图连接',
@@ -239,7 +229,7 @@ CREATE TABLE `t_banner` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='轮播图';
 
-CREATE TABLE `t_wxuser` (
+CREATE TABLE IF NOT EXISTS `t_wxuser` (
   `id` INT NOT NULL AUTO_INCREMENT COMMENT 'ID',
   `nickname` VARCHAR(100) DEFAULT NULL COMMENT '微信名称',
   `avatar` VARCHAR(255) DEFAULT NULL COMMENT '头像',
@@ -254,7 +244,7 @@ CREATE TABLE `t_wxuser` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='微信用户';
 
-CREATE TABLE `t_marketing_activity` (
+CREATE TABLE IF NOT EXISTS `t_marketing_activity` (
   `activity_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '活动ID',
   `title` VARCHAR(200) NOT NULL COMMENT '活动标题',
   `type` TINYINT(1) NOT NULL COMMENT '活动类型(1-满减,2-折扣,3-赠品,4-包邮,5-限时特价)',
@@ -282,7 +272,7 @@ CREATE TABLE `t_marketing_activity` (
   KEY `idx_time` (`start_time`, `end_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='营销活动';
 
-CREATE TABLE `t_marketing_activity_scope` (
+CREATE TABLE IF NOT EXISTS `t_marketing_activity_scope` (
   `scope_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '范围明细ID',
   `activity_id` BIGINT NOT NULL COMMENT '活动ID',
   `scope_type` TINYINT(1) NOT NULL COMMENT '范围类型(1-分类,2-商品)',
@@ -293,7 +283,7 @@ CREATE TABLE `t_marketing_activity_scope` (
   KEY `idx_scope_target` (`scope_type`, `scope_target_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='营销活动适用范围';
 
-CREATE TABLE `t_member` (
+CREATE TABLE IF NOT EXISTS `t_member` (
   `member_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '会员ID',
   `user_id` BIGINT NOT NULL COMMENT '关联用户ID',
   `level` TINYINT NOT NULL DEFAULT 1 COMMENT '等级(1-4)',
@@ -306,7 +296,7 @@ CREATE TABLE `t_member` (
   UNIQUE KEY `uk_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='会员信息';
 
-CREATE TABLE `t_wallet` (
+CREATE TABLE IF NOT EXISTS `t_wallet` (
   `wallet_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '钱包ID',
   `user_id` BIGINT NOT NULL COMMENT '关联用户ID',
   `balance` DECIMAL(10,2) NOT NULL DEFAULT 0.00 COMMENT '当前余额',
@@ -320,7 +310,7 @@ CREATE TABLE `t_wallet` (
   UNIQUE KEY `uk_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='钱包余额';
 
-CREATE TABLE `t_recharge_record` (
+CREATE TABLE IF NOT EXISTS `t_recharge_record` (
   `record_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '记录ID',
   `user_id` BIGINT NOT NULL COMMENT '用户ID',
   `recharge_no` VARCHAR(64) NOT NULL COMMENT '充值单号',
@@ -338,7 +328,7 @@ CREATE TABLE `t_recharge_record` (
   KEY `idx_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='充值记录';
 
-CREATE TABLE `t_wallet_log` (
+CREATE TABLE IF NOT EXISTS `t_wallet_log` (
   `log_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '流水ID',
   `user_id` BIGINT NOT NULL COMMENT '用户ID',
   `type` TINYINT NOT NULL COMMENT '类型(1=充值入账,2=消费扣款,3=退款返还,4=赠送)',
@@ -353,7 +343,7 @@ CREATE TABLE `t_wallet_log` (
   KEY `idx_create_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='余额流水';
 
-CREATE TABLE `t_payment_log` (
+CREATE TABLE IF NOT EXISTS `t_payment_log` (
   `log_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '日志ID',
   `business_type` VARCHAR(32) DEFAULT NULL COMMENT '业务类型(SCAN_ORDER,MALL_ORDER)',
   `business_no` VARCHAR(64) DEFAULT NULL COMMENT '业务单号',
@@ -370,7 +360,7 @@ CREATE TABLE `t_payment_log` (
   KEY `idx_payment_log_create_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='统一支付日志';
 
-CREATE TABLE `t_recharge_template` (
+CREATE TABLE IF NOT EXISTS `t_recharge_template` (
   `template_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '模板ID',
   `pay_amount` DECIMAL(10,2) NOT NULL COMMENT '充值金额',
   `gift_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00 COMMENT '赠送金额',
@@ -381,7 +371,7 @@ CREATE TABLE `t_recharge_template` (
   PRIMARY KEY (`template_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='充值模板';
 
-CREATE TABLE `t_offline_activity` (
+CREATE TABLE IF NOT EXISTS `t_offline_activity` (
   `activity_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '线下活动ID',
   `title` VARCHAR(120) NOT NULL COMMENT '活动标题',
   `cover_image` VARCHAR(500) DEFAULT NULL COMMENT '封面图地址',
@@ -404,7 +394,7 @@ CREATE TABLE `t_offline_activity` (
   KEY `idx_sort_order` (`sort_order`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='线下活动';
 
-CREATE TABLE `t_offline_activity_signup` (
+CREATE TABLE IF NOT EXISTS `t_offline_activity_signup` (
   `signup_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '预约ID',
   `activity_id` BIGINT NOT NULL COMMENT '线下活动ID',
   `user_id` BIGINT NOT NULL COMMENT '微信用户ID',
@@ -447,18 +437,10 @@ INSERT IGNORE INTO `sys_job` VALUES (101, '扫码点单订单超时取消','DEFA
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
-DROP TABLE IF EXISTS `t_scan_order_item`;
-DROP TABLE IF EXISTS `t_scan_order`;
-DROP TABLE IF EXISTS `t_scan_table_qrcode`;
-DROP TABLE IF EXISTS `t_scan_product_spec_option`;
-DROP TABLE IF EXISTS `t_scan_product_spec`;
-DROP TABLE IF EXISTS `t_scan_product`;
-DROP TABLE IF EXISTS `t_scan_category`;
-
 -- -----------------------------------------------------------------------------
 -- 1. 点单分类
 -- -----------------------------------------------------------------------------
-CREATE TABLE `t_scan_category` (
+CREATE TABLE IF NOT EXISTS `t_scan_category` (
   `category_id`   BIGINT        NOT NULL AUTO_INCREMENT COMMENT '分类ID',
   `category_name` VARCHAR(100)  NOT NULL                COMMENT '分类名称',
   `icon`          VARCHAR(500)  DEFAULT NULL            COMMENT '分类图标',
@@ -476,7 +458,7 @@ CREATE TABLE `t_scan_category` (
 -- -----------------------------------------------------------------------------
 -- 2. 点单商品
 -- -----------------------------------------------------------------------------
-CREATE TABLE `t_scan_product` (
+CREATE TABLE IF NOT EXISTS `t_scan_product` (
   `product_id`   BIGINT         NOT NULL AUTO_INCREMENT COMMENT '商品ID',
   `category_id`  BIGINT         NOT NULL                COMMENT '所属分类ID',
   `product_name` VARCHAR(200)   NOT NULL                COMMENT '商品名称',
@@ -501,7 +483,7 @@ CREATE TABLE `t_scan_product` (
 -- -----------------------------------------------------------------------------
 -- 3. 商品规格(组) -- 例如: 温度 / 糖度 / 杯型 / 加料
 -- -----------------------------------------------------------------------------
-CREATE TABLE `t_scan_product_spec` (
+CREATE TABLE IF NOT EXISTS `t_scan_product_spec` (
   `spec_id`      BIGINT        NOT NULL AUTO_INCREMENT COMMENT '规格ID',
   `product_id`   BIGINT        NOT NULL                COMMENT '商品ID',
   `spec_name`    VARCHAR(100)  NOT NULL                COMMENT '规格名称',
@@ -517,7 +499,7 @@ CREATE TABLE `t_scan_product_spec` (
 -- -----------------------------------------------------------------------------
 -- 4. 商品规格选项 -- 例如: 热 / 冰, 正常糖 / 少糖
 -- -----------------------------------------------------------------------------
-CREATE TABLE `t_scan_product_spec_option` (
+CREATE TABLE IF NOT EXISTS `t_scan_product_spec_option` (
   `option_id`     BIGINT        NOT NULL AUTO_INCREMENT COMMENT '选项ID',
   `spec_id`       BIGINT        NOT NULL                COMMENT '规格组ID',
   `product_id`    BIGINT        NOT NULL                COMMENT '商品ID(冗余,便于查询)',
@@ -534,7 +516,7 @@ CREATE TABLE `t_scan_product_spec_option` (
 -- -----------------------------------------------------------------------------
 -- 5. 桌台/门店二维码
 -- -----------------------------------------------------------------------------
-CREATE TABLE `t_scan_table_qrcode` (
+CREATE TABLE IF NOT EXISTS `t_scan_table_qrcode` (
   `table_id`     BIGINT        NOT NULL AUTO_INCREMENT COMMENT '桌台ID',
   `shop_id`      BIGINT        NOT NULL DEFAULT 1      COMMENT '门店ID',
   `shop_name`    VARCHAR(200)  DEFAULT NULL            COMMENT '门店名称',
@@ -554,7 +536,7 @@ CREATE TABLE `t_scan_table_qrcode` (
 -- -----------------------------------------------------------------------------
 -- 6. 扫码点单订单(与电商 t_order 分离,堂食场景专用)
 -- -----------------------------------------------------------------------------
-CREATE TABLE `t_scan_order` (
+CREATE TABLE IF NOT EXISTS `t_scan_order` (
   `order_id`         BIGINT         NOT NULL AUTO_INCREMENT COMMENT '订单ID',
   `order_no`         VARCHAR(64)    NOT NULL                COMMENT '订单号',
   `user_id`          BIGINT         NOT NULL                COMMENT '下单用户ID',
@@ -602,7 +584,7 @@ CREATE TABLE `t_scan_order` (
 -- -----------------------------------------------------------------------------
 -- 7. 扫码点单订单明细
 -- -----------------------------------------------------------------------------
-CREATE TABLE `t_scan_order_item` (
+CREATE TABLE IF NOT EXISTS `t_scan_order_item` (
   `item_id`        BIGINT         NOT NULL AUTO_INCREMENT COMMENT '明细ID',
   `order_id`       BIGINT         NOT NULL                COMMENT '订单ID',
   `product_id`     BIGINT         NOT NULL                COMMENT '商品ID',
@@ -629,15 +611,13 @@ SET FOREIGN_KEY_CHECKS = 1;
    1. 扫码点单购物车与商城购物车物理隔离,不改动原有 t_cart 表。
    2. 扫码点单仅服务堂食/外带场景,带 shop_id 与 table_no,便于按桌台清理。
    3. product_id 指向 t_scan_product.product_id,但不设硬外键,保持与其它 coffee_* 表风格一致。
-   4. 本脚本可重复执行:会先 DROP 再 CREATE,生产环境重跑将清空购物车数据,请谨慎。
+   4. 本脚本可重复执行:已有购物车表和数据不会被删除。
 */
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
-DROP TABLE IF EXISTS `t_scan_cart`;
-
-CREATE TABLE `t_scan_cart` (
+CREATE TABLE IF NOT EXISTS `t_scan_cart` (
   `id`            BIGINT        NOT NULL AUTO_INCREMENT COMMENT '购物车ID',
   `user_id`       BIGINT        DEFAULT NULL            COMMENT '用户ID(登录后写入,匿名下单可为空)',
   `openid`        VARCHAR(100)  DEFAULT NULL            COMMENT '微信openid(未绑定userId时的用户标识)',
@@ -688,13 +668,13 @@ SET `menu_name` = '平台设置',
     `remark` = '平台设置目录'
 WHERE `menu_id` = 1;
 
--- 隐藏当前侧边栏不显示的若依原始菜单。
--- 咖啡商城菜单固定使用 2000-2099 的菜单 ID，并在下方先删后建，
--- 避免和若依内置菜单重复或冲突。
+-- 显示平台设置中保留的若依基础菜单。
+-- 咖啡商城菜单固定使用 2000-2099 的菜单 ID，已存在的菜单不覆盖。
 UPDATE `sys_menu`
 SET `visible` = '0'
 WHERE `menu_id` IN (100, 101, 102, 105, 106);
 
+-- 隐藏当前侧边栏不使用的若依原始菜单。
 UPDATE `sys_menu`
 SET `visible` = '1'
 WHERE `menu_id` IN (
@@ -705,13 +685,8 @@ WHERE `menu_id` IN (
   500, 501
 );
 
--- 重建咖啡商城、支付日志、扫码点单菜单，保证本脚本可以重复执行。
-DELETE FROM `sys_role_menu` WHERE `menu_id` BETWEEN 2000 AND 2199;
-DELETE FROM `sys_role_menu` WHERE `menu_id` BETWEEN 2200 AND 2299;
-DELETE FROM `sys_menu` WHERE `menu_id` BETWEEN 2000 AND 2199;
-DELETE FROM `sys_menu` WHERE `menu_id` BETWEEN 2200 AND 2299;
-
-INSERT INTO `sys_menu`
+-- 固定 ID 菜单仅在不存在时插入，保留已有菜单和角色授权。
+INSERT IGNORE INTO `sys_menu`
 (`menu_id`, `menu_name`, `parent_id`, `order_num`, `url`, `target`, `menu_type`, `visible`, `is_refresh`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`)
 VALUES
 (2000, '咖啡商城', 0, 2, '#', '', 'M', '0', '1', '', 'fa fa-coffee', 'admin', NOW(), '', NULL, '咖啡商城目录'),
@@ -796,33 +771,30 @@ VALUES
 -- 扫码点单菜单
 (2100, '扫码点单', 0, 4, '#', '', 'M', '0', '1', '', 'fa fa-qrcode', 'admin', NOW(), '', NULL, '扫码点单菜单'),
 
-(2101, '点单分类', 2100, 1, '/coffee/scanCategory', '', 'C', '0', '1', 'coffee:scan:category:view', 'fa fa-list', 'admin', NOW(), '', NULL, '扫码点单分类菜单'),
-(2105, '点单分类查询', 2101, 1, '#', '', 'F', '0', '1', 'coffee:scan:category:query', '#', 'admin', NOW(), '', NULL, ''),
-(2106, '点单分类新增', 2101, 2, '#', '', 'F', '0', '1', 'coffee:scan:category:add', '#', 'admin', NOW(), '', NULL, ''),
-(2107, '点单分类修改', 2101, 3, '#', '', 'F', '0', '1', 'coffee:scan:category:edit', '#', 'admin', NOW(), '', NULL, ''),
-(2108, '点单分类删除', 2101, 4, '#', '', 'F', '0', '1', 'coffee:scan:category:remove', '#', 'admin', NOW(), '', NULL, ''),
+(2101, '点单分类', 2100, 1, 'coffee/scanCategory', '', 'C', '0', '1', 'coffee:scanCategory:view', 'fa fa-list', 'admin', NOW(), '', NULL, '扫码点单分类菜单'),
+(2102, '分类查询', 2101, 1, '#', '', 'F', '0', '1', 'coffee:scanCategory:list', '#', 'admin', NOW(), '', NULL, ''),
+(2103, '分类新增', 2101, 2, '#', '', 'F', '0', '1', 'coffee:scanCategory:add', '#', 'admin', NOW(), '', NULL, ''),
+(2104, '分类修改', 2101, 3, '#', '', 'F', '0', '1', 'coffee:scanCategory:edit', '#', 'admin', NOW(), '', NULL, ''),
+(2105, '分类删除', 2101, 4, '#', '', 'F', '0', '1', 'coffee:scanCategory:remove', '#', 'admin', NOW(), '', NULL, ''),
 
-(2102, '点单商品', 2100, 2, '/coffee/scanProduct', '', 'C', '0', '1', 'coffee:scan:product:view', 'fa fa-coffee', 'admin', NOW(), '', NULL, '扫码点单商品菜单'),
-(2109, '点单商品查询', 2102, 1, '#', '', 'F', '0', '1', 'coffee:scan:product:query', '#', 'admin', NOW(), '', NULL, ''),
-(2110, '点单商品新增', 2102, 2, '#', '', 'F', '0', '1', 'coffee:scan:product:add', '#', 'admin', NOW(), '', NULL, ''),
-(2111, '点单商品修改', 2102, 3, '#', '', 'F', '0', '1', 'coffee:scan:product:edit', '#', 'admin', NOW(), '', NULL, ''),
-(2112, '点单商品删除', 2102, 4, '#', '', 'F', '0', '1', 'coffee:scan:product:remove', '#', 'admin', NOW(), '', NULL, ''),
+(2110, '点单商品', 2100, 2, 'coffee/scanProduct', '', 'C', '0', '1', 'coffee:scanProduct:view', 'fa fa-coffee', 'admin', NOW(), '', NULL, '扫码点单商品菜单'),
+(2111, '商品查询', 2110, 1, '#', '', 'F', '0', '1', 'coffee:scanProduct:list', '#', 'admin', NOW(), '', NULL, ''),
+(2112, '商品新增', 2110, 2, '#', '', 'F', '0', '1', 'coffee:scanProduct:add', '#', 'admin', NOW(), '', NULL, ''),
+(2113, '商品修改', 2110, 3, '#', '', 'F', '0', '1', 'coffee:scanProduct:edit', '#', 'admin', NOW(), '', NULL, ''),
+(2114, '商品删除', 2110, 4, '#', '', 'F', '0', '1', 'coffee:scanProduct:remove', '#', 'admin', NOW(), '', NULL, ''),
 
-(2103, '桌台管理', 2100, 3, '/coffee/scanTable', '', 'C', '0', '1', 'coffee:scan:table:view', 'fa fa-table', 'admin', NOW(), '', NULL, '桌台二维码管理'),
-(2113, '桌台管理查询', 2103, 1, '#', '', 'F', '0', '1', 'coffee:scan:table:query', '#', 'admin', NOW(), '', NULL, ''),
-(2114, '桌台管理新增', 2103, 2, '#', '', 'F', '0', '1', 'coffee:scan:table:add', '#', 'admin', NOW(), '', NULL, ''),
-(2115, '桌台管理修改', 2103, 3, '#', '', 'F', '0', '1', 'coffee:scan:table:edit', '#', 'admin', NOW(), '', NULL, ''),
-(2116, '桌台管理删除', 2103, 4, '#', '', 'F', '0', '1', 'coffee:scan:table:remove', '#', 'admin', NOW(), '', NULL, ''),
-(2117, '生成二维码', 2103, 5, '#', '', 'F', '0', '1', 'coffee:scan:table:genQrcode', '#', 'admin', NOW(), '', NULL, ''),
+(2120, '桌台二维码', 2100, 3, 'coffee/scanTable', '', 'C', '0', '1', 'coffee:scanTable:view', 'fa fa-table', 'admin', NOW(), '', NULL, '桌台二维码管理'),
+(2121, '桌台查询', 2120, 1, '#', '', 'F', '0', '1', 'coffee:scanTable:list', '#', 'admin', NOW(), '', NULL, ''),
+(2122, '桌台新增', 2120, 2, '#', '', 'F', '0', '1', 'coffee:scanTable:add', '#', 'admin', NOW(), '', NULL, ''),
+(2123, '桌台修改', 2120, 3, '#', '', 'F', '0', '1', 'coffee:scanTable:edit', '#', 'admin', NOW(), '', NULL, ''),
+(2124, '桌台删除', 2120, 4, '#', '', 'F', '0', '1', 'coffee:scanTable:remove', '#', 'admin', NOW(), '', NULL, ''),
 
-(2104, '点单订单', 2100, 4, '/coffee/scanOrder', '', 'C', '0', '1', 'coffee:scan:order:view', 'fa fa-shopping-cart', 'admin', NOW(), '', NULL, '扫码点单订单菜单'),
-(2118, '点单订单查询', 2104, 1, '#', '', 'F', '0', '1', 'coffee:scan:order:query', '#', 'admin', NOW(), '', NULL, ''),
-(2119, '点单订单详情', 2104, 2, '#', '', 'F', '0', '1', 'coffee:scan:order:detail', '#', 'admin', NOW(), '', NULL, ''),
-(2120, '点单订单取消', 2104, 3, '#', '', 'F', '0', '1', 'coffee:scan:order:cancel', '#', 'admin', NOW(), '', NULL, ''),
-(2121, '点单订单叫号', 2104, 4, '#', '', 'F', '0', '1', 'coffee:scan:order:call', '#', 'admin', NOW(), '', NULL, ''),
-(2122, '点单订单完成', 2104, 5, '#', '', 'F', '0', '1', 'coffee:scan:order:complete', '#', 'admin', NOW(), '', NULL, '');
+(2130, '点单订单', 2100, 4, 'coffee/scanOrder', '', 'C', '0', '1', 'coffee:scanOrder:view', 'fa fa-shopping-cart', 'admin', NOW(), '', NULL, '扫码点单订单菜单'),
+(2131, '订单查询', 2130, 1, '#', '', 'F', '0', '1', 'coffee:scanOrder:list', '#', 'admin', NOW(), '', NULL, ''),
+(2132, '订单详情', 2130, 2, '#', '', 'F', '0', '1', 'coffee:scanOrder:detail', '#', 'admin', NOW(), '', NULL, ''),
+(2133, '订单操作', 2130, 3, '#', '', 'F', '0', '1', 'coffee:scanOrder:edit', '#', 'admin', NOW(), '', NULL, '');
 
-INSERT INTO `sys_role_menu` (`role_id`, `menu_id`)
+INSERT IGNORE INTO `sys_role_menu` (`role_id`, `menu_id`)
 SELECT 1, `menu_id`
 FROM `sys_menu`
 WHERE (`menu_id` BETWEEN 2000 AND 2199)
