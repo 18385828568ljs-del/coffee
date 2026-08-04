@@ -13,6 +13,7 @@ import com.ruoyi.framework.web.domain.AjaxResult;
 import com.ruoyi.framework.web.page.TableDataInfo;
 import com.ruoyi.project.coffee.activity.service.MarketingActivityEngine;
 import com.ruoyi.project.coffee.auth.WxUserTokenService;
+import com.ruoyi.project.coffee.behavior.service.UserBehaviorEventService;
 import com.ruoyi.project.coffee.category.domain.TCategory;
 import com.ruoyi.project.coffee.category.service.ITCategoryService;
 import com.ruoyi.project.coffee.product.domain.TProduct;
@@ -37,6 +38,9 @@ public class ProductApiController extends BaseController
 
     @Autowired
     private WxUserTokenService wxUserTokenService;
+
+    @Autowired
+    private UserBehaviorEventService userBehaviorEventService;
 
     @GetMapping("/categories")
     public AjaxResult getCategoryList()
@@ -80,7 +84,10 @@ public class ProductApiController extends BaseController
         {
             product.setStock(0L);
         }
-        marketingActivityEngine.enrichProduct(product, wxUserTokenService.resolveUserId(request));
+        Long userId = wxUserTokenService.resolveUserId(request);
+        marketingActivityEngine.enrichProduct(product, userId);
+        userBehaviorEventService.recordProductView(userId, UserBehaviorEventService.SCENE_MALL,
+            product.getProductId(), product.getCategoryId());
         return AjaxResult.success(product);
     }
 

@@ -13,12 +13,12 @@
  3. coffee_all_business.sql - 本文件（咖啡商城业务表）
 
  【包含内容】
- 本文件包含咖啡商城的所有业务表，共32个表，分为4个模块：
+  本文件包含咖啡商城的所有业务表，分为4个模块：
 
- 第一部分: 商城核心业务（17个表）
+ 第一部分: 商城核心业务
    - 商品相关: t_category, t_product, t_cart, t_banner
    - 订单相关: t_order, t_order_item, t_address
-   - 用户相关: t_wxuser
+   - 用户相关: t_wxuser, t_user_behavior_event
    - 会员钱包: t_member, t_wallet, t_wallet_log, t_recharge_record, t_recharge_template
    - 支付日志: t_payment_log
    - 营销活动: t_marketing_activity, t_marketing_activity_scope
@@ -69,6 +69,7 @@ DROP TABLE IF EXISTS `t_order_item`;
 DROP TABLE IF EXISTS `t_order`;
 DROP TABLE IF EXISTS `t_address`;
 DROP TABLE IF EXISTS `t_cart`;
+DROP TABLE IF EXISTS `t_user_behavior_event`;
 DROP TABLE IF EXISTS `t_product_image`;
 DROP TABLE IF EXISTS `t_product`;
 DROP TABLE IF EXISTS `t_category`;
@@ -143,6 +144,22 @@ CREATE TABLE `t_cart` (
   KEY `idx_user_id` (`user_id`),
   KEY `idx_product_id` (`product_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='购物车';
+
+CREATE TABLE `t_user_behavior_event` (
+  `event_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '行为证据ID',
+  `user_id` BIGINT NOT NULL COMMENT '微信用户ID',
+  `event_type` VARCHAR(32) NOT NULL COMMENT '行为类型(PRODUCT_VIEW/CART_ADD)',
+  `scene` VARCHAR(16) NOT NULL COMMENT '业务场景(MALL/SCAN)',
+  `product_id` BIGINT NOT NULL COMMENT '商品ID',
+  `category_id` BIGINT DEFAULT NULL COMMENT '采集时商品分类ID',
+  `source_id` BIGINT DEFAULT NULL COMMENT '来源记录ID,加购时为购物车行ID',
+  `dedup_key` VARCHAR(128) DEFAULT NULL COMMENT '幂等键,商品查看为空',
+  `event_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '行为发生时间',
+  PRIMARY KEY (`event_id`),
+  UNIQUE KEY `uk_behavior_dedup_key` (`dedup_key`),
+  KEY `idx_behavior_user_time` (`user_id`, `event_time`),
+  KEY `idx_behavior_scene_product` (`scene`, `product_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户非交易行为证据';
 
 CREATE TABLE `t_address` (
   `address_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '地址ID',

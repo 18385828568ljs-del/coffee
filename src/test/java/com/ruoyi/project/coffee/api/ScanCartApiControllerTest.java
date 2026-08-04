@@ -12,6 +12,7 @@ import java.util.Map;
 import com.ruoyi.framework.web.domain.AjaxResult;
 import com.ruoyi.project.abucoder.wxuser.domain.AbucoderWxuser;
 import com.ruoyi.project.coffee.auth.WxUserAuthContext;
+import com.ruoyi.project.coffee.behavior.service.UserBehaviorEventService;
 import com.ruoyi.project.coffee.scanOrder.domain.ScanCart;
 import com.ruoyi.project.coffee.scanOrder.domain.ScanProduct;
 import com.ruoyi.project.coffee.scanOrder.domain.ScanProductSpecOption;
@@ -34,6 +35,9 @@ class ScanCartApiControllerTest
     private IScanCartService scanCartService;
 
     @Mock
+    private UserBehaviorEventService userBehaviorEventService;
+
+    @Mock
     private IScanProductService scanProductService;
 
     @Mock
@@ -45,6 +49,7 @@ class ScanCartApiControllerTest
         MockitoAnnotations.openMocks(this);
         controller = new ScanCartApiController();
         ReflectionTestUtils.setField(controller, "scanCartService", scanCartService);
+        ReflectionTestUtils.setField(controller, "userBehaviorEventService", userBehaviorEventService);
         ReflectionTestUtils.setField(controller, "scanProductService", scanProductService);
         ReflectionTestUtils.setField(controller, "scanProductSpecOptionService", scanProductSpecOptionService);
         bindUser(18L);
@@ -93,6 +98,8 @@ class ScanCartApiControllerTest
         assertEquals(new BigDecimal("13.50"), cart.getPrice());
         assertEquals(0, result.get(AjaxResult.CODE_TAG));
         assertEquals(saved, result.get(AjaxResult.DATA_TAG));
+        verify(userBehaviorEventService).recordFirstCartAdd(18L, UserBehaviorEventService.SCENE_SCAN,
+            5L, null, 9L);
     }
 
     @Test

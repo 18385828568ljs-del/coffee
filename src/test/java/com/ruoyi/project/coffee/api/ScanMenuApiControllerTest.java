@@ -7,6 +7,8 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import com.ruoyi.framework.web.domain.AjaxResult;
+import com.ruoyi.project.coffee.auth.WxUserTokenService;
+import com.ruoyi.project.coffee.behavior.service.UserBehaviorEventService;
 import com.ruoyi.project.coffee.scanOrder.domain.ScanCategory;
 import com.ruoyi.project.coffee.scanOrder.domain.ScanProduct;
 import com.ruoyi.project.coffee.scanOrder.domain.ScanTableQrcode;
@@ -18,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 
 class ScanMenuApiControllerTest
@@ -33,6 +36,12 @@ class ScanMenuApiControllerTest
     @Mock
     private IScanTableQrcodeService scanTableQrcodeService;
 
+    @Mock
+    private WxUserTokenService wxUserTokenService;
+
+    @Mock
+    private UserBehaviorEventService userBehaviorEventService;
+
     @BeforeEach
     void setUp()
     {
@@ -41,6 +50,8 @@ class ScanMenuApiControllerTest
         ReflectionTestUtils.setField(controller, "scanCategoryService", scanCategoryService);
         ReflectionTestUtils.setField(controller, "scanProductService", scanProductService);
         ReflectionTestUtils.setField(controller, "scanTableQrcodeService", scanTableQrcodeService);
+        ReflectionTestUtils.setField(controller, "wxUserTokenService", wxUserTokenService);
+        ReflectionTestUtils.setField(controller, "userBehaviorEventService", userBehaviorEventService);
     }
 
     @Test
@@ -66,7 +77,7 @@ class ScanMenuApiControllerTest
         product.setStatus(0);
         when(scanProductService.selectScanProductWithSpecs(7L)).thenReturn(product);
 
-        AjaxResult result = controller.getProductDetail(7L);
+        AjaxResult result = controller.getProductDetail(7L, new MockHttpServletRequest());
 
         assertEquals(500, result.get(AjaxResult.CODE_TAG));
         assertEquals("商品已下架", result.get(AjaxResult.MSG_TAG));

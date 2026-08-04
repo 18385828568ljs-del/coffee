@@ -90,6 +90,7 @@
 
 <script>
 import { productApi, cartApi, resolveImageUrl } from '@/utils/apiconfig.js'
+import { getToken } from '@/utils/auth.js'
 import { ensureLocalLogin, getLocalUserId } from '@/utils/session.js'
 import { requestPromise, isSuccessResponse } from '@/utils/request-helper.js'
 import { hideBusy, showBusy, showError, showSuccess } from '@/utils/ui-feedback.js'
@@ -240,16 +241,11 @@ export default {
 
 		async loadProductDetail() {
 			showBusy('加载中...')
-			const requestData = {}
-			const userId = getLocalUserId()
-			if (userId) {
-				requestData.userId = userId
-			}
 			try {
 				const res = await requestPromise({
 					url: productApi.detail + this.productId,
 					method: 'GET',
-					data: requestData
+					header: getToken() ? { Authorization: `Bearer ${getToken()}` } : {}
 				})
 				if (!isSuccessResponse(res) || !res.data.data) {
 					showError((res.data && res.data.msg) || '商品不存在')

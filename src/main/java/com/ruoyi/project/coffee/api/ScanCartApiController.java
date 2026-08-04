@@ -20,6 +20,7 @@ import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.framework.web.controller.BaseController;
 import com.ruoyi.framework.web.domain.AjaxResult;
 import com.ruoyi.project.coffee.auth.WxUserAuthContext;
+import com.ruoyi.project.coffee.behavior.service.UserBehaviorEventService;
 import com.ruoyi.project.coffee.scanOrder.domain.ScanCart;
 import com.ruoyi.project.coffee.scanOrder.domain.ScanProduct;
 import com.ruoyi.project.coffee.scanOrder.domain.ScanProductSpecOption;
@@ -40,6 +41,9 @@ public class ScanCartApiController extends BaseController
 
     @Autowired
     private IScanCartService scanCartService;
+
+    @Autowired
+    private UserBehaviorEventService userBehaviorEventService;
 
     @Autowired
     private IScanProductService scanProductService;
@@ -118,6 +122,11 @@ public class ScanCartApiController extends BaseController
         cart.setPrice(basePrice.add(extraPrice));
 
         ScanCart saved = scanCartService.addOrIncrease(cart);
+        if (saved != null)
+        {
+            userBehaviorEventService.recordFirstCartAdd(cart.getUserId(),
+                UserBehaviorEventService.SCENE_SCAN, cart.getProductId(), product.getCategoryId(), saved.getId());
+        }
         return AjaxResult.success("已加入点单购物车", saved);
     }
 

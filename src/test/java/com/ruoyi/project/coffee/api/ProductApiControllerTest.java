@@ -11,6 +11,7 @@ import java.util.List;
 import com.ruoyi.framework.web.domain.AjaxResult;
 import com.ruoyi.project.coffee.activity.service.MarketingActivityEngine;
 import com.ruoyi.project.coffee.auth.WxUserTokenService;
+import com.ruoyi.project.coffee.behavior.service.UserBehaviorEventService;
 import com.ruoyi.project.coffee.category.domain.TCategory;
 import com.ruoyi.project.coffee.category.service.ITCategoryService;
 import com.ruoyi.project.coffee.product.domain.TProduct;
@@ -38,6 +39,9 @@ class ProductApiControllerTest
     @Mock
     private WxUserTokenService wxUserTokenService;
 
+    @Mock
+    private UserBehaviorEventService userBehaviorEventService;
+
     @BeforeEach
     void setUp()
     {
@@ -47,6 +51,7 @@ class ProductApiControllerTest
         ReflectionTestUtils.setField(controller, "categoryService", categoryService);
         ReflectionTestUtils.setField(controller, "marketingActivityEngine", marketingActivityEngine);
         ReflectionTestUtils.setField(controller, "wxUserTokenService", wxUserTokenService);
+        ReflectionTestUtils.setField(controller, "userBehaviorEventService", userBehaviorEventService);
     }
 
     @Test
@@ -95,5 +100,6 @@ class ProductApiControllerTest
         assertEquals(0L, product.getStock());
         assertEquals(Arrays.asList("cover.png", "detail.png"), ((TProduct) result.get(AjaxResult.DATA_TAG)).getImageUrls());
         verify(marketingActivityEngine).enrichProduct(product, 7L);
+        verify(userBehaviorEventService).recordProductView(7L, UserBehaviorEventService.SCENE_MALL, 3L, null);
     }
 }

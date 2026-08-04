@@ -3,6 +3,8 @@ package com.ruoyi.abucoder.wxapp.controller;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.alibaba.fastjson.JSONObject;
@@ -12,6 +14,7 @@ import com.ruoyi.project.abucoder.wxuser.service.IAbucoderWxuserService;
 import com.ruoyi.project.coffee.auth.WxUserTokenService;
 import com.ruoyi.project.common.storage.FileStorageService;
 import com.ruoyi.project.common.storage.StoredFileInfo;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -74,11 +77,33 @@ class WxloginControllerTest
     void saveUserInfoRequiresLoginState()
     {
         JSONObject body = new JSONObject();
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        when(tokenService.resolveUser(request)).thenReturn(null);
 
-        AjaxResult result = controller.saveUserInfo(body, null);
+        AjaxResult result = controller.saveUserInfo(body, request);
 
         assertEquals(500, result.get(AjaxResult.CODE_TAG));
-        assertEquals("缺少登录态", result.get(AjaxResult.MSG_TAG));
+        assertEquals("登录已失效", result.get(AjaxResult.MSG_TAG));
+    }
+
+    @Test
+    void saveUserInfoUsesTokenUserInsteadOfBodyOpenid()
+    {
+        AbucoderWxuser user = buildUser();
+        JSONObject body = new JSONObject();
+        body.put("openid", "openid-of-another-user");
+        body.put("nickName", "更新后的昵称");
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        when(tokenService.resolveUser(request)).thenReturn(user);
+        when(tokenService.createToken(user)).thenReturn("new-token");
+
+        AjaxResult result = controller.saveUserInfo(body, request);
+
+        assertEquals(0, result.get(AjaxResult.CODE_TAG));
+        assertEquals("更新后的昵称", user.getNickname());
+        assertEquals("new-token", result.get("token"));
+        verify(wxuserService).updateAbucoderWxuser(user);
+        verify(wxuserService, never()).selectAbucoderWxuserOpenID(any(String.class));
     }
 
     @Test

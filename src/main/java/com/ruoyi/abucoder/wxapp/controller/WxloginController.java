@@ -3,6 +3,7 @@ package com.ruoyi.abucoder.wxapp.controller;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import javax.servlet.http.HttpServletRequest;
 import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.common.utils.http.HttpUtils;
 import com.ruoyi.framework.web.domain.AjaxResult;
@@ -123,28 +124,17 @@ public class WxloginController
 
     @PostMapping("/saveUserInfo")
     @ResponseBody
-    public AjaxResult saveUserInfo(@RequestBody JSONObject object,
-        @RequestHeader(value = "Authorization", required = false) String authorization)
+    public AjaxResult saveUserInfo(@RequestBody JSONObject object, HttpServletRequest request)
     {
-        AbucoderWxuser abucoderWxuser = null;
-        if (StringUtils.hasLength(authorization))
+        if (object == null)
         {
-            String token = authorization.startsWith("Bearer ") ? authorization.substring(7).trim() : authorization.trim();
-            abucoderWxuser = wxUserTokenService.getUserByToken(token);
+            return AjaxResult.error("缺少用户资料");
         }
 
-        if (abucoderWxuser == null && (object == null || !StringUtils.hasLength(object.getString("openid"))))
-        {
-            return AjaxResult.error("缺少登录态");
-        }
-
+        AbucoderWxuser abucoderWxuser = wxUserTokenService.resolveUser(request);
         if (abucoderWxuser == null)
         {
-            abucoderWxuser = iAbucoderWxuserService.selectAbucoderWxuserOpenID(object.getString("openid"));
-        }
-        if (abucoderWxuser == null)
-        {
-            return AjaxResult.error("用户不存在");
+            return AjaxResult.error("登录已失效");
         }
 
         if (StringUtils.hasLength(object.getString("nickName")))

@@ -1,4 +1,5 @@
 DROP TABLE IF EXISTS t_cart;
+DROP TABLE IF EXISTS t_user_behavior_event;
 DROP TABLE IF EXISTS t_address;
 DROP TABLE IF EXISTS t_product_image;
 DROP TABLE IF EXISTS t_product;
@@ -80,6 +81,19 @@ CREATE TABLE t_cart (
     spec VARCHAR(255),
     create_time TIMESTAMP NULL,
     update_time TIMESTAMP NULL
+);
+
+CREATE TABLE t_user_behavior_event (
+    event_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    event_type VARCHAR(32) NOT NULL,
+    scene VARCHAR(16) NOT NULL,
+    product_id BIGINT NOT NULL,
+    category_id BIGINT,
+    source_id BIGINT,
+    dedup_key VARCHAR(128),
+    event_time TIMESTAMP NOT NULL,
+    CONSTRAINT uk_behavior_dedup_key UNIQUE (dedup_key)
 );
 
 CREATE TABLE t_address (
