@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import io.swagger.annotations.ApiOperation;
+import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.builders.ApiInfoBuilder;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
@@ -42,8 +42,8 @@ public class SwaggerConfig
                 .apiInfo(apiInfo())
                 // 设置哪些接口暴露给Swagger展示
                 .select()
-                // 扫描所有有注解的api，用这种方式更灵活
-                .apis(RequestHandlerSelectors.withMethodAnnotation(ApiOperation.class))
+                // 扫描所有REST接口，避免未添加@ApiOperation的方法被遗漏
+                .apis(RequestHandlerSelectors.withClassAnnotation(RestController.class))
                 // 扫描指定包中的swagger注解
                 //.apis(RequestHandlerSelectors.basePackage("com.ruoyi.project.tool.swagger"))
                 // 扫描所有 .apis(RequestHandlerSelectors.any())

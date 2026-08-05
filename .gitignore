@@ -46,4 +46,5 @@ coffee-mall-backend-src.zip
 !*/build/*.java
 !*/build/*.html
 !*/build/*.xml
-
+src/main/resources/application*.yml
+src/main/resources/application*.properties
