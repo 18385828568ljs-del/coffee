@@ -16,6 +16,7 @@ import com.ruoyi.project.coffee.scanOrder.domain.ScanTableQrcode;
 import com.ruoyi.project.coffee.scanOrder.service.IScanCategoryService;
 import com.ruoyi.project.coffee.scanOrder.service.IScanProductService;
 import com.ruoyi.project.coffee.scanOrder.service.IScanTableQrcodeService;
+import com.ruoyi.project.coffee.profile.service.ProductRecommendationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -43,6 +44,9 @@ class ScanMenuApiControllerTest
     @Mock
     private UserBehaviorEventService userBehaviorEventService;
 
+    @Mock
+    private ProductRecommendationService productRecommendationService;
+
     @BeforeEach
     void setUp()
     {
@@ -53,6 +57,8 @@ class ScanMenuApiControllerTest
         ReflectionTestUtils.setField(controller, "scanTableQrcodeService", scanTableQrcodeService);
         ReflectionTestUtils.setField(controller, "wxUserTokenService", wxUserTokenService);
         ReflectionTestUtils.setField(controller, "userBehaviorEventService", userBehaviorEventService);
+        ReflectionTestUtils.setField(controller, "productRecommendationService", productRecommendationService);
+        when(productRecommendationService.recommendScan(any(), any())).thenAnswer(invocation -> invocation.getArgument(1));
     }
 
     @Test

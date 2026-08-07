@@ -5,12 +5,16 @@ import java.util.List;
 import org.apache.ibatis.annotations.Param;
 import com.ruoyi.project.coffee.profile.domain.ProfileEvidence;
 import com.ruoyi.project.coffee.profile.domain.ProfileOrderSummary;
+import com.ruoyi.project.coffee.profile.domain.ProductPopularity;
 import com.ruoyi.project.coffee.profile.domain.UserProfile;
 
 /** 用户画像读取与计算数据 Mapper。 */
 public interface UserProfileMapper
 {
     UserProfile selectUserProfileByUserId(Long userId);
+
+    List<ProductPopularity> selectRecentProductPopularity(
+        @Param("scene") String scene, @Param("cutoffTime") Date cutoffTime);
 
     List<Long> selectAllUserIds();
 

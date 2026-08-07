@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import com.ruoyi.framework.web.domain.AjaxResult;
+import com.ruoyi.framework.web.page.TableDataInfo;
 import com.ruoyi.project.coffee.activity.service.MarketingActivityEngine;
 import com.ruoyi.project.coffee.auth.WxUserTokenService;
 import com.ruoyi.project.coffee.behavior.service.UserBehaviorEventService;
@@ -18,6 +19,7 @@ import com.ruoyi.project.coffee.category.domain.TCategory;
 import com.ruoyi.project.coffee.category.service.ITCategoryService;
 import com.ruoyi.project.coffee.product.domain.TProduct;
 import com.ruoyi.project.coffee.product.service.ITProductService;
+import com.ruoyi.project.coffee.profile.service.ProductRecommendationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -47,6 +49,9 @@ class ProductApiControllerTest
     @Mock
     private UserBehaviorEventService userBehaviorEventService;
 
+    @Mock
+    private ProductRecommendationService productRecommendationService;
+
     @BeforeEach
     void setUp()
     {
@@ -57,6 +62,8 @@ class ProductApiControllerTest
         ReflectionTestUtils.setField(controller, "marketingActivityEngine", marketingActivityEngine);
         ReflectionTestUtils.setField(controller, "wxUserTokenService", wxUserTokenService);
         ReflectionTestUtils.setField(controller, "userBehaviorEventService", userBehaviorEventService);
+        ReflectionTestUtils.setField(controller, "productRecommendationService", productRecommendationService);
+        when(productRecommendationService.recommendMall(any(), any())).thenAnswer(invocation -> invocation.getArgument(1));
     }
 
     @AfterEach
@@ -141,5 +148,33 @@ class ProductApiControllerTest
         controller.searchProducts("拿铁", request);
 
         verify(userBehaviorEventService, never()).recordSearch(any(), any(), any());
+    }
+
+    @Test
+    void productListPaginatesAfterRecommendationSorting()
+    {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addParameter("pageNum", "2");
+        request.addParameter("pageSize", "1");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+
+        TProduct first = product(1L);
+        TProduct second = product(2L);
+        TProduct third = product(3L);
+        when(productService.selectTProductList(any(TProduct.class))).thenReturn(Arrays.asList(first, second, third));
+
+        TableDataInfo result = controller.getProductList(new TProduct(), request);
+
+        assertEquals(3L, result.getTotal());
+        assertSame(second, result.getRows().get(0));
+    }
+
+    private TProduct product(Long productId)
+    {
+        TProduct product = new TProduct();
+        product.setProductId(productId);
+        product.setStatus(1);
+        product.setStock(10L);
+        return product;
     }
 }

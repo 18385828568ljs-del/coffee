@@ -1,5 +1,7 @@
 package com.ruoyi.project.coffee.api;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,7 @@ import com.ruoyi.project.coffee.category.domain.TCategory;
 import com.ruoyi.project.coffee.category.service.ITCategoryService;
 import com.ruoyi.project.coffee.product.domain.TProduct;
 import com.ruoyi.project.coffee.product.service.ITProductService;
+import com.ruoyi.project.coffee.profile.service.ProductRecommendationService;
 import com.ruoyi.project.coffee.common.annotation.RateLimit;
 
 /**
@@ -42,6 +45,9 @@ public class ProductApiController extends BaseController
     @Autowired
     private UserBehaviorEventService userBehaviorEventService;
 
+    @Autowired
+    private ProductRecommendationService productRecommendationService;
+
     @GetMapping("/categories")
     public AjaxResult getCategoryList()
     {
@@ -54,10 +60,12 @@ public class ProductApiController extends BaseController
     public TableDataInfo getProductList(TProduct product, HttpServletRequest request)
     {
         product.setStatus(1);
-        startPage();
-        List<TProduct> list = productService.selectTProductList(product);
-        marketingActivityEngine.enrichProducts(list, wxUserTokenService.resolveUserId(request));
-        return getDataTable(list);
+        Long userId = wxUserTokenService.resolveUserId(request);
+        List<TProduct> candidates = productService.selectTProductList(product);
+        List<TProduct> ranked = productRecommendationService.recommendMall(userId, candidates);
+        List<TProduct> page = paginate(ranked, request);
+        marketingActivityEngine.enrichProducts(page, userId);
+        return toTableDataInfo(page, ranked.size());
     }
 
     @GetMapping("/category/{categoryId}")
@@ -66,10 +74,12 @@ public class ProductApiController extends BaseController
         TProduct query = new TProduct();
         query.setCategoryId(categoryId);
         query.setStatus(1);
-        startPage();
-        List<TProduct> list = productService.selectTProductList(query);
-        marketingActivityEngine.enrichProducts(list, wxUserTokenService.resolveUserId(request));
-        return getDataTable(list);
+        Long userId = wxUserTokenService.resolveUserId(request);
+        List<TProduct> candidates = productService.selectTProductList(query);
+        List<TProduct> ranked = productRecommendationService.recommendMall(userId, candidates);
+        List<TProduct> page = paginate(ranked, request);
+        marketingActivityEngine.enrichProducts(page, userId);
+        return toTableDataInfo(page, ranked.size());
     }
 
     @GetMapping("/{productId}")
@@ -115,9 +125,55 @@ public class ProductApiController extends BaseController
         TProduct query = new TProduct();
         query.setProductName(keyword);
         query.setStatus(1);
-        startPage();
-        List<TProduct> list = productService.selectTProductList(query);
-        marketingActivityEngine.enrichProducts(list, userId);
-        return getDataTable(list);
+        List<TProduct> candidates = productService.selectTProductList(query);
+        List<TProduct> ranked = productRecommendationService.recommendMall(userId, candidates);
+        List<TProduct> page = paginate(ranked, request);
+        marketingActivityEngine.enrichProducts(page, userId);
+        return toTableDataInfo(page, ranked.size());
+    }
+
+    private <T> List<T> paginate(List<T> list, HttpServletRequest request)
+    {
+        List<T> values = list == null ? Collections.emptyList() : list;
+        int pageNum = positiveOrDefault(parsePositiveParameter(request, "pageNum"), 1);
+        int pageSize = positiveOrDefault(parsePositiveParameter(request, "pageSize"), 10);
+        long fromLong = ((long) pageNum - 1L) * pageSize;
+        if (fromLong >= values.size())
+        {
+            return Collections.emptyList();
+        }
+        int from = (int) fromLong;
+        int to = Math.min(values.size(), from + pageSize);
+        return new ArrayList<>(values.subList(from, to));
+    }
+
+    private int positiveOrDefault(Integer value, int defaultValue)
+    {
+        return value == null || value <= 0 ? defaultValue : value;
+    }
+
+    private Integer parsePositiveParameter(HttpServletRequest request, String name)
+    {
+        if (request == null || request.getParameter(name) == null)
+        {
+            return null;
+        }
+        try
+        {
+            return Integer.valueOf(request.getParameter(name));
+        }
+        catch (NumberFormatException ignored)
+        {
+            return null;
+        }
+    }
+
+    private TableDataInfo toTableDataInfo(List<?> rows, int total)
+    {
+        TableDataInfo result = new TableDataInfo();
+        result.setCode(0);
+        result.setRows(rows);
+        result.setTotal(total);
+        return result;
     }
 }

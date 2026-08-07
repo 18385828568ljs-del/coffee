@@ -38,6 +38,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="evidenceTime" column="evidence_time" />
     </resultMap>
 
+    <resultMap id="ProductPopularityResult" type="com.ruoyi.project.coffee.profile.domain.ProductPopularity">
+        <result property="productId" column="product_id" />
+        <result property="popularity" column="popularity" />
+    </resultMap>
+
     <select id="selectUserProfileByUserId" resultMap="UserProfileResult">
         select user_id, order_count, total_amount, avg_order_amount,
                preferred_price_min, preferred_price_max, last_order_time,
@@ -45,6 +50,37 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                calculate_time, create_time, update_time
         from t_user_profile
         where user_id = #{userId}
+    </select>
+
+    <select id="selectRecentProductPopularity"
+        resultMap="ProductPopularityResult">
+        select product_id, sum(quantity) as popularity
+        from (
+            <choose>
+                <when test="scene == 'MALL'">
+                    select i.product_id, coalesce(i.quantity, 1) as quantity
+                    from t_order o
+                    inner join t_order_item i on i.order_id = o.order_id
+                    where o.status in (1, 2, 3)
+                      and coalesce(o.refund_status, 0) &lt;&gt; 2
+                      and coalesce(o.pay_time, o.finish_time, o.create_time) &gt;= #{cutoffTime}
+                      and (i.spec is null or i.spec not like '赠品%')
+                </when>
+                <when test="scene == 'SCAN'">
+                    select i.product_id, coalesce(i.quantity, 1) as quantity
+                    from t_scan_order o
+                    inner join t_scan_order_item i on i.order_id = o.order_id
+                    where o.status in (2, 3, 4)
+                      and coalesce(o.refund_status, 0) &lt;&gt; 2
+                      and coalesce(o.pay_time, o.finish_time, o.create_time) &gt;= #{cutoffTime}
+                </when>
+                <otherwise>
+                    select null as product_id, 0 as quantity where 1 = 0
+                </otherwise>
+            </choose>
+        ) recent_orders
+        group by product_id
+        order by popularity desc, product_id asc
     </select>
 
     <select id="selectAllUserIds" resultType="java.lang.Long">
