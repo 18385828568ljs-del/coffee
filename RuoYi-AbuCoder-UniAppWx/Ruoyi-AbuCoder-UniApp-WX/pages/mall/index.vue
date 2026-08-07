@@ -4,6 +4,24 @@
 
 		<view class="content">
 			<view class="content-wrap">
+				<view class="search-box">
+					<view class="search-icon">
+						<view class="search-icon-circle"></view>
+						<view class="search-icon-line"></view>
+					</view>
+					<input
+						v-model="searchKeyword"
+						class="search-input"
+						confirm-type="search"
+						maxlength="50"
+						placeholder="搜索咖啡或风味"
+						placeholder-class="search-placeholder"
+						@confirm="handleSearch"
+					/>
+					<view class="search-clear" @tap="handleSearch"><text>搜索</text></view>
+					<view v-if="searchActive" class="search-clear" @tap="clearSearch"><text>清除</text></view>
+				</view>
+
 				<view class="category-shell" :style="{ top: categoryStickyTop + 'px' }">
 					<view class="category-inline">
 						<scroll-view
@@ -196,6 +214,9 @@ export default {
 		return {
 			categoryList: [],
 			allProductList: [],
+			searchKeyword: '',
+			searchResultList: [],
+			searchActive: false,
 			cartList: [],
 			currentCategoryId: '',
 			productImageErrorMap: {},
@@ -232,7 +253,8 @@ export default {
 				}
 			})
 
-			this.allProductList.forEach((item) => {
+			const productList = this.searchActive ? this.searchResultList : this.allProductList
+			productList.forEach((item) => {
 				const rawCategoryId = this.getProductCategoryId(item)
 				const normalizedCategoryId =
 					rawCategoryId === null || rawCategoryId === undefined || rawCategoryId === ''
@@ -267,7 +289,9 @@ export default {
 				}
 			})
 
-			return orderedSections.filter(Boolean)
+			return orderedSections.filter((section) => {
+				return !!section && (!this.searchActive || section.products.length > 0)
+			})
 		},
 
 	},
@@ -498,6 +522,51 @@ export default {
 					silent: options.silent
 				})
 			}
+		},
+
+		async handleSearch() {
+			const keyword = String(this.searchKeyword || '').trim().slice(0, 50)
+			this.searchKeyword = keyword
+			if (!keyword) {
+				this.clearSearch()
+				return
+			}
+
+			showBusy('搜索中...')
+			try {
+				const res = await requestPromise({
+					url: productApi.search,
+					method: 'GET',
+					data: {
+						keyword,
+						pageNum: 1,
+						pageSize: 1000
+					}
+				})
+				if (!isSuccessResponse(res)) {
+					this.handleRequestFailure('搜索商品', res, { fallbackMessage: '搜索失败' })
+					return
+				}
+				this.searchResultList = res.data.rows || []
+				this.searchActive = true
+				this.currentCategoryId = ''
+				this.$nextTick(() => {
+					this.scheduleSectionMeasure(true)
+					uni.pageScrollTo({ scrollTop: 0, duration: 0 })
+				})
+			} catch (error) {
+				this.handleRequestFailure('搜索商品', error, { fallbackMessage: '搜索失败' })
+			} finally {
+				hideBusy()
+			}
+		},
+
+		clearSearch() {
+			this.searchKeyword = ''
+			this.searchResultList = []
+			this.searchActive = false
+			this.currentCategoryId = ''
+			this.$nextTick(() => this.scheduleSectionMeasure(true))
 		},
 
 		async loadCartList(options = {}) {
@@ -870,7 +939,8 @@ export default {
 						userId: getLocalUserId(),
 						productId: this.resolveProductId(item),
 						quantity: 1,
-						spec: item.remark || ''
+						spec: item.remark || '',
+						behaviorSource: this.searchActive ? 'SEARCH' : 'CATEGORY'
 					}
 				})
 				if (isSuccessResponse(res)) {
@@ -926,7 +996,8 @@ export default {
 
 		buildDetailUrl(item) {
 			const productId = this.resolveProductId(item)
-			const query = []
+			const source = this.searchActive ? 'SEARCH' : 'CATEGORY'
+			const query = [`source=${source}`]
 			if (productId) {
 				query.push(`id=${encodeURIComponent(productId)}`)
 			}

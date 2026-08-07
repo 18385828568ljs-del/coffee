@@ -27,6 +27,12 @@ public class TCart extends BaseEntity
     @Excel(name = "商品ID")
     private Long productId;
 
+    /** 商品分类ID（查询购物车时关联商品取得） */
+    private Long categoryId;
+
+    /** 非数据库字段：触发加购的商品列表来源 */
+    private String behaviorSource;
+
     /** 购买数量 */
     @Excel(name = "购买数量")
     private Long quantity;
@@ -69,6 +75,24 @@ public class TCart extends BaseEntity
     public Long getProductId()
     {
         return productId;
+    }
+    public void setCategoryId(Long categoryId)
+    {
+        this.categoryId = categoryId;
+    }
+
+    public Long getCategoryId()
+    {
+        return categoryId;
+    }
+    public void setBehaviorSource(String behaviorSource)
+    {
+        this.behaviorSource = behaviorSource;
+    }
+
+    public String getBehaviorSource()
+    {
+        return behaviorSource;
     }
     public void setQuantity(Long quantity)
     {
@@ -126,6 +150,8 @@ public class TCart extends BaseEntity
             .append("cartId", getCartId())
             .append("userId", getUserId())
             .append("productId", getProductId())
+            .append("categoryId", getCategoryId())
+            .append("behaviorSource", getBehaviorSource())
             .append("quantity", getQuantity())
             .append("spec", getSpec())
             .append("productName", getProductName())

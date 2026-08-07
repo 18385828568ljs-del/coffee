@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import com.ruoyi.framework.web.domain.AjaxResult;
 import com.ruoyi.project.abucoder.wxuser.domain.AbucoderWxuser;
@@ -67,6 +68,7 @@ class ScanCartApiControllerTest
         ScanProduct product = new ScanProduct();
         product.setProductId(5L);
         product.setProductName("拿铁");
+        product.setCategoryId(4L);
         product.setImageUrl("latte.jpg");
         product.setPrice(new BigDecimal("12.00"));
         product.setStatus(1);
@@ -99,7 +101,7 @@ class ScanCartApiControllerTest
         assertEquals(0, result.get(AjaxResult.CODE_TAG));
         assertEquals(saved, result.get(AjaxResult.DATA_TAG));
         verify(userBehaviorEventService).recordFirstCartAdd(18L, UserBehaviorEventService.SCENE_SCAN,
-            5L, null, 9L);
+            5L, 4L, 9L, UserBehaviorEventService.SOURCE_CATEGORY);
     }
 
     @Test
@@ -132,12 +134,102 @@ class ScanCartApiControllerTest
         verify(scanCartService, never()).logicDeleteById(8L);
     }
 
+    @Test
+    void deleteCartRecordsRemoveAfterSuccessfulDelete()
+    {
+        ScanCart existing = new ScanCart();
+        existing.setId(8L);
+        existing.setUserId(18L);
+        existing.setProductId(5L);
+        existing.setDelFlag(0);
+        ScanProduct product = new ScanProduct();
+        product.setProductId(5L);
+        product.setCategoryId(4L);
+        when(scanCartService.selectScanCartById(8L)).thenReturn(existing);
+        when(scanCartService.logicDeleteById(8L)).thenReturn(1);
+        when(scanProductService.selectScanProductById(5L)).thenReturn(product);
+
+        AjaxResult result = controller.deleteCart(8L);
+
+        assertEquals(0, result.get(AjaxResult.CODE_TAG));
+        verify(userBehaviorEventService).recordCartRemove(18L, UserBehaviorEventService.SCENE_SCAN,
+            5L, 4L, 8L);
+    }
+
+    @Test
+    void updateCartToZeroRecordsRemove()
+    {
+        ScanCart existing = ownedCart(8L, 5L);
+        ScanCart input = new ScanCart();
+        input.setId(8L);
+        input.setQuantity(0);
+        ScanProduct product = product(5L, 4L);
+        when(scanCartService.selectScanCartById(8L)).thenReturn(existing);
+        when(scanCartService.updateQuantity(8L, 0)).thenReturn(1);
+        when(scanProductService.selectScanProductById(5L)).thenReturn(product);
+
+        AjaxResult result = controller.updateCart(input);
+
+        assertEquals(0, result.get(AjaxResult.CODE_TAG));
+        verify(userBehaviorEventService).recordCartRemove(18L, UserBehaviorEventService.SCENE_SCAN,
+            5L, 4L, 8L);
+    }
+
+    @Test
+    void clearCartRecordsEveryRemovedItem()
+    {
+        ScanCart existing = ownedCart(8L, 5L);
+        when(scanCartService.selectScanCartList(any(ScanCart.class)))
+            .thenReturn(Collections.singletonList(existing));
+        when(scanCartService.logicDeleteById(8L)).thenReturn(1);
+        when(scanProductService.selectScanProductById(5L)).thenReturn(product(5L, 4L));
+
+        AjaxResult result = controller.clearCart(null, 1L, "A01");
+
+        assertEquals(0, result.get(AjaxResult.CODE_TAG));
+        verify(scanCartService).logicDeleteById(8L);
+        verify(userBehaviorEventService).recordCartRemove(18L, UserBehaviorEventService.SCENE_SCAN,
+            5L, 4L, 8L);
+    }
+
+    @Test
+    void clearCartFallsBackToBulkDeleteWhenBehaviorSnapshotFails()
+    {
+        when(scanCartService.selectScanCartList(any(ScanCart.class)))
+            .thenThrow(new IllegalStateException("snapshot unavailable"));
+        when(scanCartService.logicDeleteByOwnerAndTable(any(ScanCart.class))).thenReturn(1);
+
+        AjaxResult result = controller.clearCart(null, 1L, "A01");
+
+        assertEquals(0, result.get(AjaxResult.CODE_TAG));
+        verify(scanCartService).logicDeleteByOwnerAndTable(any(ScanCart.class));
+        verify(userBehaviorEventService, never()).recordCartRemove(any(), any(), any(), any(), any());
+    }
+
     private ScanCart cart(Integer quantity, String price)
     {
         ScanCart cart = new ScanCart();
         cart.setQuantity(quantity);
         cart.setPrice(new BigDecimal(price));
         return cart;
+    }
+
+    private ScanCart ownedCart(Long id, Long productId)
+    {
+        ScanCart cart = new ScanCart();
+        cart.setId(id);
+        cart.setUserId(18L);
+        cart.setProductId(productId);
+        cart.setDelFlag(0);
+        return cart;
+    }
+
+    private ScanProduct product(Long productId, Long categoryId)
+    {
+        ScanProduct product = new ScanProduct();
+        product.setProductId(productId);
+        product.setCategoryId(categoryId);
+        return product;
     }
 
     private void bindUser(Long userId)

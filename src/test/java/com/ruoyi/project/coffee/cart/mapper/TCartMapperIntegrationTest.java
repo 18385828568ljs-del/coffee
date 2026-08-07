@@ -39,8 +39,9 @@ class TCartMapperIntegrationTest
     void selectTCartListShouldJoinProductSnapshot()
     {
         jdbcTemplate.update(
-            "insert into t_product(product_id, product_name, image_url, price, status) values (?, ?, ?, ?, ?)",
-            1001L, "招牌拿铁", "latte.png", new BigDecimal("18.50"), 1
+            "insert into t_product(product_id, category_id, product_name, image_url, price, status) "
+                + "values (?, ?, ?, ?, ?, ?)",
+            1001L, 3L, "招牌拿铁", "latte.png", new BigDecimal("18.50"), 1
         );
         jdbcTemplate.update(
             "insert into t_cart(cart_id, user_id, product_id, quantity, spec, create_time) values (?, ?, ?, ?, ?, ?)",
@@ -53,6 +54,7 @@ class TCartMapperIntegrationTest
 
         assertEquals(1, carts.size());
         assertEquals("招牌拿铁", carts.get(0).getProductName());
+        assertEquals(Long.valueOf(3L), carts.get(0).getCategoryId());
         assertEquals("latte.png", carts.get(0).getProductImage());
         assertEquals(new BigDecimal("18.50"), carts.get(0).getPrice());
         assertEquals(Long.valueOf(2L), carts.get(0).getQuantity());
