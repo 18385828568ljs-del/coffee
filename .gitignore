@@ -50,7 +50,8 @@ coffee-mall-backend-src.zip
 /task_plan.md
 /progress.md
 /findings.md
-/CONTEXT.md
 /src/main/resources/application.yml
 /src/main/resources/application-druid.yml
-/docs/
+
+CONTEXT.md
+docs

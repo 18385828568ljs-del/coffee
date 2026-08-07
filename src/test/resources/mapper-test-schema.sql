@@ -1,5 +1,6 @@
 DROP TABLE IF EXISTS t_cart;
 DROP TABLE IF EXISTS t_user_behavior_event;
+DROP TABLE IF EXISTS t_user_profile;
 DROP TABLE IF EXISTS t_address;
 DROP TABLE IF EXISTS t_product_image;
 DROP TABLE IF EXISTS t_product;
@@ -88,9 +89,11 @@ CREATE TABLE t_user_behavior_event (
     user_id BIGINT NOT NULL,
     event_type VARCHAR(32) NOT NULL,
     scene VARCHAR(16) NOT NULL,
-    product_id BIGINT NOT NULL,
+    product_id BIGINT,
     category_id BIGINT,
     source_id BIGINT,
+    search_keyword VARCHAR(50),
+    source VARCHAR(32),
     dedup_key VARCHAR(128),
     event_time TIMESTAMP NOT NULL,
     CONSTRAINT uk_behavior_dedup_key UNIQUE (dedup_key)
@@ -397,10 +400,27 @@ CREATE TABLE t_marketing_activity_scope (
 
 CREATE TABLE t_wxuser (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    openid VARCHAR(128),
+    openid VARCHAR(128) UNIQUE,
     nickname VARCHAR(128),
     avatar VARCHAR(500),
     create_time TIMESTAMP NULL
+);
+
+CREATE TABLE t_user_profile (
+    user_id BIGINT PRIMARY KEY,
+    order_count INT NOT NULL DEFAULT 0,
+    total_amount DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+    avg_order_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    preferred_price_min DECIMAL(10, 2),
+    preferred_price_max DECIMAL(10, 2),
+    last_order_time TIMESTAMP NULL,
+    last_active_time TIMESTAMP NULL,
+    evidence_count INT NOT NULL DEFAULT 0,
+    profile_status VARCHAR(16) NOT NULL DEFAULT 'EMPTY',
+    profile_data CLOB,
+    calculate_time TIMESTAMP NULL,
+    create_time TIMESTAMP NULL,
+    update_time TIMESTAMP NULL
 );
 
 CREATE TABLE t_offline_activity (
