@@ -140,6 +140,7 @@ export default {
 	data() {
 		return {
 			productId: null,
+			behaviorSource: 'DEFAULT_LIST',
 			productInfo: {},
 			currentImageIndex: 0,
 			addingToCart: false
@@ -177,6 +178,7 @@ export default {
 	},
 
 	onLoad(options) {
+		this.behaviorSource = safeDecode(options.source) || 'DEFAULT_LIST'
 		const optionPreview = compactPreviewData({
 			productName: safeDecode(options.name),
 			productImg: safeDecode(options.image),
@@ -245,6 +247,7 @@ export default {
 				const res = await requestPromise({
 					url: productApi.detail + this.productId,
 					method: 'GET',
+					data: { source: this.behaviorSource },
 					header: getToken() ? { Authorization: `Bearer ${getToken()}` } : {}
 				})
 				if (!isSuccessResponse(res) || !res.data.data) {
@@ -270,6 +273,7 @@ export default {
 					method: 'GET',
 					data: {
 						keyword: previewProduct.productName,
+						trackBehavior: false,
 						pageNum: 1,
 						pageSize: 20
 					}
@@ -327,7 +331,8 @@ export default {
 						userId: getLocalUserId(),
 						productId: this.productId,
 						quantity: 1,
-						spec: this.productInfo.remark || ''
+						spec: this.productInfo.remark || '',
+						behaviorSource: this.behaviorSource
 					}
 				})
 					.then((res) => {

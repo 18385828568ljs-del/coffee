@@ -68,13 +68,16 @@ class CartApiControllerTest
         incoming.setProductId(5L);
         incoming.setQuantity(2L);
         incoming.setSpec(null);
+        incoming.setBehaviorSource(UserBehaviorEventService.SOURCE_CATEGORY);
         TCart existing = new TCart();
         existing.setCartId(20L);
         existing.setUserId(10L);
         existing.setProductId(5L);
+        existing.setCategoryId(6L);
         existing.setSpec("");
         existing.setQuantity(3L);
         when(cartService.selectTCartList(any(TCart.class))).thenReturn(Arrays.asList(existing));
+        when(cartService.updateTCart(existing)).thenReturn(1);
 
         AjaxResult result = controller.addToCart(incoming);
 
@@ -83,6 +86,8 @@ class CartApiControllerTest
         assertEquals(5L, existing.getQuantity());
         verify(cartService).updateTCart(existing);
         verify(cartService, never()).insertTCart(any(TCart.class));
+        verify(userBehaviorEventService).recordFirstCartAdd(10L, UserBehaviorEventService.SCENE_MALL,
+            5L, 6L, 20L, UserBehaviorEventService.SOURCE_CATEGORY);
     }
 
     @Test
@@ -92,8 +97,14 @@ class CartApiControllerTest
         incoming.setProductId(5L);
         incoming.setQuantity(2L);
         incoming.setCartId(30L);
+        incoming.setBehaviorSource(UserBehaviorEventService.SOURCE_CATEGORY);
+        TCart saved = new TCart();
+        saved.setCartId(30L);
+        saved.setProductId(5L);
+        saved.setCategoryId(6L);
         when(cartService.insertTCart(incoming)).thenReturn(1);
         when(cartService.selectTCartList(any(TCart.class))).thenReturn(Collections.emptyList());
+        when(cartService.selectTCartByCartId(30L)).thenReturn(saved);
 
         AjaxResult result = controller.addToCart(incoming);
 
@@ -102,7 +113,7 @@ class CartApiControllerTest
         assertEquals("", incoming.getSpec());
         verify(cartService).insertTCart(incoming);
         verify(userBehaviorEventService).recordFirstCartAdd(10L, UserBehaviorEventService.SCENE_MALL,
-            5L, null, 30L);
+            5L, 6L, 30L, UserBehaviorEventService.SOURCE_CATEGORY);
     }
 
     @Test
@@ -121,13 +132,37 @@ class CartApiControllerTest
     }
 
     @Test
+    void deleteCartRecordsRemoveAfterSuccessfulDelete()
+    {
+        TCart existing = new TCart();
+        existing.setCartId(2L);
+        existing.setUserId(10L);
+        existing.setProductId(5L);
+        existing.setCategoryId(6L);
+        when(cartService.selectTCartByCartId(2L)).thenReturn(existing);
+        when(cartService.deleteTCartByCartId(2L)).thenReturn(1);
+
+        AjaxResult result = controller.deleteCart(2L);
+
+        assertEquals(0, result.get(AjaxResult.CODE_TAG));
+        verify(userBehaviorEventService).recordCartRemove(10L, UserBehaviorEventService.SCENE_MALL,
+            5L, 6L, 2L);
+    }
+
+    @Test
     void clearCartDeletesCurrentUsersItems()
     {
         TCart first = new TCart();
         first.setCartId(1L);
+        first.setProductId(5L);
+        first.setCategoryId(6L);
         TCart second = new TCart();
         second.setCartId(2L);
+        second.setProductId(7L);
+        second.setCategoryId(8L);
         when(cartService.selectTCartList(any(TCart.class))).thenReturn(Arrays.asList(first, second));
+        when(cartService.deleteTCartByCartId(1L)).thenReturn(1);
+        when(cartService.deleteTCartByCartId(2L)).thenReturn(1);
 
         AjaxResult result = controller.clearCart(999L);
 
@@ -136,6 +171,10 @@ class CartApiControllerTest
         assertEquals(10L, captor.getValue().getUserId());
         verify(cartService).deleteTCartByCartId(1L);
         verify(cartService).deleteTCartByCartId(2L);
+        verify(userBehaviorEventService).recordCartRemove(10L, UserBehaviorEventService.SCENE_MALL,
+            5L, 6L, 1L);
+        verify(userBehaviorEventService).recordCartRemove(10L, UserBehaviorEventService.SCENE_MALL,
+            7L, 8L, 2L);
         assertEquals(0, result.get(AjaxResult.CODE_TAG));
     }
 

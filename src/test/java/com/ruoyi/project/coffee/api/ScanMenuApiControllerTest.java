@@ -3,6 +3,7 @@ package com.ruoyi.project.coffee.api;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
@@ -81,6 +82,24 @@ class ScanMenuApiControllerTest
 
         assertEquals(500, result.get(AjaxResult.CODE_TAG));
         assertEquals("商品已下架", result.get(AjaxResult.MSG_TAG));
+    }
+
+    @Test
+    void getProductDetailRecordsCategoryView()
+    {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        ScanProduct product = new ScanProduct();
+        product.setProductId(7L);
+        product.setCategoryId(3L);
+        product.setStatus(1);
+        when(scanProductService.selectScanProductWithSpecs(7L)).thenReturn(product);
+        when(wxUserTokenService.resolveUserId(request)).thenReturn(18L);
+
+        AjaxResult result = controller.getProductDetail(7L, request);
+
+        assertEquals(0, result.get(AjaxResult.CODE_TAG));
+        verify(userBehaviorEventService).recordProductView(18L, UserBehaviorEventService.SCENE_SCAN,
+            7L, 3L, UserBehaviorEventService.SOURCE_CATEGORY);
     }
 
     @Test

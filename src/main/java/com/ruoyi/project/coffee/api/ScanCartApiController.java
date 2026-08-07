@@ -125,7 +125,8 @@ public class ScanCartApiController extends BaseController
         if (saved != null)
         {
             userBehaviorEventService.recordFirstCartAdd(cart.getUserId(),
-                UserBehaviorEventService.SCENE_SCAN, cart.getProductId(), product.getCategoryId(), saved.getId());
+                UserBehaviorEventService.SCENE_SCAN, cart.getProductId(), product.getCategoryId(), saved.getId(),
+                UserBehaviorEventService.SOURCE_CATEGORY);
         }
         return AjaxResult.success("已加入点单购物车", saved);
     }
@@ -180,6 +181,11 @@ public class ScanCartApiController extends BaseController
         {
             return AjaxResult.error("购物车更新失败");
         }
+        if (cart.getQuantity() != null && cart.getQuantity() <= 0)
+        {
+            userBehaviorEventService.recordCartRemove(currentUserId, UserBehaviorEventService.SCENE_SCAN,
+                exist.getProductId(), resolveCategoryId(exist.getProductId()), exist.getId());
+        }
         return AjaxResult.success("已更新");
     }
 
@@ -203,7 +209,13 @@ public class ScanCartApiController extends BaseController
             return AjaxResult.error("无权操作此购物车记录");
         }
 
-        return toAjax(scanCartService.logicDeleteById(id));
+        int affected = scanCartService.logicDeleteById(id);
+        if (affected > 0)
+        {
+            userBehaviorEventService.recordCartRemove(currentUserId, UserBehaviorEventService.SCENE_SCAN,
+                exist.getProductId(), resolveCategoryId(exist.getProductId()), exist.getId());
+        }
+        return toAjax(affected);
     }
 
     @DeleteMapping("/clear")
@@ -226,8 +238,46 @@ public class ScanCartApiController extends BaseController
             return AjaxResult.error("用户标识缺失,无法清空购物车");
         }
 
-        scanCartService.logicDeleteByOwnerAndTable(query);
+        List<ScanCart> items;
+        try
+        {
+            items = scanCartService.selectScanCartList(query);
+        }
+        catch (Exception e)
+        {
+            // 行为快照查询失败时仍执行原有批量清空，不能阻断购物车主流程。
+            logger.warn("读取扫码购物车行为快照失败, userId={}", query.getUserId(), e);
+            scanCartService.logicDeleteByOwnerAndTable(query);
+            return AjaxResult.success("当前桌台购物车已清空");
+        }
+
+        if (items == null)
+        {
+            items = java.util.Collections.emptyList();
+        }
+        for (ScanCart item : items)
+        {
+            if (scanCartService.logicDeleteById(item.getId()) > 0)
+            {
+                userBehaviorEventService.recordCartRemove(query.getUserId(), UserBehaviorEventService.SCENE_SCAN,
+                    item.getProductId(), resolveCategoryId(item.getProductId()), item.getId());
+            }
+        }
         return AjaxResult.success("当前桌台购物车已清空");
+    }
+
+    private Long resolveCategoryId(Long productId)
+    {
+        try
+        {
+            ScanProduct product = scanProductService.selectScanProductById(productId);
+            return product == null ? null : product.getCategoryId();
+        }
+        catch (Exception e)
+        {
+            logger.warn("读取扫码商品分类失败, productId={}", productId, e);
+            return null;
+        }
     }
 
     private void normalizeOwner(ScanCart cart)

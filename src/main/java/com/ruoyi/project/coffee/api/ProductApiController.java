@@ -87,7 +87,7 @@ public class ProductApiController extends BaseController
         Long userId = wxUserTokenService.resolveUserId(request);
         marketingActivityEngine.enrichProduct(product, userId);
         userBehaviorEventService.recordProductView(userId, UserBehaviorEventService.SCENE_MALL,
-            product.getProductId(), product.getCategoryId());
+            product.getProductId(), product.getCategoryId(), request.getParameter("source"));
         return AjaxResult.success(product);
     }
 
@@ -106,12 +106,18 @@ public class ProductApiController extends BaseController
             keyword = keyword.substring(0, 50);
         }
 
+        Long userId = wxUserTokenService.resolveUserId(request);
+        if (!"false".equalsIgnoreCase(request.getParameter("trackBehavior")))
+        {
+            userBehaviorEventService.recordSearch(userId, UserBehaviorEventService.SCENE_MALL, keyword);
+        }
+
         TProduct query = new TProduct();
         query.setProductName(keyword);
         query.setStatus(1);
         startPage();
         List<TProduct> list = productService.selectTProductList(query);
-        marketingActivityEngine.enrichProducts(list, wxUserTokenService.resolveUserId(request));
+        marketingActivityEngine.enrichProducts(list, userId);
         return getDataTable(list);
     }
 }

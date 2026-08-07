@@ -8,6 +8,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="cartId"    column="cart_id"    />
         <result property="userId"    column="user_id"    />
         <result property="productId"    column="product_id"    />
+        <result property="categoryId"    column="category_id"    />
         <result property="quantity"    column="quantity"    />
         <result property="spec"    column="spec"    />
         <result property="productName"    column="product_name"    />
@@ -25,6 +26,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                c.spec,
                c.create_time,
                c.update_time,
+               p.category_id,
                p.product_name,
                p.image_url as product_image,
                p.price

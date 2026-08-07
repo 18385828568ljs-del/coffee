@@ -88,7 +88,7 @@ public class ScanMenuApiController extends BaseController
         }
         Long userId = wxUserTokenService.resolveUserId(request);
         userBehaviorEventService.recordProductView(userId, UserBehaviorEventService.SCENE_SCAN,
-            product.getProductId(), product.getCategoryId());
+            product.getProductId(), product.getCategoryId(), UserBehaviorEventService.SOURCE_CATEGORY);
         return AjaxResult.success(product);
     }
 

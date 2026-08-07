@@ -3,10 +3,12 @@ package com.ruoyi.project.coffee.api;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import com.ruoyi.framework.web.domain.AjaxResult;
 import com.ruoyi.project.coffee.activity.service.MarketingActivityEngine;
@@ -17,11 +19,14 @@ import com.ruoyi.project.coffee.category.service.ITCategoryService;
 import com.ruoyi.project.coffee.product.domain.TProduct;
 import com.ruoyi.project.coffee.product.service.ITProductService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 class ProductApiControllerTest
 {
@@ -54,6 +59,12 @@ class ProductApiControllerTest
         ReflectionTestUtils.setField(controller, "userBehaviorEventService", userBehaviorEventService);
     }
 
+    @AfterEach
+    void tearDown()
+    {
+        RequestContextHolder.resetRequestAttributes();
+    }
+
     @Test
     void getCategoryListReturnsServiceData()
     {
@@ -84,6 +95,7 @@ class ProductApiControllerTest
     void getProductDetailNormalizesEmptyStockAndEnrichesProduct()
     {
         MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addParameter("source", UserBehaviorEventService.SOURCE_CATEGORY);
         TProduct product = new TProduct();
         product.setProductId(3L);
         product.setStatus(1);
@@ -100,6 +112,34 @@ class ProductApiControllerTest
         assertEquals(0L, product.getStock());
         assertEquals(Arrays.asList("cover.png", "detail.png"), ((TProduct) result.get(AjaxResult.DATA_TAG)).getImageUrls());
         verify(marketingActivityEngine).enrichProduct(product, 7L);
-        verify(userBehaviorEventService).recordProductView(7L, UserBehaviorEventService.SCENE_MALL, 3L, null);
+        verify(userBehaviorEventService).recordProductView(7L, UserBehaviorEventService.SCENE_MALL, 3L, null,
+            UserBehaviorEventService.SOURCE_CATEGORY);
+    }
+
+    @Test
+    void searchProductsRecordsAuthenticatedSearch()
+    {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        when(wxUserTokenService.resolveUserId(request)).thenReturn(7L);
+        when(productService.selectTProductList(any(TProduct.class))).thenReturn(Collections.emptyList());
+
+        controller.searchProducts("  拿铁  ", request);
+
+        verify(userBehaviorEventService).recordSearch(7L, UserBehaviorEventService.SCENE_MALL, "拿铁");
+    }
+
+    @Test
+    void internalProductLookupDoesNotRecordSearch()
+    {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addParameter("trackBehavior", "false");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        when(wxUserTokenService.resolveUserId(request)).thenReturn(7L);
+        when(productService.selectTProductList(any(TProduct.class))).thenReturn(Collections.emptyList());
+
+        controller.searchProducts("拿铁", request);
+
+        verify(userBehaviorEventService, never()).recordSearch(any(), any(), any());
     }
 }

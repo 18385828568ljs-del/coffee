@@ -69,15 +69,18 @@ public class CartApiController extends BaseController
             if (cartService.updateTCart(existCart) > 0)
             {
                 userBehaviorEventService.recordFirstCartAdd(userId,
-                    UserBehaviorEventService.SCENE_MALL, existCart.getProductId(), null, existCart.getCartId());
+                    UserBehaviorEventService.SCENE_MALL, existCart.getProductId(), existCart.getCategoryId(),
+                    existCart.getCartId(), cart.getBehaviorSource());
             }
             return AjaxResult.success("已更新购物车数量");
         }
 
         if (cartService.insertTCart(cart) > 0)
         {
+            TCart savedCart = findSavedCart(cart);
             userBehaviorEventService.recordFirstCartAdd(userId,
-                UserBehaviorEventService.SCENE_MALL, cart.getProductId(), null, cart.getCartId());
+                UserBehaviorEventService.SCENE_MALL, savedCart.getProductId(), savedCart.getCategoryId(),
+                savedCart.getCartId(), cart.getBehaviorSource());
         }
         return AjaxResult.success("已添加到购物车");
     }
@@ -115,7 +118,13 @@ public class CartApiController extends BaseController
         {
             return AjaxResult.error("购物车记录不存在");
         }
-        return toAjax(cartService.deleteTCartByCartId(cartId));
+        int affected = cartService.deleteTCartByCartId(cartId);
+        if (affected > 0)
+        {
+            userBehaviorEventService.recordCartRemove(userId, UserBehaviorEventService.SCENE_MALL,
+                existCart.getProductId(), existCart.getCategoryId(), existCart.getCartId());
+        }
+        return toAjax(affected);
     }
 
     @DeleteMapping("/clear/{userId}")
@@ -127,8 +136,26 @@ public class CartApiController extends BaseController
         List<TCart> list = cartService.selectTCartList(query);
         for (TCart item : list)
         {
-            cartService.deleteTCartByCartId(item.getCartId());
+            if (cartService.deleteTCartByCartId(item.getCartId()) > 0)
+            {
+                userBehaviorEventService.recordCartRemove(currentUserId, UserBehaviorEventService.SCENE_MALL,
+                    item.getProductId(), item.getCategoryId(), item.getCartId());
+            }
         }
         return AjaxResult.success("购物车已清空");
+    }
+
+    private TCart findSavedCart(TCart cart)
+    {
+        try
+        {
+            TCart savedCart = cartService.selectTCartByCartId(cart.getCartId());
+            return savedCart == null ? cart : savedCart;
+        }
+        catch (Exception e)
+        {
+            logger.warn("读取新购物车分类失败, cartId={}", cart.getCartId(), e);
+            return cart;
+        }
     }
 }
