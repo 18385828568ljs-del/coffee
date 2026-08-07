@@ -88,6 +88,9 @@ public class TProduct extends BaseEntity
     /** 活动标签列表 */
     private List<String> activityTags;
 
+    /** Whether the product was ordered by personalized ranking. */
+    private Boolean recommendationApplied;
+
     public void setProductId(Long productId)
     {
         this.productId = productId;
@@ -263,6 +266,16 @@ public class TProduct extends BaseEntity
     public List<String> getActivityTags()
     {
         return activityTags;
+    }
+
+    public void setRecommendationApplied(Boolean recommendationApplied)
+    {
+        this.recommendationApplied = recommendationApplied;
+    }
+
+    public Boolean getRecommendationApplied()
+    {
+        return recommendationApplied;
     }
     public String getFlavorTags()
     {

@@ -18,6 +18,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.project.coffee.product.domain.TProduct;
 import com.ruoyi.project.coffee.profile.domain.ProductPopularity;
+import com.ruoyi.project.coffee.profile.domain.RecommendedProduct;
 import com.ruoyi.project.coffee.profile.domain.UserProfile;
 import com.ruoyi.project.coffee.profile.mapper.UserProfileMapper;
 import com.ruoyi.project.coffee.scanOrder.domain.ScanProduct;
@@ -43,6 +44,13 @@ public class ProductRecommendationService
     public List<TProduct> recommendMall(Long userId, List<TProduct> products)
     {
         List<TProduct> original = safeList(products);
+        for (TProduct product : original)
+        {
+            if (product != null)
+            {
+                product.setRecommendationApplied(false);
+            }
+        }
         UserProfile profile = loadReadyProfile(userId);
         if (profile == null)
         {
@@ -59,11 +67,16 @@ public class ProductRecommendationService
                 {
                     continue;
                 }
-                scored.add(new ScoredItem<>(product, score(context, product.getProductId(),
-                    product.getCategoryId(), product.getPrice(), product.getCreateTime())));
+                scored.add(scoreItem(context, product, product.getProductId(), product.getCategoryId(),
+                    product.getPrice(), product.getCreateTime()));
             }
             scored.sort((left, right) -> Double.compare(right.score, left.score));
-            return values(scored);
+            List<TProduct> result = values(scored);
+            for (TProduct product : result)
+            {
+                product.setRecommendationApplied(true);
+            }
+            return result;
         }
         catch (RuntimeException e)
         {
@@ -91,8 +104,8 @@ public class ProductRecommendationService
                 {
                     continue;
                 }
-                scored.add(new ScoredItem<>(product, score(context, product.getProductId(),
-                    product.getCategoryId(), product.getPrice(), product.getCreateTime())));
+                scored.add(scoreItem(context, product, product.getProductId(), product.getCategoryId(),
+                    product.getPrice(), product.getCreateTime()));
             }
             scored.sort((left, right) -> Double.compare(right.score, left.score));
             return values(scored);
@@ -101,6 +114,54 @@ public class ProductRecommendationService
         {
             log.warn("读取扫码推荐数据失败，沿用原商品顺序，userId={}", userId, e);
             return original;
+        }
+    }
+
+    /** Return the same mall ranking with the score contribution's primary explanation. */
+    public List<RecommendedProduct> explainMall(Long userId, List<TProduct> products, int limit)
+    {
+        return explainMall(loadReadyProfile(userId), products, limit);
+    }
+
+    List<RecommendedProduct> explainMall(UserProfile profile, List<TProduct> products, int limit)
+    {
+        if (profile == null || !"READY".equalsIgnoreCase(profile.getProfileStatus()) || limit <= 0)
+        {
+            return Collections.emptyList();
+        }
+        try
+        {
+            RecommendationContext context = buildContext(profile, SCENE_MALL);
+            List<ScoredItem<TProduct>> scored = new ArrayList<>();
+            for (TProduct product : safeList(products))
+            {
+                if (product == null || product.getStock() == null || product.getStock() <= 0)
+                {
+                    continue;
+                }
+                scored.add(scoreItem(context, product, product.getProductId(), product.getCategoryId(),
+                    product.getPrice(), product.getCreateTime()));
+            }
+            scored.sort((left, right) -> Double.compare(right.score, left.score));
+            List<RecommendedProduct> result = new ArrayList<>();
+            for (int i = 0; i < scored.size() && i < limit; i++)
+            {
+                TProduct product = scored.get(i).value;
+                RecommendedProduct item = new RecommendedProduct();
+                item.setProductId(product.getProductId());
+                item.setProductName(product.getProductName());
+                item.setCategoryId(product.getCategoryId());
+                item.setPrice(product.getPrice());
+                item.setScore(scored.get(i).score);
+                item.setReason(scored.get(i).reason);
+                result.add(item);
+            }
+            return result;
+        }
+        catch (RuntimeException e)
+        {
+            log.warn("读取用户画像推荐解释失败，userId={}", profile.getUserId(), e);
+            return Collections.emptyList();
         }
     }
 
@@ -191,19 +252,62 @@ public class ProductRecommendationService
         }
     }
 
-    private double score(RecommendationContext context, Long productId, Long categoryId,
-        BigDecimal price, Date createTime)
+    private ScoredItem<TProduct> scoreItem(RecommendationContext context, TProduct product,
+        Long productId, Long categoryId, BigDecimal price, Date createTime)
     {
         double productInterest = normalized(context.productScores.get(productId), context.productMax);
         double categoryInterest = normalized(context.categoryScores.get(categoryId), context.categoryMax);
         double priceMatch = priceMatch(price, context.priceMin, context.priceMax);
         double popularity = normalized(context.popularity.get(productId), context.popularityMax);
         double newItem = isRecent(createTime) ? 1D : 0D;
-        return PRODUCT_WEIGHT * productInterest
-            + CATEGORY_WEIGHT * categoryInterest
-            + PRICE_WEIGHT * priceMatch
-            + POPULARITY_WEIGHT * popularity
-            + NEW_ITEM_WEIGHT * newItem;
+        double productContribution = PRODUCT_WEIGHT * productInterest;
+        double categoryContribution = CATEGORY_WEIGHT * categoryInterest;
+        double priceContribution = PRICE_WEIGHT * priceMatch;
+        double popularityContribution = POPULARITY_WEIGHT * popularity;
+        double newItemContribution = NEW_ITEM_WEIGHT * newItem;
+        double total = productContribution
+            + categoryContribution
+            + priceContribution
+            + popularityContribution
+            + newItemContribution;
+        return new ScoredItem<>(product, total, primaryReason(productContribution, categoryContribution,
+            priceContribution, popularityContribution, newItemContribution));
+    }
+
+    private ScoredItem<ScanProduct> scoreItem(RecommendationContext context, ScanProduct product,
+        Long productId, Long categoryId, BigDecimal price, Date createTime)
+    {
+        double productInterest = normalized(context.productScores.get(productId), context.productMax);
+        double categoryInterest = normalized(context.categoryScores.get(categoryId), context.categoryMax);
+        double priceMatch = priceMatch(price, context.priceMin, context.priceMax);
+        double popularity = normalized(context.popularity.get(productId), context.popularityMax);
+        double newItem = isRecent(createTime) ? 1D : 0D;
+        double productContribution = PRODUCT_WEIGHT * productInterest;
+        double categoryContribution = CATEGORY_WEIGHT * categoryInterest;
+        double priceContribution = PRICE_WEIGHT * priceMatch;
+        double popularityContribution = POPULARITY_WEIGHT * popularity;
+        double newItemContribution = NEW_ITEM_WEIGHT * newItem;
+        return new ScoredItem<>(product, productContribution
+            + categoryContribution
+            + priceContribution
+            + popularityContribution
+            + newItemContribution, primaryReason(productContribution, categoryContribution,
+                priceContribution, popularityContribution, newItemContribution));
+    }
+
+    private String primaryReason(double product, double category, double price, double popularity, double newer)
+    {
+        double max = product;
+        if (Math.max(Math.max(product, category), Math.max(price, Math.max(popularity, newer))) <= 0D)
+        {
+            return "默认排序";
+        }
+        String reason = "常购或感兴趣商品";
+        if (category > max) { max = category; reason = "偏好分类"; }
+        if (price > max) { max = price; reason = "符合常见价格"; }
+        if (popularity > max) { max = popularity; reason = "近期热门"; }
+        if (newer > max) { reason = "近期新品"; }
+        return reason;
     }
 
     private double priceMatch(BigDecimal price, BigDecimal min, BigDecimal max)
@@ -287,11 +391,13 @@ public class ProductRecommendationService
     {
         private final T value;
         private final double score;
+        private final String reason;
 
-        ScoredItem(T value, double score)
+        ScoredItem(T value, double score, String reason)
         {
             this.value = value;
             this.score = score;
+            this.reason = reason;
         }
     }
 }

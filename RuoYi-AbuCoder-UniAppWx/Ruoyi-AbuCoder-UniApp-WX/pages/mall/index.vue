@@ -940,7 +940,7 @@ export default {
 						productId: this.resolveProductId(item),
 						quantity: 1,
 						spec: item.remark || '',
-						behaviorSource: this.searchActive ? 'SEARCH' : 'CATEGORY'
+						behaviorSource: this.getBehaviorSource(item)
 					}
 				})
 				if (isSuccessResponse(res)) {
@@ -996,7 +996,7 @@ export default {
 
 		buildDetailUrl(item) {
 			const productId = this.resolveProductId(item)
-			const source = this.searchActive ? 'SEARCH' : 'CATEGORY'
+			const source = this.getBehaviorSource(item)
 			const query = [`source=${source}`]
 			if (productId) {
 				query.push(`id=${encodeURIComponent(productId)}`)
@@ -1023,6 +1023,13 @@ export default {
 				query.push(`activitySummary=${encodeURIComponent(item.activitySummary)}`)
 			}
 			return `/pages/product/detail${query.length ? `?${query.join('&')}` : ''}`
+		},
+
+		getBehaviorSource(item) {
+			if (this.searchActive) {
+				return 'SEARCH'
+			}
+			return item && item.recommendationApplied ? 'PERSONALIZED_LIST' : 'DEFAULT_LIST'
 		},
 
 		goDetail(item) {

@@ -1,7 +1,9 @@
 package com.ruoyi.project.coffee.profile.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -23,6 +25,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.test.util.ReflectionTestUtils;
 import com.ruoyi.project.coffee.product.domain.TProduct;
 import com.ruoyi.project.coffee.profile.domain.ProductPopularity;
+import com.ruoyi.project.coffee.profile.domain.RecommendedProduct;
 import com.ruoyi.project.coffee.profile.domain.UserProfile;
 import com.ruoyi.project.coffee.profile.mapper.UserProfileMapper;
 import com.ruoyi.project.coffee.scanOrder.domain.ScanProduct;
@@ -64,6 +67,9 @@ class ProductRecommendationServiceTest
         List<TProduct> result = service.recommendMall(7L, Arrays.asList(interested, popular, outOfStock));
 
         assertEquals(Arrays.asList(interested, popular), result);
+        assertTrue(interested.getRecommendationApplied());
+        assertTrue(popular.getRecommendationApplied());
+        assertFalse(outOfStock.getRecommendationApplied());
         verify(userProfileMapper).selectRecentProductPopularity(eq("MALL"), any(Date.class));
     }
 
@@ -77,7 +83,27 @@ class ProductRecommendationServiceTest
         List<TProduct> result = service.recommendMall(8L, products);
 
         assertSame(products, result);
+        assertFalse(products.get(0).getRecommendationApplied());
         verify(userProfileMapper, never()).selectRecentProductPopularity(any(), any(Date.class));
+    }
+
+    @Test
+    void mallExplanationUsesLargestRankingContribution()
+    {
+        when(userProfileMapper.selectUserProfileByUserId(10L)).thenReturn(profile("READY",
+            "{\"MALL\":{\"products\":[{\"id\":101,\"score\":7}],\"categories\":[]},\"SCAN\":{}}"));
+        when(userProfileMapper.selectRecentProductPopularity(eq("MALL"), any(Date.class)))
+            .thenReturn(Collections.emptyList());
+        TProduct preferred = product(101L, 11L, 20L, dateDaysAgo(60));
+        preferred.setProductName("Preferred coffee");
+
+        List<RecommendedProduct> result = service.explainMall(10L,
+            Collections.singletonList(preferred), 5);
+
+        assertEquals(1, result.size());
+        assertEquals(101L, result.get(0).getProductId());
+        assertEquals("常购或感兴趣商品", result.get(0).getReason());
+        assertEquals(0.55D, result.get(0).getScore(), 0.0001D);
     }
 
     @Test
