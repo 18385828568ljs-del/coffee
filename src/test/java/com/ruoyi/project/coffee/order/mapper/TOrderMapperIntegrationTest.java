@@ -78,6 +78,7 @@ class TOrderMapperIntegrationTest
         TOrder saved = orderMapper.selectTOrderByOrderId(order.getOrderId());
         assertEquals(Integer.valueOf(1), saved.getStatus());
         assertNotNull(saved.getPayTime());
+        assertNotNull(saved.getUpdateTime());
         assertEquals("已支付", saved.getRemark());
     }
 
@@ -108,6 +109,33 @@ class TOrderMapperIntegrationTest
 
         assertEquals(1, orders.size());
         assertEquals("MO202606170008", orders.get(0).getOrderNo());
+    }
+
+    @Test
+    void paidOrderCannotBeHardDeleted()
+    {
+        TOrder paid = buildOrder("MO202606170010", 1);
+        orderMapper.insertTOrder(paid);
+
+        assertEquals(0, orderMapper.deleteTOrderByOrderId(paid.getOrderId()));
+        assertNotNull(orderMapper.selectTOrderByOrderId(paid.getOrderId()));
+    }
+
+    @Test
+    void existingOrderCannotBeReassignedToAnotherUser()
+    {
+        TOrder order = buildOrder("MO202606170011", 1);
+        orderMapper.insertTOrder(order);
+
+        TOrder change = new TOrder();
+        change.setOrderId(order.getOrderId());
+        change.setUserId(9102L);
+        change.setPayAmount(new BigDecimal("49.00"));
+        assertEquals(1, orderMapper.updateTOrder(change));
+
+        TOrder saved = orderMapper.selectTOrderByOrderId(order.getOrderId());
+        assertEquals(9101L, saved.getUserId());
+        assertEquals(new BigDecimal("49.00"), saved.getPayAmount());
     }
 
     private TOrder buildOrder(String orderNo, int status)

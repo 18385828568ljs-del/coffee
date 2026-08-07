@@ -338,6 +338,7 @@ CREATE TABLE t_order (
     status INT,
     pay_type VARCHAR(64),
     create_time TIMESTAMP NULL,
+    update_time TIMESTAMP NULL,
     pay_time TIMESTAMP NULL,
     ship_time TIMESTAMP NULL,
     finish_time TIMESTAMP NULL,

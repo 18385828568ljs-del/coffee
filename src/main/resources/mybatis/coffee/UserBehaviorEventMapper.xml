@@ -19,7 +19,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="dedupKey != null and dedupKey != ''">dedup_key,</if>
             event_time
         </trim>
-        <trim prefix="values (" suffix=")" suffixOverrides=",">
+        <trim prefix="select" suffixOverrides=",">
             #{userId},
             #{eventType},
             #{scene},
@@ -31,5 +31,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="dedupKey != null and dedupKey != ''">#{dedupKey},</if>
             #{eventTime}
         </trim>
+        from t_wxuser
+        where id = #{userId}
     </insert>
 </mapper>

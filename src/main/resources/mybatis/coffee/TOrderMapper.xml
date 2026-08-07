@@ -16,6 +16,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="status"    column="status"    />
         <result property="payType"    column="pay_type"    />
         <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
         <result property="payTime"    column="pay_time"    />
         <result property="shipTime"    column="ship_time"    />
         <result property="finishTime"    column="finish_time"    />
@@ -35,7 +36,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <sql id="selectTOrderVo">
         select order_id, order_no, user_id, total_amount, pay_amount, receiver_name, receiver_phone, receiver_address, status, pay_type,
-               create_time, pay_time, ship_time, finish_time, cancel_time, express_no,
+               create_time, update_time, pay_time, ship_time, finish_time, cancel_time, express_no,
                refund_status, refund_reason, refund_reject_reason, refund_apply_time, refund_time, refund_amount,
                discount_amount, freight_amount, activity_summary, remark
         from t_order
@@ -132,8 +133,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <update id="updateTOrder" parameterType="TOrder">
         update t_order
         <trim prefix="SET" suffixOverrides=",">
+            update_time = now(),
             <if test="orderNo != null and orderNo != ''">order_no = #{orderNo},</if>
-            <if test="userId != null">user_id = #{userId},</if>
             <if test="totalAmount != null">total_amount = #{totalAmount},</if>
             <if test="payAmount != null">pay_amount = #{payAmount},</if>
             <if test="receiverName != null and receiverName != ''">receiver_name = #{receiverName},</if>
@@ -163,7 +164,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <update id="updateOrderStatus">
         update t_order
-        set status = #{newStatus}
+        set status = #{newStatus}, update_time = now()
         <if test="payTime != null">, pay_time = #{payTime}</if>
         <if test="shipTime != null">, ship_time = #{shipTime}</if>
         <if test="finishTime != null">, finish_time = #{finishTime}</if>
@@ -182,7 +183,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </select>
 
     <delete id="deleteTOrderByOrderId" parameterType="Long">
-        delete from t_order where order_id = #{orderId}
+        delete from t_order where order_id = #{orderId} and status in (0, 4)
     </delete>
 
     <delete id="deleteTOrderByOrderIds" parameterType="String">
@@ -190,6 +191,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <foreach item="orderId" collection="array" open="(" separator="," close=")">
             #{orderId}
         </foreach>
+        and status in (0, 4)
     </delete>
 
 </mapper>

@@ -39,6 +39,8 @@ class UserBehaviorEventMapperIntegrationTest
     @Test
     void behaviorEvidenceFollowsDailyAndCartRowDedupRules()
     {
+        jdbcTemplate.update("insert into t_wxuser(id, openid) values (7, 'behavior-user-7')");
+
         assertTrue(service.recordProductView(7L, UserBehaviorEventService.SCENE_MALL, 100L, 3L));
         assertFalse(service.recordProductView(7L, UserBehaviorEventService.SCENE_MALL, 100L, 3L));
         assertTrue(service.recordSearch(7L, UserBehaviorEventService.SCENE_MALL, "拿铁"));
@@ -64,6 +66,13 @@ class UserBehaviorEventMapperIntegrationTest
             "select source_id, source from t_user_behavior_event where event_type = 'CART_ADD'");
         assertEquals(55L, ((Number) cartAdd.get("source_id")).longValue());
         assertEquals(UserBehaviorEventService.SOURCE_DEFAULT_LIST, cartAdd.get("source"));
+    }
+
+    @Test
+    void deletedUserCannotReceiveLateBehaviorEvidence()
+    {
+        assertFalse(service.recordSearch(999L, UserBehaviorEventService.SCENE_MALL, "拿铁"));
+        assertEquals(0, countEvents());
     }
 
     private int countEvents()

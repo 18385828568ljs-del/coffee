@@ -4,9 +4,11 @@ import java.util.List;
 import com.ruoyi.common.utils.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.project.abucoder.wxuser.mapper.AbucoderWxuserMapper;
 import com.ruoyi.project.abucoder.wxuser.domain.AbucoderWxuser;
 import com.ruoyi.project.abucoder.wxuser.service.IAbucoderWxuserService;
+import com.ruoyi.project.coffee.profile.mapper.UserProfileMapper;
 import com.ruoyi.common.utils.text.Convert;
 
 /**
@@ -20,6 +22,9 @@ public class AbucoderWxuserServiceImpl implements IAbucoderWxuserService
 {
     @Autowired
     private AbucoderWxuserMapper abucoderWxuserMapper;
+
+    @Autowired
+    private UserProfileMapper userProfileMapper;
 
     /**
      * 查询微信用户
@@ -78,9 +83,14 @@ public class AbucoderWxuserServiceImpl implements IAbucoderWxuserService
      * @return 结果
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public int deleteAbucoderWxuserByIds(String ids)
     {
-        return abucoderWxuserMapper.deleteAbucoderWxuserByIds(Convert.toStrArray(ids));
+        String[] userIds = Convert.toStrArray(ids);
+        int deleted = abucoderWxuserMapper.deleteAbucoderWxuserByIds(userIds);
+        userProfileMapper.deleteBehaviorByUserIds(userIds);
+        userProfileMapper.deleteProfilesByUserIds(userIds);
+        return deleted;
     }
 
     /**
@@ -90,9 +100,14 @@ public class AbucoderWxuserServiceImpl implements IAbucoderWxuserService
      * @return 结果
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public int deleteAbucoderWxuserById(Long id)
     {
-        return abucoderWxuserMapper.deleteAbucoderWxuserById(id);
+        String[] userIds = { String.valueOf(id) };
+        int deleted = abucoderWxuserMapper.deleteAbucoderWxuserById(id);
+        userProfileMapper.deleteBehaviorByUserIds(userIds);
+        userProfileMapper.deleteProfilesByUserIds(userIds);
+        return deleted;
     }
 
     /**

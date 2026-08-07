@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.coffee.profile.mapper.UserProfileMapper">
+
+    <resultMap id="UserProfileResult" type="com.ruoyi.project.coffee.profile.domain.UserProfile">
+        <id property="userId" column="user_id" />
+        <result property="orderCount" column="order_count" />
+        <result property="totalAmount" column="total_amount" />
+        <result property="avgOrderAmount" column="avg_order_amount" />
+        <result property="preferredPriceMin" column="preferred_price_min" />
+        <result property="preferredPriceMax" column="preferred_price_max" />
+        <result property="lastOrderTime" column="last_order_time" />
+        <result property="lastActiveTime" column="last_active_time" />
+        <result property="evidenceCount" column="evidence_count" />
+        <result property="profileStatus" column="profile_status" />
+        <result property="profileData" column="profile_data" />
+        <result property="calculateTime" column="calculate_time" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <resultMap id="OrderSummaryResult" type="com.ruoyi.project.coffee.profile.domain.ProfileOrderSummary">
+        <result property="orderCount" column="order_count" />
+        <result property="totalAmount" column="total_amount" />
+        <result property="lastOrderTime" column="last_order_time" />
+    </resultMap>
+
+    <resultMap id="EvidenceResult" type="com.ruoyi.project.coffee.profile.domain.ProfileEvidence">
+        <result property="scene" column="scene" />
+        <result property="evidenceType" column="evidence_type" />
+        <result property="productId" column="product_id" />
+        <result property="productName" column="product_name" />
+        <result property="categoryId" column="category_id" />
+        <result property="categoryName" column="category_name" />
+        <result property="price" column="price" />
+        <result property="evidenceTime" column="evidence_time" />
+    </resultMap>
+
+    <select id="selectUserProfileByUserId" resultMap="UserProfileResult">
+        select user_id, order_count, total_amount, avg_order_amount,
+               preferred_price_min, preferred_price_max, last_order_time,
+               last_active_time, evidence_count, profile_status, profile_data,
+               calculate_time, create_time, update_time
+        from t_user_profile
+        where user_id = #{userId}
+    </select>
+
+    <select id="selectAllUserIds" resultType="java.lang.Long">
+        select id from t_wxuser order by id
+    </select>
+
+    <select id="selectChangedUserIds" resultType="java.lang.Long">
+        select distinct changed.user_id
+        from (
+            select u.id as user_id
+            from t_wxuser u
+            left join t_user_profile p on p.user_id = u.id
+            where p.user_id is null
+
+            union all
+
+            select e.user_id
+            from t_user_behavior_event e
+            inner join t_wxuser u on u.id = e.user_id
+            left join t_user_profile p on p.user_id = e.user_id
+            where e.event_time &gt;= timestampadd(
+                MINUTE, -10, coalesce(p.calculate_time, '1970-01-01 00:00:00'))
+
+            union all
+
+            select o.user_id
+            from t_order o
+            inner join t_wxuser u on u.id = o.user_id
+            left join t_user_profile p on p.user_id = o.user_id
+            where greatest(
+                coalesce(o.create_time, '1970-01-01 00:00:00'),
+                coalesce(o.update_time, '1970-01-01 00:00:00'),
+                coalesce(o.pay_time, '1970-01-01 00:00:00'),
+                coalesce(o.ship_time, '1970-01-01 00:00:00'),
+                coalesce(o.finish_time, '1970-01-01 00:00:00'),
+                coalesce(o.cancel_time, '1970-01-01 00:00:00'),
+                coalesce(o.refund_apply_time, '1970-01-01 00:00:00'),
+                coalesce(o.refund_time, '1970-01-01 00:00:00')
+            ) &gt;= timestampadd(
+                MINUTE, -10, coalesce(p.calculate_time, '1970-01-01 00:00:00'))
+
+            union all
+
+            select o.user_id
+            from t_scan_order o
+            inner join t_wxuser u on u.id = o.user_id
+            left join t_user_profile p on p.user_id = o.user_id
+            where coalesce(o.update_time, o.create_time, '1970-01-01 00:00:00')
+                &gt;= timestampadd(
+                    MINUTE, -10, coalesce(p.calculate_time, '1970-01-01 00:00:00'))
+        ) changed
+        order by changed.user_id
+    </select>
+
+    <select id="selectOrderSummary" resultMap="OrderSummaryResult">
+        select count(*) as order_count,
+               coalesce(sum(valid_order.amount), 0) as total_amount,
+               max(valid_order.order_time) as last_order_time
+        from (
+            select coalesce(o.pay_amount, o.total_amount, 0) as amount,
+                   coalesce(o.pay_time, o.finish_time, o.create_time) as order_time
+            from t_order o
+            where o.user_id = #{userId}
+              and o.status in (1, 2, 3)
+              and coalesce(o.refund_status, 0) &lt;&gt; 2
+
+            union all
+
+            select coalesce(o.pay_amount, o.total_amount, 0) as amount,
+                   coalesce(o.pay_time, o.finish_time, o.create_time) as order_time
+            from t_scan_order o
+            where o.user_id = #{userId}
+              and o.status in (2, 3, 4)
+              and coalesce(o.refund_status, 0) &lt;&gt; 2
+        ) valid_order
+    </select>
+
+    <select id="selectLastBehaviorTime" resultType="java.util.Date">
+        select max(event_time) from t_user_behavior_event where user_id = #{userId}
+    </select>
+
+    <select id="countRecentBehaviorEvents" resultType="int">
+        select count(*)
+        from t_user_behavior_event
+        where user_id = #{userId}
+          and event_time &gt;= #{cutoffTime}
+    </select>
+
+    <select id="selectBehaviorEvidence" resultMap="EvidenceResult">
+        select e.scene,
+               e.event_type as evidence_type,
+               e.product_id,
+               case when e.scene = 'MALL' then mp.product_name else sp.product_name end as product_name,
+               case when e.scene = 'MALL' then coalesce(e.category_id, mp.category_id)
+                    else coalesce(e.category_id, sp.category_id) end as category_id,
+               case when e.scene = 'MALL' then mc.category_name else sc.category_name end as category_name,
+               case when e.scene = 'MALL' then mp.price else sp.price end as price,
+               e.event_time as evidence_time
+        from t_user_behavior_event e
+        left join t_product mp on e.scene = 'MALL' and mp.product_id = e.product_id
+        left join t_category mc on mc.category_id = coalesce(e.category_id, mp.category_id)
+        left join t_scan_product sp on e.scene = 'SCAN' and sp.product_id = e.product_id
+        left join t_scan_category sc on sc.category_id = coalesce(e.category_id, sp.category_id)
+        where e.user_id = #{userId}
+          and e.event_time &gt;= #{cutoffTime}
+          and e.event_type in ('PRODUCT_VIEW', 'CART_ADD')
+        order by e.event_time desc, e.event_id desc
+    </select>
+
+    <select id="selectPurchaseEvidence" resultMap="EvidenceResult">
+        select purchase.scene, purchase.evidence_type, purchase.product_id,
+               purchase.product_name, purchase.category_id, purchase.category_name,
+               purchase.price, purchase.evidence_time
+        from (
+            select 'MALL' as scene,
+                   'PURCHASE' as evidence_type,
+                   i.product_id,
+                   i.product_name,
+                   p.category_id,
+                   c.category_name,
+                   i.price,
+                   coalesce(o.pay_time, o.finish_time, o.create_time) as evidence_time
+            from t_order o
+            inner join t_order_item i on i.order_id = o.order_id
+            left join t_product p on p.product_id = i.product_id
+            left join t_category c on c.category_id = p.category_id
+            where o.user_id = #{userId}
+              and o.status in (1, 2, 3)
+              and coalesce(o.refund_status, 0) &lt;&gt; 2
+              and coalesce(o.pay_time, o.finish_time, o.create_time) &gt;= #{cutoffTime}
+              and (i.spec is null or i.spec not like '赠品%')
+
+            union all
+
+            select 'SCAN' as scene,
+                   'PURCHASE' as evidence_type,
+                   i.product_id,
+                   i.product_name,
+                   p.category_id,
+                   c.category_name,
+                   i.price,
+                   coalesce(o.pay_time, o.finish_time, o.create_time) as evidence_time
+            from t_scan_order o
+            inner join t_scan_order_item i on i.order_id = o.order_id
+            left join t_scan_product p on p.product_id = i.product_id
+            left join t_scan_category c on c.category_id = p.category_id
+            where o.user_id = #{userId}
+              and o.status in (2, 3, 4)
+              and coalesce(o.refund_status, 0) &lt;&gt; 2
+              and coalesce(o.pay_time, o.finish_time, o.create_time) &gt;= #{cutoffTime}
+        ) purchase
+        order by purchase.evidence_time desc, purchase.product_id
+    </select>
+
+    <insert id="upsertUserProfile" parameterType="com.ruoyi.project.coffee.profile.domain.UserProfile">
+        insert into t_user_profile (
+            user_id, order_count, total_amount, avg_order_amount,
+            preferred_price_min, preferred_price_max, last_order_time,
+            last_active_time, evidence_count, profile_status, profile_data,
+            calculate_time, create_time, update_time
+        )
+        select
+            #{userId}, #{orderCount}, #{totalAmount}, #{avgOrderAmount},
+            #{preferredPriceMin}, #{preferredPriceMax}, #{lastOrderTime},
+            #{lastActiveTime}, #{evidenceCount}, #{profileStatus}, #{profileData},
+            #{calculateTime}, #{createTime}, #{updateTime}
+        from t_wxuser
+        where id = #{userId}
+        on duplicate key update
+            order_count = values(order_count),
+            total_amount = values(total_amount),
+            avg_order_amount = values(avg_order_amount),
+            preferred_price_min = values(preferred_price_min),
+            preferred_price_max = values(preferred_price_max),
+            last_order_time = values(last_order_time),
+            last_active_time = values(last_active_time),
+            evidence_count = values(evidence_count),
+            profile_status = values(profile_status),
+            profile_data = values(profile_data),
+            calculate_time = values(calculate_time),
+            update_time = values(update_time)
+    </insert>
+
+    <delete id="deleteExpiredBehavior">
+        delete from t_user_behavior_event where event_time &lt; #{cutoffTime}
+    </delete>
+
+    <delete id="deleteBehaviorByUserIds">
+        delete from t_user_behavior_event where user_id in
+        <foreach collection="array" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteProfilesByUserIds">
+        delete from t_user_profile where user_id in
+        <foreach collection="array" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </delete>
+</mapper>
