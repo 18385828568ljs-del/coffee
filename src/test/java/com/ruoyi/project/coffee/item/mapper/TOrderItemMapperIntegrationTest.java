@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.mybatis.spring.annotation.MapperScan;
 import org.mybatis.spring.boot.test.autoconfigure.MybatisTest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,16 @@ class TOrderItemMapperIntegrationTest
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @BeforeEach
+    void preparePendingOrders()
+    {
+        for (long orderId = 9301L; orderId <= 9304L; orderId++)
+        {
+            jdbcTemplate.update("insert into t_order(order_id, order_no, user_id, total_amount, pay_amount, status) "
+                + "values (?, ?, 7, 36.00, 36.00, 0)", orderId, "MO-" + orderId);
+        }
+    }
 
     @Test
     void selectTOrderItemListShouldUseCurrentProductNameAndImageWhenAvailable()
@@ -87,6 +98,35 @@ class TOrderItemMapperIntegrationTest
         TOrderItem query = new TOrderItem();
         query.setOrderId(9303L);
         assertEquals(0, orderItemMapper.selectTOrderItemList(query).size());
+    }
+
+    @Test
+    void paidOrderItemIsImmutableAndCannotBeHardDeleted()
+    {
+        TOrderItem item = buildItem(9304L, 9204L, "拿铁", "latte.png", "热");
+        assertEquals(1, orderItemMapper.insertTOrderItem(item));
+        jdbcTemplate.update("update t_order set status = 1 where order_id = 9304");
+
+        item.setQuantity(9L);
+        assertEquals(0, orderItemMapper.updateTOrderItem(item));
+        assertEquals(0, orderItemMapper.deleteTOrderItemByItemId(item.getItemId()));
+        assertEquals(0, orderItemMapper.deleteTOrderItemByOrderId(9304L));
+        assertNotNull(orderItemMapper.selectTOrderItemByItemId(item.getItemId()));
+    }
+
+    @Test
+    void pendingItemCannotBeMovedToAnotherOrderDuringEdit()
+    {
+        TOrderItem item = buildItem(9303L, 9204L, "拿铁", "latte.png", "热");
+        assertEquals(1, orderItemMapper.insertTOrderItem(item));
+
+        item.setOrderId(9304L);
+        item.setQuantity(3L);
+        assertEquals(1, orderItemMapper.updateTOrderItem(item));
+
+        TOrderItem saved = orderItemMapper.selectTOrderItemByItemId(item.getItemId());
+        assertEquals(9303L, saved.getOrderId());
+        assertEquals(3L, saved.getQuantity());
     }
 
     private TOrderItem buildItem(Long orderId, Long productId, String name, String image, String spec)
