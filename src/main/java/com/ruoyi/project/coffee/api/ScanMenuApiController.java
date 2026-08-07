@@ -20,6 +20,7 @@ import com.ruoyi.project.coffee.scanOrder.domain.ScanTableQrcode;
 import com.ruoyi.project.coffee.scanOrder.service.IScanCategoryService;
 import com.ruoyi.project.coffee.scanOrder.service.IScanProductService;
 import com.ruoyi.project.coffee.scanOrder.service.IScanTableQrcodeService;
+import com.ruoyi.project.coffee.profile.service.ProductRecommendationService;
 
 /**
  * 小程序扫码点单菜单接口
@@ -45,6 +46,9 @@ public class ScanMenuApiController extends BaseController
     @Autowired
     private UserBehaviorEventService userBehaviorEventService;
 
+    @Autowired
+    private ProductRecommendationService productRecommendationService;
+
     @GetMapping("/categories")
     public AjaxResult getCategoryList()
     {
@@ -57,7 +61,8 @@ public class ScanMenuApiController extends BaseController
     @GetMapping("/products")
     public AjaxResult getProductList(
         @RequestParam(value = "categoryId", required = false) Long categoryId,
-        @RequestParam(value = "shopId", required = false) Long shopId)
+        @RequestParam(value = "shopId", required = false) Long shopId,
+        HttpServletRequest request)
     {
         ScanProduct query = new ScanProduct();
         if (categoryId != null)
@@ -67,6 +72,7 @@ public class ScanMenuApiController extends BaseController
         query.setStatus(1);
         // shopId 当前商品表无字段;参数保留用于后续扩展,默认门店为 1
         List<ScanProduct> list = scanProductService.selectScanProductList(query);
+        list = productRecommendationService.recommendScan(wxUserTokenService.resolveUserId(request), list);
         return AjaxResult.success(list);
     }
 

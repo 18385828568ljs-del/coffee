@@ -18,6 +18,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.jdbc.Sql;
 import com.ruoyi.project.coffee.profile.domain.ProfileEvidence;
 import com.ruoyi.project.coffee.profile.domain.ProfileOrderSummary;
+import com.ruoyi.project.coffee.profile.domain.ProductPopularity;
 import com.ruoyi.project.coffee.profile.domain.UserProfile;
 
 @MybatisTest(properties = {
@@ -92,6 +93,16 @@ class UserProfileMapperIntegrationTest
         assertEquals("PRODUCT_VIEW", behaviors.get(0).getEvidenceType());
         assertEquals(3, mapper.countRecentBehaviorEvents(7L, dateDaysAgo(180)));
         assertEquals(7L, mapper.selectChangedUserIds().get(0));
+
+        List<ProductPopularity> mallPopularity = mapper.selectRecentProductPopularity("MALL", dateDaysAgo(30));
+        assertEquals(1, mallPopularity.size());
+        assertEquals(101L, mallPopularity.get(0).getProductId());
+        assertEquals(1L, mallPopularity.get(0).getPopularity());
+
+        List<ProductPopularity> scanPopularity = mapper.selectRecentProductPopularity("SCAN", dateDaysAgo(30));
+        assertEquals(1, scanPopularity.size());
+        assertEquals(201L, scanPopularity.get(0).getProductId());
+        assertEquals(1L, scanPopularity.get(0).getPopularity());
     }
 
     @Test
