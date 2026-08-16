@@ -96,6 +96,13 @@
 							</view>
 							<text class="menu-value">进入</text>
 						</view>
+						<view v-if="isLogin" class="menu-row" @click="goMyCards">
+							<view class="menu-copy">
+								<text class="menu-title">我的卡片</text>
+								<text class="menu-desc">查看抽到的咖啡卡片</text>
+							</view>
+							<text class="menu-value">进入</text>
+						</view>
 					</view>
 				</view>
 
@@ -368,6 +375,15 @@ export default {
 			}
 			uni.navigateTo({
 				url: '/pages/wallet/log'
+			})
+		},
+
+		goMyCards() {
+			if (!ensureLocalLogin()) {
+				return
+			}
+			uni.navigateTo({
+				url: '/pages/card/mine'
 			})
 		},
 

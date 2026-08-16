@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.coffee.card.mapper.CardGenerationTaskMapper">
+    <resultMap id="TaskResult" type="CardGenerationTask">
+        <id property="taskId" column="task_id"/><result property="taskNo" column="task_no"/>
+        <result property="cardId" column="card_id"/><result property="status" column="status"/>
+        <result property="stage" column="stage"/><result property="attemptCount" column="attempt_count"/>
+        <result property="maxAttempts" column="max_attempts"/><result property="artworkUrl" column="artwork_url"/>
+        <result property="finalImageUrl" column="final_image_url"/><result property="errorMessage" column="error_message"/>
+        <result property="nextRetryTime" column="next_retry_time"/><result property="startedTime" column="started_time"/>
+        <result property="finishedTime" column="finished_time"/><result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+    <select id="selectById" resultMap="TaskResult">select * from t_card_generation_task where task_id=#{taskId}</select>
+    <select id="selectLatestByCard" resultMap="TaskResult">select * from t_card_generation_task where card_id=#{cardId} order by task_id desc limit 1</select>
+    <select id="selectRunnableTasks" resultMap="TaskResult">
+        select * from t_card_generation_task
+        where status in ('PENDING','RETRY') and attempt_count &lt; max_attempts
+          and (next_retry_time is null or next_retry_time &lt;= now())
+        order by task_id asc limit #{limit}
+    </select>
+    <insert id="insert" parameterType="CardGenerationTask" useGeneratedKeys="true" keyProperty="taskId">
+        insert into t_card_generation_task(task_no,card_id,status,stage,attempt_count,max_attempts,artwork_url,
+          final_image_url,error_message,next_retry_time,create_time,update_time)
+        values(#{taskNo},#{cardId},#{status},#{stage},#{attemptCount},#{maxAttempts},#{artworkUrl},
+          #{finalImageUrl},#{errorMessage},#{nextRetryTime},now(),now())
+    </insert>
+    <update id="claim">
+        update t_card_generation_task set status='RUNNING',attempt_count=attempt_count+1,started_time=now(),
+          update_time=now() where task_id=#{taskId} and status in ('PENDING','RETRY') and attempt_count &lt; max_attempts
+    </update>
+    <update id="releaseClaim">
+        update t_card_generation_task set status='RETRY',attempt_count=greatest(attempt_count-1,0),
+          error_message='任务线程池繁忙，已自动重新排队',next_retry_time=date_add(now(), interval 5 second),update_time=now()
+        where task_id=#{taskId} and status='RUNNING'
+    </update>
+    <update id="updateProgress" parameterType="CardGenerationTask">
+        update t_card_generation_task set status=#{status},stage=#{stage},artwork_url=#{artworkUrl},
+          final_image_url=#{finalImageUrl},error_message=#{errorMessage},next_retry_time=#{nextRetryTime},
+          finished_time=#{finishedTime},update_time=now() where task_id=#{taskId}
+    </update>
+    <update id="recoverStaleRunning">
+        update t_card_generation_task set status='RETRY',error_message='服务重启或任务执行超时，已自动恢复',
+          next_retry_time=now(),update_time=now()
+        where status='RUNNING' and update_time &lt; date_sub(now(), interval #{staleMinutes} minute)
+    </update>
+    <delete id="deleteByCard">delete from t_card_generation_task where card_id=#{cardId}</delete>
+</mapper>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.coffee.card.mapper.CardDrawRecordMapper">
+    <resultMap id="DrawResult" type="CardDrawRecord">
+        <id property="drawId" column="draw_id"/><result property="requestNo" column="request_no"/>
+        <result property="campaignId" column="campaign_id"/><result property="campaignTitle" column="campaign_title"/>
+        <result property="cardId" column="card_id"/><result property="userId" column="user_id"/>
+        <result property="cardTitle" column="card_title"/><result property="finalImageUrl" column="final_image_url"/>
+        <result property="leftProductType" column="left_product_type"/><result property="leftProductId" column="left_product_id"/>
+        <result property="rightProductType" column="right_product_type"/><result property="rightProductId" column="right_product_id"/>
+        <result property="drawTime" column="draw_time"/>
+    </resultMap>
+    <sql id="drawColumns">
+        select d.*,c.title campaign_title,ac.title card_title,ac.final_image_url,
+          ac.left_product_type,ac.left_product_id,ac.right_product_type,ac.right_product_id
+        from t_card_draw_record d join t_card_campaign c on c.campaign_id=d.campaign_id
+        join t_ai_card ac on ac.card_id=d.card_id
+    </sql>
+    <select id="selectByIdAndUser" resultMap="DrawResult"><include refid="drawColumns"/> where d.draw_id=#{drawId} and d.user_id=#{userId}</select>
+    <select id="selectByRequestNo" resultMap="DrawResult"><include refid="drawColumns"/> where d.request_no=#{requestNo} and d.user_id=#{userId}</select>
+    <select id="selectByCampaignAndUser" resultMap="DrawResult"><include refid="drawColumns"/> where d.campaign_id=#{campaignId} and d.user_id=#{userId}</select>
+    <select id="selectByUser" resultMap="DrawResult"><include refid="drawColumns"/> where d.user_id=#{userId} order by d.draw_time desc</select>
+    <select id="countByCampaign" resultType="int">select count(1) from t_card_draw_record where campaign_id=#{campaignId}</select>
+    <insert id="insert" parameterType="CardDrawRecord" useGeneratedKeys="true" keyProperty="drawId">
+        insert into t_card_draw_record(request_no,campaign_id,card_id,user_id,draw_time)
+        values(#{requestNo},#{campaignId},#{cardId},#{userId},now())
+    </insert>
+</mapper>

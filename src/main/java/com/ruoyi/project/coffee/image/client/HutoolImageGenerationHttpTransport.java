@@ -1,7 +1,9 @@
 package com.ruoyi.project.coffee.image.client;
 
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
@@ -34,7 +36,9 @@ public class HutoolImageGenerationHttpTransport implements ImageGenerationHttpTr
                 String responseBody = response.body();
                 if (!response.isOk())
                 {
-                    throw new IllegalStateException("AI服务请求失败，HTTP状态：" + response.getStatus());
+                    String detail = extractErrorMessage(responseBody);
+                    throw new IllegalStateException("AI服务请求失败，HTTP状态：" + response.getStatus()
+                        + (StringUtils.isBlank(detail) ? "" : "，原因：" + detail));
                 }
                 return responseBody;
             }
@@ -109,5 +113,36 @@ public class HutoolImageGenerationHttpTransport implements ImageGenerationHttpTr
             current = current.getCause();
         }
         return current.getMessage() == null ? current.getClass().getSimpleName() : current.getMessage();
+    }
+
+    private String extractErrorMessage(String responseBody)
+    {
+        if (StringUtils.isBlank(responseBody))
+        {
+            return null;
+        }
+        String message = null;
+        try
+        {
+            JSONObject body = JSON.parseObject(responseBody);
+            JSONObject error = body.getJSONObject("error");
+            if (error != null)
+            {
+                message = error.getString("message");
+            }
+            if (StringUtils.isBlank(message)) message = body.getString("message");
+            if (StringUtils.isBlank(message)) message = body.getString("msg");
+        }
+        catch (RuntimeException ignored)
+        {
+            message = responseBody.replaceAll("<[^>]+>", " ").replaceAll("\\s+", " ").trim();
+        }
+        if (StringUtils.isBlank(message))
+        {
+            return null;
+        }
+        String sanitized = message.replaceAll("data:image/[^;]+;base64,[A-Za-z0-9+/=\\r\\n]+", "[image data]")
+            .replaceAll("\\s+", " ").trim();
+        return sanitized.length() <= 500 ? sanitized : sanitized.substring(0, 500);
     }
 }

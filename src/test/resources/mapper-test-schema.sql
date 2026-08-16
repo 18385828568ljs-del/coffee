@@ -23,6 +23,10 @@ DROP TABLE IF EXISTS t_marketing_activity_scope;
 DROP TABLE IF EXISTS t_marketing_activity;
 DROP TABLE IF EXISTS t_offline_activity_signup;
 DROP TABLE IF EXISTS t_offline_activity;
+DROP TABLE IF EXISTS t_card_draw_record;
+DROP TABLE IF EXISTS t_card_generation_task;
+DROP TABLE IF EXISTS t_ai_card;
+DROP TABLE IF EXISTS t_card_campaign;
 DROP TABLE IF EXISTS t_wxuser;
 
 DROP ALIAS IF EXISTS DATE_FORMAT;
@@ -420,4 +424,30 @@ CREATE TABLE t_offline_activity_signup (
     create_time TIMESTAMP NULL,
     update_time TIMESTAMP NULL,
     remark VARCHAR(500)
+);
+
+CREATE TABLE t_card_campaign (
+    campaign_id BIGINT AUTO_INCREMENT PRIMARY KEY, title VARCHAR(120), subtitle VARCHAR(255), cover_image VARCHAR(500),
+    start_time TIMESTAMP, end_time TIMESTAMP, status INT, sort_order INT, create_by VARCHAR(64), create_time TIMESTAMP,
+    update_by VARCHAR(64), update_time TIMESTAMP, remark VARCHAR(500)
+);
+
+CREATE TABLE t_ai_card (
+    card_id BIGINT AUTO_INCREMENT PRIMARY KEY, campaign_id BIGINT, title VARCHAR(80), english_title VARCHAR(80),
+    left_product_type VARCHAR(16), left_product_id BIGINT, left_product_name VARCHAR(80), left_description VARCHAR(160), left_product_image VARCHAR(500),
+    right_product_type VARCHAR(16), right_product_id BIGINT, right_product_name VARCHAR(80), right_description VARCHAR(160), right_product_image VARCHAR(500),
+    brand_name VARCHAR(80), logo_url VARCHAR(500), theme_prompt VARCHAR(1000), template_code VARCHAR(32), palette_code VARCHAR(32),
+    artwork_url VARCHAR(500), final_image_url VARCHAR(500), status INT, weight INT, version INT, last_error VARCHAR(1000),
+    create_by VARCHAR(64), create_time TIMESTAMP, update_by VARCHAR(64), update_time TIMESTAMP, remark VARCHAR(500)
+);
+
+CREATE TABLE t_card_generation_task (
+    task_id BIGINT AUTO_INCREMENT PRIMARY KEY, task_no VARCHAR(64) UNIQUE, card_id BIGINT, status VARCHAR(24), stage VARCHAR(32),
+    attempt_count INT, max_attempts INT, artwork_url VARCHAR(500), final_image_url VARCHAR(500), error_message VARCHAR(1000),
+    next_retry_time TIMESTAMP, started_time TIMESTAMP, finished_time TIMESTAMP, create_time TIMESTAMP, update_time TIMESTAMP
+);
+
+CREATE TABLE t_card_draw_record (
+    draw_id BIGINT AUTO_INCREMENT PRIMARY KEY, request_no VARCHAR(64) UNIQUE, campaign_id BIGINT, card_id BIGINT, user_id BIGINT,
+    draw_time TIMESTAMP, UNIQUE(campaign_id,user_id)
 );

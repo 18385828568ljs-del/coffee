@@ -47,6 +47,13 @@
 					</view>
 				</view>
 
+				<view v-if="cardCampaign" class="card-draw-entry" @tap="goCardDraw">
+					<image v-if="cardCampaign.coverImage" class="card-draw-cover" :src="resolveImageUrl(cardCampaign.coverImage)" mode="aspectFill"></image>
+					<view v-else class="card-draw-poster"><text class="card-draw-en">COFFEE CARD</text><text class="card-draw-mark">DRAW</text></view>
+					<view class="card-draw-copy"><text class="card-draw-title">{{ cardCampaign.title }}</text><text class="card-draw-desc">{{ cardCampaign.subtitle || '抽取属于你的今日咖啡卡片' }}</text></view>
+					<text class="card-draw-arrow">›</text>
+				</view>
+
 				<image class="welcome-image" src="/static/banner/welcome.png" mode="widthFix"></image>
 
 				<view v-if="featuredActivity" class="activity-section">
@@ -108,7 +115,7 @@
 </template>
 
 <script>
-import { bannerApi, offlineActivityApi, resolveImageUrl } from '@/utils/apiconfig.js'
+import { bannerApi, offlineActivityApi, cardApi, resolveImageUrl } from '@/utils/apiconfig.js'
 import { getToken } from '@/utils/auth.js'
 import { requestPromise, isSuccessResponse } from '@/utils/request-helper.js'
 import { loginByWxAuth } from '@/utils/wx-login.js'
@@ -152,6 +159,7 @@ export default {
 			tableNo: '',
 			bannerList: [],
 			activityList: [],
+			cardCampaign: null,
 			bannerImageErrorMap: {},
 			showWxLogin: false,
 			wxLoginLoading: false
@@ -162,17 +170,20 @@ export default {
 		this.resolveEntryContext(options)
 		this.loadBanners()
 		this.loadActivities()
+		this.loadCardCampaign()
 		this.maybeShowWxLogin()
 	},
 
 	onShow() {
 		this.maybeShowWxLogin()
+		this.loadCardCampaign()
 	},
 
 	onPullDownRefresh() {
 		Promise.all([
 			this.loadBanners(),
-			this.loadActivities()
+			this.loadActivities(),
+			this.loadCardCampaign()
 		]).finally(() => {
 			uni.stopPullDownRefresh()
 		})
@@ -185,6 +196,7 @@ export default {
 	},
 
 	methods: {
+		resolveImageUrl,
 		resolveEntryContext(options = {}) {
 			const sceneData = parseScene(options.scene)
 			const shopId = options.shopId || sceneData.shopId
@@ -228,6 +240,15 @@ export default {
 				this.activityList = []
 			} catch (error) {
 				this.activityList = []
+			}
+		},
+
+		async loadCardCampaign() {
+			try {
+				const res = await requestPromise({ url: cardApi.active, method: 'GET', header: this.getAuthHeader() })
+				this.cardCampaign = isSuccessResponse(res) ? (res.data.data || null) : null
+			} catch (error) {
+				this.cardCampaign = null
 			}
 		},
 
@@ -319,6 +340,10 @@ export default {
 
 		goActivityList() {
 			uni.navigateTo({ url: '/pages/activity/list' })
+		},
+
+		goCardDraw() {
+			uni.navigateTo({ url: '/pages/card/draw' })
 		},
 
 		goActivityDetail(item) {
@@ -488,6 +513,46 @@ export default {
 	width: 100%;
 	display: block;
 }
+
+.card-draw-entry {
+	position: relative;
+	min-height: 172rpx;
+	display: grid;
+	grid-template-columns: 126rpx minmax(0, 1fr) 36rpx;
+	align-items: center;
+	gap: 22rpx;
+	padding: 20rpx 24rpx;
+	background: #5c2a12;
+	border: 4rpx solid #201a17;
+	box-shadow: 0 10rpx 24rpx rgba(66, 34, 18, 0.18);
+	box-sizing: border-box;
+	@include active-press;
+}
+
+.card-draw-cover,
+.card-draw-poster {
+	width: 126rpx;
+	height: 126rpx;
+	display: block;
+	border: 4rpx solid #f6df54;
+	box-sizing: border-box;
+}
+
+.card-draw-poster {
+	background: #0f8bac;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	color: #201a17;
+}
+
+.card-draw-en { font-size: 16rpx; font-weight: 800; }
+.card-draw-mark { font-size: 32rpx; font-weight: 900; }
+.card-draw-copy { min-width: 0; display: flex; flex-direction: column; }
+.card-draw-title { font-family: $font-family; font-size: 30rpx; font-weight: 800; color: #ffffff; }
+.card-draw-desc { margin-top: 10rpx; font-family: $font-family; font-size: 22rpx; line-height: 1.4; color: #f5dc9b; }
+.card-draw-arrow { font-size: 48rpx; color: #f6df54; }
 
 .activity-section {
 	display: flex;

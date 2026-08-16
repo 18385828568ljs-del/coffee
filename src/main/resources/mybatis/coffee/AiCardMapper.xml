@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.coffee.card.mapper.AiCardMapper">
+    <resultMap id="CardResult" type="AiCard">
+        <id property="cardId" column="card_id"/>
+        <result property="campaignId" column="campaign_id"/>
+        <result property="campaignTitle" column="campaign_title"/>
+        <result property="title" column="title"/>
+        <result property="englishTitle" column="english_title"/>
+        <result property="leftProductType" column="left_product_type"/>
+        <result property="leftProductId" column="left_product_id"/>
+        <result property="leftProductName" column="left_product_name"/>
+        <result property="leftDescription" column="left_description"/>
+        <result property="leftProductImage" column="left_product_image"/>
+        <result property="rightProductType" column="right_product_type"/>
+        <result property="rightProductId" column="right_product_id"/>
+        <result property="rightProductName" column="right_product_name"/>
+        <result property="rightDescription" column="right_description"/>
+        <result property="rightProductImage" column="right_product_image"/>
+        <result property="brandName" column="brand_name"/>
+        <result property="logoUrl" column="logo_url"/>
+        <result property="themePrompt" column="theme_prompt"/>
+        <result property="templateCode" column="template_code"/>
+        <result property="paletteCode" column="palette_code"/>
+        <result property="artworkUrl" column="artwork_url"/>
+        <result property="finalImageUrl" column="final_image_url"/>
+        <result property="status" column="status"/>
+        <result property="weight" column="weight"/>
+        <result property="version" column="version"/>
+        <result property="lastError" column="last_error"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+    <sql id="cardColumns">
+        select ac.*, cc.title campaign_title from t_ai_card ac
+        left join t_card_campaign cc on cc.campaign_id=ac.campaign_id
+    </sql>
+    <select id="selectById" resultMap="CardResult"><include refid="cardColumns"/> where ac.card_id=#{cardId}</select>
+    <select id="selectList" parameterType="AiCard" resultMap="CardResult">
+        <include refid="cardColumns"/>
+        <where>
+            <if test="campaignId != null">and ac.campaign_id=#{campaignId}</if>
+            <if test="title != null and title != ''">and ac.title like concat('%', #{title}, '%')</if>
+            <if test="status != null">and ac.status=#{status}</if>
+        </where>
+        order by ac.card_id desc
+    </select>
+    <select id="selectDrawableByCampaign" resultMap="CardResult">
+        <include refid="cardColumns"/> where ac.campaign_id=#{campaignId} and ac.status=3 and ac.final_image_url is not null
+        order by ac.card_id asc
+    </select>
+    <insert id="insert" parameterType="AiCard" useGeneratedKeys="true" keyProperty="cardId">
+        insert into t_ai_card(campaign_id,title,english_title,left_product_type,left_product_id,left_product_name,
+          left_description,left_product_image,right_product_type,right_product_id,right_product_name,right_description,
+          right_product_image,brand_name,logo_url,theme_prompt,template_code,palette_code,artwork_url,final_image_url,
+          status,weight,version,last_error,create_by,create_time,remark)
+        values(#{campaignId},#{title},#{englishTitle},#{leftProductType},#{leftProductId},#{leftProductName},
+          #{leftDescription},#{leftProductImage},#{rightProductType},#{rightProductId},#{rightProductName},#{rightDescription},
+          #{rightProductImage},#{brandName},#{logoUrl},#{themePrompt},#{templateCode},#{paletteCode},#{artworkUrl},#{finalImageUrl},
+          #{status},#{weight},#{version},#{lastError},#{createBy},now(),#{remark})
+    </insert>
+    <update id="update" parameterType="AiCard">
+        update t_ai_card set campaign_id=#{campaignId},title=#{title},english_title=#{englishTitle},
+          left_product_type=#{leftProductType},left_product_id=#{leftProductId},left_product_name=#{leftProductName},
+          left_description=#{leftDescription},left_product_image=#{leftProductImage},right_product_type=#{rightProductType},
+          right_product_id=#{rightProductId},right_product_name=#{rightProductName},right_description=#{rightDescription},
+          right_product_image=#{rightProductImage},brand_name=#{brandName},logo_url=#{logoUrl},theme_prompt=#{themePrompt},
+          template_code=#{templateCode},palette_code=#{paletteCode},artwork_url=#{artworkUrl},final_image_url=#{finalImageUrl},
+          status=#{status},weight=#{weight},version=#{version},last_error=#{lastError},update_by=#{updateBy},update_time=now(),remark=#{remark}
+        where card_id=#{cardId}
+    </update>
+    <update id="updateGenerationResult">
+        update t_ai_card set artwork_url=#{artworkUrl},final_image_url=#{finalImageUrl},status=#{status},
+          last_error=#{lastError},update_time=now() where card_id=#{cardId}
+    </update>
+    <update id="publishReadyByCampaign">update t_ai_card set status=3,update_time=now() where campaign_id=#{campaignId} and status=2</update>
+    <update id="unpublishByCampaign">update t_ai_card set status=2,update_time=now() where campaign_id=#{campaignId} and status=3</update>
+    <delete id="delete">delete from t_ai_card where card_id=#{cardId}</delete>
+    <delete id="deleteByCampaign">delete from t_ai_card where campaign_id=#{campaignId}</delete>
+</mapper>

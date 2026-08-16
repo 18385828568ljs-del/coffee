@@ -5,7 +5,7 @@
 
 // export const baseUrl = 'https://your-domain.com'
 // 真机/cpolar 公网调试地址;切回本机可改为 http://127.0.0.1:8080
-const DEFAULT_BASE_URL = 'http://172.16.13.8:8080'
+const DEFAULT_BASE_URL = 'http://127.0.0.1:8080'
 
 function normalizeBaseUrl(value) {
 	return String(value || '').trim().replace(/\/+$/, '')
@@ -167,6 +167,13 @@ export const offlineActivityApi = {
 	signup: `${baseUrl}/api/offlineActivity/signup`,
 	cancel: `${baseUrl}/api/offlineActivity/cancel`,
 	my: `${baseUrl}/api/offlineActivity/my`
+}
+
+export const cardApi = {
+	active: `${baseUrl}/api/card/campaign/active`,
+	draw: `${baseUrl}/api/card/draw`,
+	result: `${baseUrl}/api/card/result/`,
+	my: `${baseUrl}/api/card/my`
 }
 
 export const memberApi = {

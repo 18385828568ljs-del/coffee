@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head><th:block th:include="include :: header('AI卡片活动')" /></head>
+<body class="gray-bg">
+<div class="container-div"><div class="row">
+    <div class="col-sm-12 search-collapse"><form id="formId"><div class="select-list"><ul>
+        <li><label>活动标题：</label><input type="text" name="title"/></li>
+        <li><label>状态：</label><select name="status"><option value="">全部</option><option value="0">草稿</option><option value="1">已发布</option><option value="2">已结束</option></select></li>
+        <li><a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a><a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a></li>
+    </ul></div></form></div>
+    <div class="btn-group-sm" id="toolbar"><a class="btn btn-success" onclick="$.operate.add()" shiro:hasPermission="coffee:card:add"><i class="fa fa-plus"></i> 新建活动</a></div>
+    <div class="col-sm-12 select-table table-striped"><table id="bootstrap-table"></table></div>
+</div></div>
+<th:block th:include="include :: footer" />
+<script th:inline="javascript">
+var editFlag=[[${@permission.hasPermi('coffee:card:edit')}]], removeFlag=[[${@permission.hasPermi('coffee:card:remove')}]], publishFlag=[[${@permission.hasPermi('coffee:card:publish')}]];
+var prefix=ctx+"coffee/cardCampaign";
+$(function(){ $.table.init({url:prefix+"/list",createUrl:prefix+"/add",updateUrl:prefix+"/edit/{id}",modalName:"AI卡片活动",columns:[
+ {checkbox:true},{field:'campaignId',title:'ID',visible:false},{field:'coverImage',title:'入口图',formatter:function(v){return v?'<img src="'+v+'" style="width:88px;height:56px;object-fit:cover;border-radius:4px">':'-';}},
+ {field:'title',title:'活动标题'},{field:'startTime',title:'开始时间'},{field:'endTime',title:'结束时间'},{field:'cardCount',title:'卡片',formatter:function(v,r){return (r.readyCardCount||0)+' / '+(v||0)+' 张可用';}},
+ {field:'status',title:'状态',formatter:function(v){return v===1?'<span class="badge badge-primary">已发布</span>':(v===2?'<span class="badge badge-warning">已结束</span>':'<span class="badge badge-default">草稿</span>');}},
+ {title:'操作',align:'center',formatter:function(v,r){var a=[];a.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="manageCards('+r.campaignId+')"><i class="fa fa-picture-o"></i> 卡片</a> ');a.push('<a class="btn btn-success btn-xs '+editFlag+'" onclick="$.operate.edit('+r.campaignId+')"><i class="fa fa-edit"></i> 编辑</a> ');if(r.status===1)a.push('<a class="btn btn-warning btn-xs '+publishFlag+'" onclick="changePublish('+r.campaignId+',false)"><i class="fa fa-arrow-down"></i> 下架</a> ');else a.push('<a class="btn btn-primary btn-xs '+publishFlag+'" onclick="changePublish('+r.campaignId+',true)"><i class="fa fa-send"></i> 发布</a> ');a.push('<a class="btn btn-danger btn-xs '+removeFlag+'" onclick="removeCampaign('+r.campaignId+')"><i class="fa fa-remove"></i> 删除</a>');return a.join('');}}
+]});});
+function manageCards(id){$.modal.openTab('卡片管理',ctx+'coffee/card/campaign/'+id);}
+function changePublish(id,publish){$.modal.confirm(publish?'确认发布这个卡片活动？':'确认下架这个卡片活动？',function(){postAndRefresh(prefix+(publish?'/publish/':'/unpublish/')+id);});}
+function removeCampaign(id){$.modal.confirm('删除后不可恢复，确认删除？',function(){postAndRefresh(prefix+'/remove',{id:id});});}
+function postAndRefresh(url,data){$.ajax({url:url,type:'post',data:data||{},success:function(r){if(r.code===0){$.modal.msgSuccess(r.msg);$.table.refresh();}else{$.modal.alertError(r.msg);}},error:function(){$.modal.alertError('请求失败');}});}
+</script></body></html>

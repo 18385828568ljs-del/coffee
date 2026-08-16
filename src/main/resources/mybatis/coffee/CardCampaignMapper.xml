@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.coffee.card.mapper.CardCampaignMapper">
+    <resultMap id="CampaignResult" type="CardCampaign">
+        <id property="campaignId" column="campaign_id"/>
+        <result property="title" column="title"/>
+        <result property="subtitle" column="subtitle"/>
+        <result property="coverImage" column="cover_image"/>
+        <result property="startTime" column="start_time"/>
+        <result property="endTime" column="end_time"/>
+        <result property="status" column="status"/>
+        <result property="sortOrder" column="sort_order"/>
+        <result property="cardCount" column="card_count"/>
+        <result property="readyCardCount" column="ready_card_count"/>
+        <result property="currentUserDrawId" column="current_user_draw_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="campaignColumns">
+        select c.campaign_id, c.title, c.subtitle, c.cover_image, c.start_time, c.end_time,
+               c.status, c.sort_order, c.create_by, c.create_time, c.update_by, c.update_time, c.remark,
+               (select count(1) from t_ai_card ac where ac.campaign_id = c.campaign_id) card_count,
+               (select count(1) from t_ai_card ac where ac.campaign_id = c.campaign_id and ac.status in (2, 3)) ready_card_count
+        from t_card_campaign c
+    </sql>
+
+    <select id="selectById" resultMap="CampaignResult">
+        <include refid="campaignColumns"/> where c.campaign_id = #{campaignId}
+    </select>
+
+    <select id="selectList" parameterType="CardCampaign" resultMap="CampaignResult">
+        <include refid="campaignColumns"/>
+        <where>
+            <if test="title != null and title != ''">and c.title like concat('%', #{title}, '%')</if>
+            <if test="status != null">and c.status = #{status}</if>
+        </where>
+        order by c.sort_order asc, c.campaign_id desc
+    </select>
+
+    <select id="selectActive" resultMap="CampaignResult">
+        select c.campaign_id, c.title, c.subtitle, c.cover_image, c.start_time, c.end_time,
+               c.status, c.sort_order, c.create_by, c.create_time, c.update_by, c.update_time, c.remark,
+               (select count(1) from t_ai_card ac where ac.campaign_id = c.campaign_id) card_count,
+               (select count(1) from t_ai_card ac where ac.campaign_id = c.campaign_id and ac.status = 3) ready_card_count,
+               (select d.draw_id from t_card_draw_record d
+                 where d.campaign_id = c.campaign_id and d.user_id = #{userId} limit 1) current_user_draw_id
+        from t_card_campaign c
+        where c.status = 1
+          and c.start_time &lt;= now()
+          and (c.end_time is null or c.end_time &gt;= now())
+          and exists (select 1 from t_ai_card ac where ac.campaign_id = c.campaign_id and ac.status = 3)
+        order by c.sort_order asc, c.campaign_id desc
+        limit 1
+    </select>
+
+    <insert id="insert" parameterType="CardCampaign" useGeneratedKeys="true" keyProperty="campaignId">
+        insert into t_card_campaign(title, subtitle, cover_image, start_time, end_time, status, sort_order,
+                                    create_by, create_time, remark)
+        values(#{title}, #{subtitle}, #{coverImage}, #{startTime}, #{endTime}, #{status}, #{sortOrder},
+               #{createBy}, now(), #{remark})
+    </insert>
+
+    <update id="update" parameterType="CardCampaign">
+        update t_card_campaign
+        set title=#{title}, subtitle=#{subtitle}, cover_image=#{coverImage}, start_time=#{startTime},
+            end_time=#{endTime}, status=#{status}, sort_order=#{sortOrder}, update_by=#{updateBy},
+            update_time=now(), remark=#{remark}
+        where campaign_id=#{campaignId}
+    </update>
+
+    <delete id="delete">delete from t_card_campaign where campaign_id=#{campaignId}</delete>
+</mapper>

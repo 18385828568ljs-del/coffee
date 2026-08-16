@@ -46,6 +46,22 @@
 			}
 		},
 		{
+			"path": "pages/card/draw",
+			"style": {
+				"navigationBarTitleText": "今日抽卡",
+				"enablePullDownRefresh": true,
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/card/mine",
+			"style": {
+				"navigationBarTitleText": "我的卡片",
+				"enablePullDownRefresh": true,
+				"navigationStyle": "custom"
+			}
+		},
+		{
 			"path": "pages/cart/cart",
 			"style": {
 				"navigationBarTitleText": "购物车",
