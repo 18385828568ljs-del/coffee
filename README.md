@@ -1,445 +1,432 @@
-# 咖啡商城小程序
+# 咖啡商城
 
-<div align="center">
+咖啡商城是一个基于 Spring Boot、MyBatis 和 uni-app 的咖啡商城与扫码点单系统，包含后端管理端、微信小程序端和商家装修工作台。
 
-![咖啡商城](https://img.shields.io/badge/咖啡商城-小程序-brightgreen)
-![后端](https://img.shields.io/badge/后端-Spring%20Boot-blue)
-![前端](https://img.shields.io/badge/前端-uni--app-orange)
-![数据库](https://img.shields.io/badge/数据库-MySQL-blue)
+## 1. 技术栈
 
-一个功能完善的咖啡商城扫码点单系统，支持扫码点单、会员钱包、营销活动、线下活动、AI图片润色等功能，并规划扩展社区与个性化玩法。
+- 后端：Java 8、Spring Boot 2.5、Spring MVC、MyBatis、Druid、Shiro、Quartz
+- 数据库：MySQL 8.0+
+- 管理端：Spring MVC + Thymeleaf
+- 小程序端：uni-app、Vue 2、uView
+- 外部服务：微信小程序登录/订阅消息、腾讯云 COS、可选的 AI 图片服务
 
-</div>
+## 2. 目录结构
 
----
-
-## 项目介绍
-
-### 这个项目是什么
-
-**咖啡商城小程序**是一个面向咖啡店的**扫码点单系统**，包含以下核心功能：
-
-- **扫码点单** - 顾客扫桌面二维码进入小程序，浏览商品、加入购物车、余额支付、实时履约（取餐号、预计等待时间、催单）
-- **商家后台** - 实时接收订单、管理商品、订单履约管理（接单、制作、叫号）
-- **会员钱包** - 余额消费、消费流水、充值模板、会员等级折扣；在线充值待接入
-- **营销活动** - 满减活动、指定商品优惠、活动时段控制
-- **线下活动** - 活动发布、用户预约报名、状态管理
-- **AI图片润色** - 商家上传商品图片，AI自动优化图片质量
-- **支付能力** - 当前支持余额支付；微信或第三方支付待接入
-
-规划中的社区能力包括会员画像与偏好、个性化皮肤、朋友圈素材与定制卡片、人像捏制，以及卡池抽卡和集卡玩法。
-
-### 技术栈
-
-**后端**
-- Spring Boot 2.x
-- MyBatis
-- MySQL 8.0
-- Shiro（权限管理）
-- Quartz（定时任务）
-
-**前端**
-- uni-app（小程序）
-- Vue.js
-- Thymeleaf（后台管理页面）
-
-**第三方服务**
-- 微信小程序（登录、订阅消息）
-- 腾讯云COS（对象存储）
-- AI图片处理服务
-
-### 项目架构
-
-```
-咖啡商城系统
-├── 后端服务（Spring Boot）
-│   ├── 扫码点单（商品、订单、购物车、履约）
-│   ├── 在线商城（商品、订单、地址）
-│   ├── 会员钱包（余额、流水、充值模板）
-│   ├── 营销活动（满减、优惠）
-│   ├── 线下活动（发布、预约）
-│   ├── 支付管理（余额支付；微信或第三方支付待接入）
-│   ├── AI图片处理
-│   └── 社区功能（计划：会员画像、素材与卡片、捏人像、集卡）
-├── 小程序端（uni-app）
-│   ├── 扫码点单（菜单、购物车、确认订单、支付成功）
-│   ├── 在线商城（商品列表、详情、订单）
-│   ├── 会员中心（充值入口、余额、订单、地址）
-│   ├── 线下活动（列表、详情、报名）
-│   ├── 社区（计划：笔记互动、个性化素材、卡片与抽卡）
-│   └── 个人中心
-└── 后台管理（Web）
-    ├── 扫码点单管理（商品、订单、履约）
-    ├── 在线商城管理（商品、订单）
-    ├── 会员管理（用户、钱包、充值模板）
-    ├── 营销活动管理
-    ├── 线下活动管理
-    ├── 社区运营管理（计划：素材、卡池、内容审核）
-    └── 数据统计
+```text
+src/main/java/com/ruoyi/                 后端 Java 源码
+src/main/resources/mybatis/              MyBatis XML 映射
+src/main/resources/templates/            管理端 Thymeleaf 页面
+src/main/resources/static/               管理端静态资源
+sql/                                     数据库初始化和迁移脚本
+RuoYi-AbuCoder-UniAppWx/
+Ruoyi-AbuCoder-UniApp-WX/              uni-app 小程序/H5 工程
+docs/                                    主题装修功能说明
+pom.xml                                  Maven 配置
 ```
 
----
+## 3. 环境要求
 
-## 项目怎么使用
-
-### 环境要求
-
-- JDK 1.8+
-- MySQL 8.0+
+- JDK 8
 - Maven 3.6+
-- Node.js 14+
-- 微信开发者工具
+- MySQL 8.0+
+- Node.js 14+，npm
+- 微信开发者工具（运行微信小程序时需要）
+- HBuilderX（使用可视化方式运行 uni-app 时需要）
 
-### 后端启动步骤
+项目没有把本地配置文件提交到 Git。以下文件被 `.gitignore` 忽略，首次运行时必须在本地创建：
 
-#### 1. 克隆项目
-```bash
-git clone https://github.com/你的用户名/coffee-shop.git
-cd coffee-shop
+```text
+src/main/resources/application.yml
+src/main/resources/application-druid.yml
 ```
 
-#### 2. 创建数据库
+## 4. 数据库初始化
 
-```bash
-# 登录MySQL
-mysql -u root -p
+建议在全新的本地数据库中执行初始化脚本。`ry_20210924.sql` 和 `quartz.sql` 会删除并重建对应的系统表，不能直接用于包含重要数据的数据库。
 
-# 创建数据库
-CREATE DATABASE ruoyi DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+先创建数据库：
+
+```sql
+CREATE DATABASE ruoyi
+  DEFAULT CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+```
+
+在仓库根目录启动 MySQL 客户端，按以下顺序执行：
+
+```sql
 USE ruoyi;
-
-# 执行若依框架SQL
-mysql -u root -p ruoyi < sql/ry_20210924.sql
-
-# 执行定时任务框架SQL
-mysql -u root -p ruoyi < sql/quartz.sql
-
-# 执行业务表SQL（合并版，一次搞定）
-mysql -u root -p ruoyi < sql/coffee_all_business.sql
+SOURCE E:/Coffee/coffee/sql/ry_20210924.sql;
+SOURCE E:/Coffee/coffee/sql/quartz.sql;
+SOURCE E:/Coffee/coffee/sql/coffee_all_business.sql;
 ```
 
-#### 3. 修改配置文件
+`coffee_all_business.sql` 会继续加载以下装修平台脚本：
 
-编辑 `src/main/resources/application.yml` 和 `application-druid.yml`
+```text
+sql/coffee_theme_decorator.sql
+sql/coffee_theme_scope_v2.sql
+```
+
+如果需要完整的 SkinConfig V1 模板和背景插槽，再执行：
+
+```sql
+SOURCE E:/Coffee/coffee/sql/coffee_skin_v1.sql;
+```
+
+本地演示数据是可选的，只能在开发或测试数据库执行：
+
+```sql
+SOURCE E:/Coffee/coffee/sql/coffee_test_data.sql;
+```
+
+生产环境更新数据库时，应先备份，再编写并验证增量迁移脚本。不要直接重新执行会删除系统表的初始化脚本。
+
+## 5. 后端配置
+
+### 5.1 `application.yml`
+
+创建 `src/main/resources/application.yml`，至少包含以下内容。可以根据部署环境补充日志、上传目录、微信和 COS 配置。
 
 ```yaml
-# 数据库配置
+ruoyi:
+  name: 咖啡小程序后台
+  version: 1.0.0
+  profile: ${RUOYI_PROFILE:D:/RuoYi/uploadPath}
+  addressEnabled: false
+
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /
+
+spring:
+  profiles:
+    active: druid
+  thymeleaf:
+    cache: false
+  jackson:
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd HH:mm:ss
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+mybatis:
+  typeAliasesPackage: com.ruoyi.project.**.domain
+  mapperLocations: classpath:mybatis/**/*Mapper.xml
+  configLocation: classpath:mybatis/mybatis-config.xml
+
+pagehelper:
+  helperDialect: mysql
+  supportMethodsArguments: true
+  params: count=countSql
+
+user:
+  password:
+    maxRetryCount: 5
+
+shiro:
+  user:
+    loginUrl: /login
+    unauthorizedUrl: /unauth
+    indexUrl: /index
+    captchaEnabled: true
+    captchaType: math
+  cookie:
+    domain:
+    path: /
+    httpOnly: true
+    maxAge: 30
+    cipherKey:
+  session:
+    expireTime: 30
+    dbSyncPeriod: 1
+    validationInterval: 10
+    maxSession: -1
+    kickoutAfter: false
+  rememberMe:
+    enabled: true
+
+xss:
+  enabled: true
+  excludes:
+  urlPatterns: /system/*,/monitor/*,/tool/*
+
+swagger:
+  enabled: true
+
+wx:
+  miniapp:
+    app-id: ${WX_APP_ID:}
+    app-secret: ${WX_APP_SECRET:}
+    token-secret: ${WX_TOKEN_SECRET:}
+    subscribe:
+      pickup-template-id: ${WX_PICKUP_TEMPLATE_ID:}
+
+cos:
+  bucket: ${COS_BUCKET:}
+  region: ${COS_REGION:}
+  secret-id: ${COS_SECRET_ID:}
+  secret-key: ${COS_SECRET_KEY:}
+  base-url: ${COS_BASE_URL:}
+  key-prefix: ${COS_KEY_PREFIX:coffee}
+
+decorator:
+  preview:
+    h5-url: ${DECORATOR_PREVIEW_H5_URL:}
+
+ai:
+  image:
+    provider: ${AI_IMAGE_PROVIDER:images-edits}
+    base-url: ${AI_IMAGE_BASE_URL:}
+    endpoint: ${AI_IMAGE_ENDPOINT:/v1/images/edits}
+    api-key: ${AI_IMAGE_API_KEY:}
+    model: ${AI_IMAGE_MODEL:gpt-image-2}
+    timeout-seconds: ${AI_IMAGE_TIMEOUT_SECONDS:300}
+    max-source-image-bytes: ${AI_IMAGE_MAX_SOURCE_BYTES:10485760}
+```
+
+### 5.2 `application-druid.yml`
+
+创建 `src/main/resources/application-druid.yml`：
+
+```yaml
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/ruoyi?useUnicode=true&characterEncoding=utf8
-    username: root
-    password: 你的数据库密码
-    
-# 腾讯云COS配置（建议使用环境变量）
-cos:
-  secret-id: ${COS_SECRET_ID}
-  secret-key: ${COS_SECRET_KEY}
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      master:
+        url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/ruoyi?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8}
+        username: ${DB_USERNAME:root}
+        password: ${DB_PASSWORD:}
+      slave:
+        enabled: false
+        url:
+        username:
+        password:
+      initialSize: 5
+      minIdle: 10
+      maxActive: 20
+      maxWait: 60000
+      timeBetweenEvictionRunsMillis: 60000
+      minEvictableIdleTimeMillis: 300000
+      maxEvictableIdleTimeMillis: 900000
+      validationQuery: SELECT 1
+      testWhileIdle: true
+      testOnBorrow: false
+      testOnReturn: false
+      statViewServlet:
+        enabled: true
+        url-pattern: /druid/*
+        allow: 127.0.0.1
+        login-username: ${DRUID_LOGIN_USERNAME:ruoyi}
+        login-password: ${DRUID_LOGIN_PASSWORD:change-me}
 ```
 
-#### 4. 启动项目
-```bash
-# 使用Maven启动
-mvn clean install
+## 6. 启动后端
+
+在仓库根目录执行：
+
+```powershell
+mvn clean package -DskipTests
 mvn spring-boot:run
-
-# 或在IDE中运行 RuoYiApplication.java
 ```
 
-#### 5. 访问后台
-```
-URL: http://localhost:8080
-账号: admin
-密码: admin123
+也可以在 IDE 中运行：
+
+```text
+src/main/java/com/ruoyi/RuoYiApplication.java
 ```
 
-### 小程序端启动步骤
+默认地址：
 
-#### 1. 进入小程序目录
-```bash
+```text
+管理端：http://localhost:8080
+登录页：http://localhost:8080/login
+Swagger：http://localhost:8080/swagger-ui/index.html
+Druid：http://localhost:8080/druid/
+```
+
+后台账号由 `sql/ry_20210924.sql` 初始化。首次登录后应立即修改默认密码。
+
+## 7. 启动小程序和 H5
+
+### 7.1 npm/H5
+
+```powershell
 cd RuoYi-AbuCoder-UniAppWx/Ruoyi-AbuCoder-UniApp-WX
+npm install
+npm run dev:h5
 ```
 
-#### 2. 修改API地址
-编辑 `utils/apiconfig.js`
+H5 默认地址：
+
+```text
+http://localhost:18081
+```
+
+H5 开发代理默认把 `/api`、`/wxapi`、`/profile` 和 `/common` 转发到 `http://127.0.0.1:8080`。后端不在本机时，可在启动前设置：
+
+```powershell
+$env:H5_API_PROXY = "http://后端地址:8080"
+npm run dev:h5
+```
+
+### 7.2 微信小程序
+
+1. 使用 HBuilderX 打开 `RuoYi-AbuCoder-UniAppWx/Ruoyi-AbuCoder-UniApp-WX`。
+2. 确认 `manifest.json` 中配置了自己的微信小程序 AppID。
+3. 将项目运行到微信开发者工具，或使用 HBuilderX 的发行功能生成微信小程序代码。
+4. 打开 `utils/apiconfig.js`，将 `DEFAULT_BASE_URL` 改为后端可访问地址。
+
+电脑本机调试可以使用：
+
 ```javascript
-const DEFAULT_BASE_URL = 'http://127.0.0.1:8080' // 改为你的后端地址
+let DEFAULT_BASE_URL = 'http://127.0.0.1:8080'
 ```
 
-#### 3. 导入微信开发者工具
-- 打开微信开发者工具
-- 导入项目目录
-- 填写AppID
-- 编译运行
+手机或局域网调试不能使用 `localhost`，应改成电脑局域网 IP，例如：
 
----
-
-## 项目预计开发的功能
-
-### 已完成功能
-
-#### 1. 基础商城功能
-- 用户注册/登录（微信授权）
-- 商品浏览（列表、详情、分类、搜索）
-- 购物车管理
-- 订单管理（创建、支付、查看、取消）
-- 余额支付
-- 收货地址管理
-- 会员系统（等级、折扣）
-- 会员钱包（余额消费、消费流水、充值模板与记录；在线充值待接入）
-
-#### 2. 后台管理
-- 商品管理（CRUD、上下架、库存）
-- 订单管理（查看、发货、退款）
-- 用户管理
-- 营销活动配置（满减、指定商品优惠）
-- 线下活动管理（发布、预约管理）
-- 数据统计
-
-#### 3. 扫码点单
-- 扫码识别桌号
-- 商品浏览和下单
-- 购物车管理
-- 订单支付（余额）
-- 商家接单制作
-- 订单履约（取餐号、预计等待时间）
-- 叫号出餐
-- 催单功能
-- 订单超时自动取消
-
-#### 4. AI图片润色
-- 商家上传商品图片
-- 接入第三方AI图片处理API
-- 图片对比预览
-- 一键应用/重新生成
-- 批量处理
-- 批量生成支持后台异步任务，关闭弹窗或刷新页面后可重新进入查看进度
-
-#### 5. 线下活动
-- 活动发布管理
-- 活动列表展示
-- 活动详情查看
-- 用户预约报名
-- 报名状态管理
-
-#### 6. 微信能力
-- 微信登录授权
-- 订阅消息推送（取餐通知）
-
-### 计划开发功能
-
-#### 1. 真实支付与在线充值
-- 接入微信或第三方支付（下单、前端拉起支付、回调验签）
-- 在线充值
-- 支付状态补偿、退款和对账
-
-#### 2. 社区功能
-- 用户发布笔记
-- 点赞、评论、收藏
-- 关注/粉丝系统
-- 内容审核（微信内容安全API）
-- 违规处理机制
-- 话题活动
-- **会员机制**：用户画像、行为记录、用户偏好
-- **个性化皮肤**：皮肤素材管理、用户皮肤配置
-- **社交素材与卡片**：合成朋友圈素材、定制个性化卡片
-- **捏人像机制**：人像素材组合与用户形象保存
-- **集卡机制**：卡池配置、手工抽卡与 AI 抽卡、卡片收集
-
-
-
----
-
-## TODO List
-
-### 高优先级任务（P0 - 核心优化）
-
-**真实支付与在线充值**
-- [x] **防止并发超卖** - 已实现SQL WHERE条件：`stock >= quantity`
-- [x] **订单金额后端重算** - 已实现服务端重新计算所有金额
-- [ ] **微信或第三方支付接入** - 创建支付单、前端拉起支付、回调验签
-- [ ] **在线充值** - 创建充值单、到账入账与充值记录
-- [ ] **支付状态补偿、退款和对账**
-
-**扫码点单核心流程**
-- [x] **商家接单后台** - 已完成订单列表和接单功能
-- [x] **制作进度管理** - 已完成制作状态流转
-- [x] **取餐号和叫号** - 已完成取餐号分配和叫号系统
-- [x] **催单功能** - 已实现催单次数限制
-
-
-### 后续任务（P2 - 长期规划）
-
-**社区功能**
-- [ ] 数据库设计
-- [ ] 发布笔记功能
-- [ ] 浏览互动、关注系统
-- [ ] 内容审核、违规处理
-- [ ] 用户画像、行为记录与偏好数据模型
-- [ ] 皮肤素材管理与用户个性化皮肤配置
-- [ ] 朋友圈素材合成与个性化卡片生成
-- [ ] 捏人像素材、组合规则与形象保存
-- [ ] 卡池配置、手工抽卡、AI 抽卡与集卡册
-
----
-
-## 项目结构
-
-```
-xcx-ruoyi-uniapp-wx/
-├── RuoYi-AbuCoder-UniAppWx/
-│   └── Ruoyi-AbuCoder-UniApp-WX/    # 小程序前端工程
-├── src/main/java/com/ruoyi/
-│   ├── project/
-│   │   ├── coffee/                   # 咖啡业务模块
-│   │   │   ├── product/              # 商品管理
-│   │   │   ├── order/                # 订单管理
-│   │   │   ├── cart/                 # 购物车
-│   │   │   ├── member/               # 会员系统
-│   │   │   ├── wallet/               # 钱包余额
-│   │   │   ├── activity/             # 营销活动
-│   │   │   ├── offlineActivity/      # 线下活动
-│   │   │   ├── scanOrder/            # 扫码点单
-│   │   │   ├── scanProduct/          # 点单商品
-│   │   │   ├── scanCart/             # 点单购物车
-│   │   │   └── tableQrcode/          # 桌台二维码
-│   │   ├── common/                   # 公共模块
-│   │   └── system/                   # 系统模块
-│   ├── framework/                    # 框架核心
-│   └── common/                       # 通用工具
-├── src/main/resources/
-│   ├── mybatis/coffee/               # MyBatis映射文件
-│   ├── templates/coffee/             # 后台页面模板
-│   ├── static/                       # 静态资源
-│   └── application.yml               # 配置文件
-├── sql/                              # 数据库脚本
-│   ├── README.md                     # SQL文件说明
-│   ├── ry_20210924.sql               # 若依框架表
-│   ├── quartz.sql                    # 定时任务表
-│   └── coffee_all_business.sql       # 业务表（合并版）
-├── docs/                             # 文档
-│   └── 问题梳理与风险清单.md
-└── README.md                         # 本文件
+```javascript
+let DEFAULT_BASE_URL = 'http://192.168.1.10:8080'
 ```
 
----
+## 8. 核心 API 路由
 
-## 已知问题与风险
+以下路由均以 `http://localhost:8080` 为基地址。需要用户身份的接口通过微信用户 Token 或后台会话认证。
 
-### 高优先级问题（P0）
+### 8.1 微信和公共接口
 
-#### 1. 真实支付与在线充值尚未接入
-- **现状**：商城与扫码点单仅支持余额支付，在线充值接口尚未开放
-- **影响**：用户无法通过微信或第三方渠道付款、充值或退款
-- **后续处理**：接入支付下单、回调验签、状态补偿、退款和对账
+| 方法 | 路由 | 作用 |
+| --- | --- | --- |
+| `POST` | `/wxapi/wxlogin` | 微信登录并获取用户会话 |
+| `GET` | `/wxapi/me` | 获取当前微信用户 |
+| `POST` | `/wxapi/saveUserInfo` | 保存用户资料 |
+| `POST` | `/wxapi/uploadAvatar` | 上传微信用户头像 |
+| `GET` | `/wxapi/loadBanner` | 查询小程序轮播图 |
+| `POST` | `/common/upload` | 上传文件 |
+| `GET` | `/common/download` | 下载文件 |
 
-#### 2. 密钥安全存储
-- **现状**：配置文件直接写密钥
-- **风险**：代码泄露导致密钥泄露
-- **改进方案**：使用环境变量或密钥管理服务
+### 8.2 商城和会员
 
-#### 3. 订阅消息授权机制
-- **机制**：微信小程序订阅消息为一次性授权
-- **说明**：用户授权一次只能发送1条消息，消息发送后授权失效
-- **影响**：用户每次下单都需要重新授权才能收到取餐通知
-- **处理**：扫码确认页在创建订单前统一请求授权，避免重复弹窗
+| 模块 | 主要路由 |
+| --- | --- |
+| 商品 | `GET /api/product/categories`、`GET /api/product/list`、`GET /api/product/{productId}` |
+| 购物车 | `GET /api/cart/list`、`POST /api/cart/add`、`PUT /api/cart/update`、`DELETE /api/cart/{cartId}` |
+| 订单 | `GET /api/order/list`、`POST /api/order/create`、`PUT /api/order/pay/{orderId}`、`PUT /api/order/cancel/{orderId}`、`PUT /api/order/confirm/{orderId}` |
+| 售后 | `POST /api/order/refund/apply`、`GET /api/order/refund/{orderId}` |
+| 收货地址 | `GET /api/address/list`、`POST /api/address/add`、`PUT /api/address/update`、`PUT /api/address/setDefault/{addressId}` |
+| 会员 | `GET /api/member/info`、`GET /api/member/level-config` |
+| 钱包 | `GET /api/wallet/info`、`GET /api/wallet/log`、`GET /api/wallet/recharge/templates`、`GET /api/wallet/recharge/records` |
+| 活动 | `GET /api/activity/list`、`POST /api/activity/preview` |
+| 线下活动 | `GET /api/offlineActivity/list`、`GET /api/offlineActivity/{activityId}`、`POST /api/offlineActivity/signup`、`GET /api/offlineActivity/my` |
 
-### 已解决问题
+### 8.3 扫码点单
 
-#### 1. 订单金额被篡改
-- **解决方案**：后端重新计算所有金额，忽略前端传入的金额参数
-- **实现位置**：`OrderApiController.java` 和 `ScanOrderServiceImpl.java`
+| 模块 | 主要路由 |
+| --- | --- |
+| 点单菜单 | `GET /api/scanMenu/categories`、`GET /api/scanMenu/products`、`GET /api/scanMenu/products/{productId}` |
+| 桌台解析 | `GET /api/scanMenu/table/parse` |
+| 扫码购物车 | `GET /api/scanCart/list`、`POST /api/scanCart/add`、`PUT /api/scanCart/update`、`DELETE /api/scanCart/{id}` |
+| 扫码订单 | `POST /api/scanOrder/create`、`GET /api/scanOrder/list`、`GET /api/scanOrder/{orderId}`、`PUT /api/scanOrder/pay/{orderId}`、`POST /api/scanOrder/urge/{orderId}` |
+| 扫码退款 | `POST /api/scanOrder/refund/apply`、`GET /api/scanOrder/refund/{orderId}` |
+| 桌台二维码 | `POST /api/scanTableQrcode/generate`、`POST /api/scanTableQrcode/batchGenerate`、`GET /api/scanTableQrcode/download/{id}` |
 
-#### 2. 并发超卖
-- **解决方案**：SQL WHERE条件：`UPDATE ... SET stock = stock - #{quantity} WHERE stock >= #{quantity}`
-- **实现位置**：`TProductMapper.xml`
+### 8.4 商家装修和主题
 
-#### 3. 会员折扣动态配置
-- **解决方案**：从 `sys_config` 读取折扣率，数据库字段仅作快照
-- **实现位置**：`MemberService.java`
+| 方法 | 路由 | 作用 |
+| --- | --- | --- |
+| `GET` | `/coffee/decorator/workbench` | 打开 PC 装修工作台 |
+| `GET` | `/coffee/decorator/stores` | 查询可管理门店 |
+| `GET` | `/coffee/decorator/templates` | 查询系统主题模板 |
+| `GET/POST` | `/coffee/decorator/themes` | 查询或创建装修方案 |
+| `GET/PUT` | `/coffee/decorator/themes/{themeId}/draft` | 获取或保存草稿 |
+| `POST` | `/coffee/decorator/themes/{themeId}/validate` | 发布前校验 |
+| `POST` | `/coffee/decorator/themes/{themeId}/publish` | 发布主题版本 |
+| `GET` | `/coffee/decorator/themes/{themeId}/versions` | 查询版本历史 |
+| `POST` | `/coffee/decorator/themes/{themeId}/versions/{versionId}/restore` | 恢复历史版本 |
+| `GET/POST/DELETE` | `/coffee/decorator/assets` | 查询、上传和删除装修素材 |
+| `GET` | `/api/wx/stores/{storeCode}/skin` | 小程序读取门店皮肤 |
+| `GET` | `/api/mini/skin` | 小程序读取当前主题 |
+| `GET` | `/api/wx/skin/preview` | 预览装修主题 |
 
----
+## 9. 核心服务
 
-## 开发进度
+后端采用 Controller、Service、Mapper 分层，主要业务服务如下：
 
-| 模块 | 状态 | 说明 |
-|------|------|------|
-| 基础商城功能 | 已实现 | 商品、购物车、地址和订单；支付仅支持余额 |
-| 扫码点单 | 已实现 | 桌台扫码、菜单、订单履约和余额支付 |
-| 会员钱包 | 部分实现 | 余额消费、流水、充值模板与记录；在线充值待接入 |
-| 营销活动 | 已实现 | 满减、指定商品优惠和时段控制 |
-| 线下活动 | 已实现 | 发布、展示、报名和状态管理 |
-| 真实支付 | 计划中 | 微信或第三方支付、回调、退款和对账待接入 |
-| AI图片润色 | 已实现 | 需配置第三方 AI 图片服务 |
-| 后台管理 | 已实现 | 商品、订单、会员、活动和数据统计 |
-| 社区功能 | 计划中 | 内容互动、个性化与集卡玩法 |
+| 服务 | 主要职责 |
+| --- | --- |
+| `TProductServiceImpl` | 商品、分类、库存和商品图片 |
+| `TCartServiceImpl` | 商城购物车增删改查 |
+| `TOrderServiceImpl` | 商城订单创建、金额重算、支付、取消和确认收货 |
+| `OrderRefundServiceImpl` | 商城订单退款申请和处理 |
+| `WalletService` | 余额、消费流水、充值模板和充值记录 |
+| `MemberService` | 会员等级和折扣配置 |
+| `ScanOrderServiceImpl` | 扫码订单、取餐号、履约状态和催单 |
+| `ScanOrderRefundServiceImpl` | 扫码订单退款 |
+| `ScanTableQrcodeServiceImpl` | 桌台二维码生成和下载 |
+| `DecoratorThemeService` | 装修方案、草稿、发布、版本恢复和门店绑定 |
+| `DecoratorAssetService` | 装修素材上传、引用和权限校验 |
+| `DecoratorPreviewService` | H5/真机预览会话和预览快照 |
+| `UserProfileService` | 用户行为画像计算 |
+| `ProductRecommendationService` | 基于画像和行为的商品推荐 |
+| `ImageAiService` / `ImageAiBatchService` | AI 图片润色、批量任务和任务状态查询 |
+| `WxAccessTokenService` | 微信接口访问令牌 |
+| `ScanOrderSubscribeMessageService` | 扫码订单订阅消息 |
 
----
+管理端页面对应的主要路由前缀为：
 
-## 项目亮点
+```text
+/coffee/product          商品管理
+/coffee/order            商城订单管理
+/coffee/scanProduct      扫码商品管理
+/coffee/scanOrder        扫码订单履约
+/coffee/scanTable        桌台二维码管理
+/coffee/member           会员管理
+/coffee/rechargeTemplate 充值模板
+/coffee/walletLog        余额流水
+/coffee/offlineActivity 线下活动管理
+/coffee/decorator        商家装修工作台
+/monitor/job             定时任务
+/system                  用户、角色、菜单和系统配置
+```
 
-1. **完整的扫码点单流程** - 从扫码下单到取餐叫号的全流程闭环
-2. **会员钱包系统** - 余额消费、消费流水、充值模板与会员折扣
-3. **营销活动引擎** - 灵活配置满减活动和商品优惠
-4. **订单金额防篡改** - 服务端重算所有金额，防止前端篡改
-5. **库存并发控制** - SQL层面防止超卖
-6. **AI图片处理** - 批量异步处理商品图片
-7. **微信订阅消息** - 取餐通知推送
+## 10. 核心功能
 
----
+- 微信小程序登录、用户信息和头像管理。
+- 商品分类、商品详情、库存、商品图片和上下架管理。
+- 商城购物车、收货地址、订单创建、余额支付、取消、确认收货和退款申请。
+- 会员等级、折扣、钱包余额、消费流水和充值模板。
+- 扫码识别桌台、扫码菜单、扫码购物车、扫码订单、取餐号、催单和订单履约。
+- 商家后台接单、制作、叫号、完成和退款处理。
+- 满减和指定商品营销活动，以及线下活动发布、报名和取消报名。
+- 商家多门店装修，主题草稿、版本发布、回滚、门店独立主题和跟随主主题。
+- 装修素材管理、H5 实时预览、真机预览和 SkinConfig V1 主题配置。
+- 用户行为记录、用户画像和商品推荐。
+- AI 商品图片润色和异步批量处理。
+- Quartz 定时任务、日志、缓存、在线用户和 Druid 数据源监控。
 
-**最后更新时间：** 2026-07-28
+## 11. 测试和构建
 
+运行后端测试：
 
-## 一、成员工作进展
+```powershell
+mvn test
+```
 
-### 1. 金生
+只构建后端 JAR：
 
-**已完成：**
-- 实现数据采集功能。
-- 基于采集的数据为用户生成用户画像。
-- 根据用户画像实现商品推荐功能。
+```powershell
+mvn clean package -DskipTests
+```
 
-**存在问题：**
-- 当前功能尚未完成测试。
+前端构建 H5：
 
----
+```powershell
+cd RuoYi-AbuCoder-UniAppWx/Ruoyi-AbuCoder-UniApp-WX
+npm run build:h5
+```
 
-### 2. 索方楹
-
-**已完成：**
-- 实现后台预览小程序页面功能。
-- 支持修改小程序组件的背景样式。
-- 支持为小程序前端发布新的页面样式。
-
----
-
-### 3. 郑嘉鑫
-
-**已完成：**
-- 实现 AI 生卡功能。
-- 实现小程序前端抽卡功能。
-- 完成从后台创建卡片活动到用户前端抽取卡片的完整流程。
-
-**存在问题：**
-- AI 卡片生成速度较慢。
-- 当前卡片样式较为单一，需要进一步丰富卡片样式。
-
----
-
-## 二、AI 卡片功能操作流程
-
-### 1. 创建卡片活动
-
-登录后台管理系统，进入 **AI 卡片** 功能模块，点击创建卡片活动，并填写相关活动表单信息。
-
-### 2. 创建卡片
-
-进入对应的卡片活动，点击**新增卡片**，填写卡片相关数据，并使用 AI 生成功能生成卡片。
-
-### 3. 发布活动
-
-完成卡片创建后，发布卡片活动。
-
-### 4. 用户抽卡
-
-用户进入小程序前端，参与已发布的卡片活动并进行抽卡。
+数据库测试使用 `src/test/resources/mapper-test-schema.sql` 和 H2，不要把测试数据库脚本当作生产初始化脚本。

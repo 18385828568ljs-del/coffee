@@ -1,71 +1,58 @@
-######################################################################
-# Build Tools
+# Java and Maven build output
+.gradle/
+target/
+build/
+out/
+*.class
+*.log
+*.xml.versionsBackup
 
-.gradle
-/build/
+# Keep wrapper files when they are intentionally committed
+!.mvn/wrapper/maven-wrapper.jar
 !gradle/wrapper/gradle-wrapper.jar
 
-target/
-!.mvn/wrapper/maven-wrapper.jar
-
-######################################################################
-# IDE
-
-### STS ###
-.apt_generated
+# IDE and editor files
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
 .classpath
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### JRebel ###
-rebel.xml
-### NetBeans ###
-nbproject/private/
-build/*
-nbbuild/
-dist/
-nbdist/
-.nb-gradle/
-
-######################################################################
-# Others
-*.log
-*.xml.versionsBackup
+.apt_generated/
 *.swp
+
+# Frontend dependencies and generated output
+**/node_modules/
+**/unpackage/dist/
+**/dist/
+**/.cache/
+
+# Local configuration and secrets
+/src/main/resources/application.yml
+/src/main/resources/application-druid.yml
+/src/main/resources/templates/application.yml
+.env
+.env.*
+!.env.example
+
+# Local backups and runtime files
+配置文件备份/
+uploadPath/
+logs/
 coffee-mall-backend-src/
 coffee-mall-backend-src.zip
 
-# Frontend dependencies and generated H5 output
-**/node_modules/
-RuoYi-AbuCoder-UniAppWx/Ruoyi-AbuCoder-UniApp-WX/unpackage/dist/
-
-!*/build/*.java
-!*/build/*.html
-!*/build/*.xml
-
+# Local task notes and generated context files
 /task_plan.md
 /progress.md
 /findings.md
-/src/main/resources/application.yml
-/src/main/resources/application-druid.yml
-
 CONTEXT.md
-/docs/*
-!/docs/PROJECT_STRUCTURE_AND_PERSONALIZED_SKIN.md
-# 本地配置文件，不上传 GitHub
-src/main/resources/application.yml
-src/main/resources/application-druid.yml
-src/main/resources/templates/application.yml
 
-# 本地配置备份
-配置文件备份/
-# 本地运行产生的上传文件
-uploadPath/
+# OS metadata
+.DS_Store
+Thumbs.db
+desktop.ini
