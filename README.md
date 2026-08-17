@@ -408,25 +408,9 @@ let DEFAULT_BASE_URL = 'http://192.168.1.10:8080'
 - AI 商品图片润色和异步批量处理。
 - Quartz 定时任务、日志、缓存、在线用户和 Druid 数据源监控。
 
-## 11. 测试和构建
 
-运行后端测试：
+## 近期成员工作汇报
 
-```powershell
-mvn test
-```
-
-只构建后端 JAR：
-
-```powershell
-mvn clean package -DskipTests
-```
-
-前端构建 H5：
-
-```powershell
-cd RuoYi-AbuCoder-UniAppWx/Ruoyi-AbuCoder-UniApp-WX
-npm run build:h5
-```
-
-数据库测试使用 `src/test/resources/mapper-test-schema.sql` 和 H2，不要把测试数据库脚本当作生产初始化脚本。
+- 郑嘉鑫：
+- 索方楹：
+- 刘金生：
