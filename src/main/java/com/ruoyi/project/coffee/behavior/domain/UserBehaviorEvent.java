@@ -17,7 +17,6 @@ public class UserBehaviorEvent implements Serializable
     private Long productId;
     private Long categoryId;
     private Long sourceId;
-    private String searchKeyword;
     private String source;
     private String dedupKey;
     private Date eventTime;
@@ -90,16 +89,6 @@ public class UserBehaviorEvent implements Serializable
     public void setSourceId(Long sourceId)
     {
         this.sourceId = sourceId;
-    }
-
-    public String getSearchKeyword()
-    {
-        return searchKeyword;
-    }
-
-    public void setSearchKeyword(String searchKeyword)
-    {
-        this.searchKeyword = searchKeyword;
     }
 
     public String getSource()

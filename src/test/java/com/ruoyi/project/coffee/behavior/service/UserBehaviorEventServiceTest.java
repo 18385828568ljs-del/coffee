@@ -2,7 +2,6 @@ package com.ruoyi.project.coffee.behavior.service;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -53,23 +52,6 @@ class UserBehaviorEventServiceTest
         assertEquals(3L, event.getCategoryId());
         assertEquals(UserBehaviorEventService.SOURCE_PERSONALIZED_LIST, event.getSource());
         assertTrue(event.getDedupKey().startsWith("PRODUCT_VIEW:MALL:7:100:"));
-    }
-
-    @Test
-    void recordSearchAllowsMissingProductAndNormalizesKeyword()
-    {
-        when(userBehaviorEventMapper.insertUserBehaviorEvent(any(UserBehaviorEvent.class))).thenReturn(1);
-
-        assertTrue(service.recordSearch(7L, UserBehaviorEventService.SCENE_MALL, "  拿铁  "));
-
-        ArgumentCaptor<UserBehaviorEvent> captor = ArgumentCaptor.forClass(UserBehaviorEvent.class);
-        verify(userBehaviorEventMapper).insertUserBehaviorEvent(captor.capture());
-        UserBehaviorEvent event = captor.getValue();
-        assertEquals(UserBehaviorEventService.EVENT_SEARCH, event.getEventType());
-        assertEquals("拿铁", event.getSearchKeyword());
-        assertEquals(UserBehaviorEventService.SOURCE_SEARCH, event.getSource());
-        assertNull(event.getProductId());
-        assertTrue(event.getDedupKey().contains(":拿铁:"));
     }
 
     @Test

@@ -3,12 +3,10 @@ package com.ruoyi.project.coffee.api;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import com.ruoyi.framework.web.domain.AjaxResult;
 import com.ruoyi.framework.web.page.TableDataInfo;
@@ -121,33 +119,6 @@ class ProductApiControllerTest
         verify(marketingActivityEngine).enrichProduct(product, 7L);
         verify(userBehaviorEventService).recordProductView(7L, UserBehaviorEventService.SCENE_MALL, 3L, null,
             UserBehaviorEventService.SOURCE_CATEGORY);
-    }
-
-    @Test
-    void searchProductsRecordsAuthenticatedSearch()
-    {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
-        when(wxUserTokenService.resolveUserId(request)).thenReturn(7L);
-        when(productService.selectTProductList(any(TProduct.class))).thenReturn(Collections.emptyList());
-
-        controller.searchProducts("  拿铁  ", request);
-
-        verify(userBehaviorEventService).recordSearch(7L, UserBehaviorEventService.SCENE_MALL, "拿铁");
-    }
-
-    @Test
-    void internalProductLookupDoesNotRecordSearch()
-    {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addParameter("trackBehavior", "false");
-        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
-        when(wxUserTokenService.resolveUserId(request)).thenReturn(7L);
-        when(productService.selectTProductList(any(TProduct.class))).thenReturn(Collections.emptyList());
-
-        controller.searchProducts("拿铁", request);
-
-        verify(userBehaviorEventService, never()).recordSearch(any(), any(), any());
     }
 
     @Test

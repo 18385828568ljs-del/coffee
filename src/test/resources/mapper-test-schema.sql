@@ -77,7 +77,7 @@ CREATE TABLE t_category (
 CREATE TABLE t_cart (
     cart_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT,
-    product_id BIGINT,
+    product_id BIGINT NOT NULL,
     quantity BIGINT,
     spec VARCHAR(255),
     create_time TIMESTAMP NULL,
@@ -92,7 +92,6 @@ CREATE TABLE t_user_behavior_event (
     product_id BIGINT,
     category_id BIGINT,
     source_id BIGINT,
-    search_keyword VARCHAR(50),
     source VARCHAR(32),
     dedup_key VARCHAR(128),
     event_time TIMESTAMP NOT NULL,

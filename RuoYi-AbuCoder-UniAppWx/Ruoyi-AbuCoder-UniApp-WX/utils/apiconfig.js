@@ -115,8 +115,7 @@ export const productApi = {
 	categories: `${baseUrl}/api/product/categories`,
 	list: `${baseUrl}/api/product/list`,
 	categoryProducts: `${baseUrl}/api/product/category/`,
-	detail: `${baseUrl}/api/product/`,
-	search: `${baseUrl}/api/product/search`
+	detail: `${baseUrl}/api/product/`
 }
 
 export const cartApi = {

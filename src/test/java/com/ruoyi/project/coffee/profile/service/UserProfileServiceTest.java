@@ -88,7 +88,7 @@ class UserProfileServiceTest
     }
 
     @Test
-    void searchOnlyActivityRemainsLearningAndDoesNotCreateInterestEvidence()
+    void singleActivityRemainsLearningAndDoesNotCreateInterestEvidence()
     {
         when(userProfileMapper.countRecentBehaviorEvents(eq(8L), any(Date.class))).thenReturn(1);
 

@@ -214,10 +214,7 @@ export default {
 				this.loadProductDetail()
 				return
 			}
-			if (mergedPreview.productName) {
-				this.resolveProductFromName(mergedPreview)
-				return
-			}
+			showError('缺少商品信息')
 			return
 		}
 		showError('缺少商品信息')
@@ -260,50 +257,6 @@ export default {
 				this.productInfo = res.data.data || {}
 			} catch (error) {
 				showError('加载失败')
-			} finally {
-				hideBusy()
-			}
-		},
-
-		async resolveProductFromName(previewProduct) {
-			showBusy('加载中...')
-			try {
-				const res = await requestPromise({
-					url: productApi.search,
-					method: 'GET',
-					data: {
-						keyword: previewProduct.productName,
-						trackBehavior: false,
-						pageNum: 1,
-						pageSize: 20
-					}
-				})
-				const rows = (res && res.data && res.data.rows) || []
-				const matchedItem = rows.find((item) => {
-					if (!item) {
-						return false
-					}
-					if (item.productName !== previewProduct.productName) {
-						return false
-					}
-					if (!previewProduct.imageUrl && !previewProduct.productImg) {
-						return true
-					}
-					const previewImage = getProductImages(previewProduct)[0]
-					const currentImage = getProductImages(item)[0]
-					return previewImage === currentImage
-				}) || rows[0]
-
-				const productId = this.resolveProductId(matchedItem)
-				if (productId) {
-					this.productId = productId
-					hideBusy()
-					this.loadProductDetail()
-					return
-				}
-				showError('缺少商品信息')
-			} catch (error) {
-				showError('缺少商品信息')
 			} finally {
 				hideBusy()
 			}

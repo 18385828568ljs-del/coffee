@@ -4,24 +4,6 @@
 
 		<view class="content">
 			<view class="content-wrap">
-				<view class="search-box">
-					<view class="search-icon">
-						<view class="search-icon-circle"></view>
-						<view class="search-icon-line"></view>
-					</view>
-					<input
-						v-model="searchKeyword"
-						class="search-input"
-						confirm-type="search"
-						maxlength="50"
-						placeholder="搜索咖啡或风味"
-						placeholder-class="search-placeholder"
-						@confirm="handleSearch"
-					/>
-					<view class="search-clear" @tap="handleSearch"><text>搜索</text></view>
-					<view v-if="searchActive" class="search-clear" @tap="clearSearch"><text>清除</text></view>
-				</view>
-
 				<view class="category-shell" :style="{ top: categoryStickyTop + 'px' }">
 					<view class="category-inline">
 						<scroll-view
@@ -214,9 +196,6 @@ export default {
 		return {
 			categoryList: [],
 			allProductList: [],
-			searchKeyword: '',
-			searchResultList: [],
-			searchActive: false,
 			cartList: [],
 			currentCategoryId: '',
 			productImageErrorMap: {},
@@ -253,8 +232,7 @@ export default {
 				}
 			})
 
-			const productList = this.searchActive ? this.searchResultList : this.allProductList
-			productList.forEach((item) => {
+			this.allProductList.forEach((item) => {
 				const rawCategoryId = this.getProductCategoryId(item)
 				const normalizedCategoryId =
 					rawCategoryId === null || rawCategoryId === undefined || rawCategoryId === ''
@@ -289,9 +267,7 @@ export default {
 				}
 			})
 
-			return orderedSections.filter((section) => {
-				return !!section && (!this.searchActive || section.products.length > 0)
-			})
+			return orderedSections.filter(Boolean)
 		},
 
 	},
@@ -522,51 +498,6 @@ export default {
 					silent: options.silent
 				})
 			}
-		},
-
-		async handleSearch() {
-			const keyword = String(this.searchKeyword || '').trim().slice(0, 50)
-			this.searchKeyword = keyword
-			if (!keyword) {
-				this.clearSearch()
-				return
-			}
-
-			showBusy('搜索中...')
-			try {
-				const res = await requestPromise({
-					url: productApi.search,
-					method: 'GET',
-					data: {
-						keyword,
-						pageNum: 1,
-						pageSize: 1000
-					}
-				})
-				if (!isSuccessResponse(res)) {
-					this.handleRequestFailure('搜索商品', res, { fallbackMessage: '搜索失败' })
-					return
-				}
-				this.searchResultList = res.data.rows || []
-				this.searchActive = true
-				this.currentCategoryId = ''
-				this.$nextTick(() => {
-					this.scheduleSectionMeasure(true)
-					uni.pageScrollTo({ scrollTop: 0, duration: 0 })
-				})
-			} catch (error) {
-				this.handleRequestFailure('搜索商品', error, { fallbackMessage: '搜索失败' })
-			} finally {
-				hideBusy()
-			}
-		},
-
-		clearSearch() {
-			this.searchKeyword = ''
-			this.searchResultList = []
-			this.searchActive = false
-			this.currentCategoryId = ''
-			this.$nextTick(() => this.scheduleSectionMeasure(true))
 		},
 
 		async loadCartList(options = {}) {
@@ -997,10 +928,7 @@ export default {
 		buildDetailUrl(item) {
 			const productId = this.resolveProductId(item)
 			const source = this.getBehaviorSource(item)
-			const query = [`source=${source}`]
-			if (productId) {
-				query.push(`id=${encodeURIComponent(productId)}`)
-			}
+			const query = [`id=${encodeURIComponent(productId)}`, `source=${source}`]
 			if (item && item.productName) {
 				query.push(`name=${encodeURIComponent(item.productName)}`)
 			}
@@ -1026,14 +954,15 @@ export default {
 		},
 
 		getBehaviorSource(item) {
-			if (this.searchActive) {
-				return 'SEARCH'
-			}
 			return item && item.recommendationApplied ? 'PERSONALIZED_LIST' : 'DEFAULT_LIST'
 		},
 
 		goDetail(item) {
 			if (!item) {
+				return
+			}
+			if (!this.resolveProductId(item)) {
+				showError('缺少商品信息')
 				return
 			}
 			const previewItem = clonePlainData(item)
@@ -1136,70 +1065,6 @@ export default {
 	flex-direction: column;
 	gap: 30rpx;
 	box-sizing: border-box;
-}
-
-.search-box {
-	@include card(0 20rpx);
-	min-height: 88rpx;
-	display: flex;
-	align-items: center;
-	gap: 16rpx;
-}
-
-.search-icon {
-	width: 26rpx;
-	height: 26rpx;
-	position: relative;
-	flex-shrink: 0;
-}
-
-.search-icon-circle {
-	width: 18rpx;
-	height: 18rpx;
-	border: 3rpx solid $text-tertiary;
-	border-radius: 50%;
-}
-
-.search-icon-line {
-	position: absolute;
-	right: 0;
-	bottom: 2rpx;
-	width: 10rpx;
-	height: 3rpx;
-	background: $text-tertiary;
-	transform: rotate(45deg);
-	transform-origin: center;
-}
-
-.search-input {
-	flex: 1;
-	height: 88rpx;
-	font-family: $font-family;
-	font-size: 26rpx;
-	font-weight: 500;
-	color: $text-primary;
-}
-
-.search-placeholder {
-	color: $text-tertiary;
-}
-
-.search-clear {
-	min-height: 88rpx;
-	padding: 0 18rpx;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	border-radius: $radius-sm;
-	background: $bg-muted;
-	@include active-press;
-}
-
-.search-clear text {
-	font-family: $font-family;
-	font-size: 22rpx;
-	font-weight: 500;
-	color: $text-secondary;
 }
 
 .floor-list {

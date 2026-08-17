@@ -139,13 +139,12 @@ CREATE TABLE IF NOT EXISTS `t_cart` (
 CREATE TABLE IF NOT EXISTS `t_user_behavior_event` (
   `event_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '行为证据ID',
   `user_id` BIGINT NOT NULL COMMENT '微信用户ID',
-  `event_type` VARCHAR(32) NOT NULL COMMENT '行为类型(PRODUCT_VIEW/SEARCH/CART_ADD/CART_REMOVE)',
+  `event_type` VARCHAR(32) NOT NULL COMMENT '行为类型(PRODUCT_VIEW/CART_ADD/CART_REMOVE)',
   `scene` VARCHAR(16) NOT NULL COMMENT '业务场景(MALL/SCAN)',
-  `product_id` BIGINT DEFAULT NULL COMMENT '商品ID,搜索行为可为空',
+  `product_id` BIGINT NOT NULL COMMENT '商品ID',
   `category_id` BIGINT DEFAULT NULL COMMENT '采集时商品分类ID',
   `source_id` BIGINT DEFAULT NULL COMMENT '来源记录ID,加购时为购物车行ID',
-  `search_keyword` VARCHAR(50) DEFAULT NULL COMMENT '搜索关键词',
-  `source` VARCHAR(32) DEFAULT NULL COMMENT '行为来源(DEFAULT_LIST/PERSONALIZED_LIST/CATEGORY/SEARCH)',
+  `source` VARCHAR(32) DEFAULT NULL COMMENT '行为来源(DEFAULT_LIST/PERSONALIZED_LIST/CATEGORY)',
   `dedup_key` VARCHAR(128) DEFAULT NULL COMMENT '行为幂等键',
   `event_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '行为发生时间',
   PRIMARY KEY (`event_id`),
@@ -205,33 +204,6 @@ CREATE TABLE IF NOT EXISTS `t_order` (
   KEY `idx_create_time` (`create_time`),
   KEY `idx_order_user_update` (`user_id`, `update_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单';
-
--- 兼容已经初始化过的数据库；本文件仍可重复执行，不另建业务迁移文件。
-SET @has_order_update_time = (
-  SELECT COUNT(*) FROM information_schema.COLUMNS
-  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 't_order' AND COLUMN_NAME = 'update_time'
-);
-SET @add_order_update_time = IF(
-  @has_order_update_time = 0,
-  'ALTER TABLE `t_order` ADD COLUMN `update_time` DATETIME DEFAULT NULL COMMENT ''交易信息最近变更时间'' AFTER `create_time`',
-  'SELECT 1'
-);
-PREPARE add_order_update_time_stmt FROM @add_order_update_time;
-EXECUTE add_order_update_time_stmt;
-DEALLOCATE PREPARE add_order_update_time_stmt;
-
-SET @has_order_user_update_index = (
-  SELECT COUNT(*) FROM information_schema.STATISTICS
-  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 't_order' AND INDEX_NAME = 'idx_order_user_update'
-);
-SET @add_order_user_update_index = IF(
-  @has_order_user_update_index = 0,
-  'ALTER TABLE `t_order` ADD INDEX `idx_order_user_update` (`user_id`, `update_time`)',
-  'SELECT 1'
-);
-PREPARE add_order_user_update_index_stmt FROM @add_order_user_update_index;
-EXECUTE add_order_user_update_index_stmt;
-DEALLOCATE PREPARE add_order_user_update_index_stmt;
 
 CREATE TABLE IF NOT EXISTS `t_order_item` (
   `item_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '明细ID',

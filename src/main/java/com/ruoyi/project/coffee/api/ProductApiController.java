@@ -7,7 +7,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.framework.web.controller.BaseController;
@@ -21,7 +20,6 @@ import com.ruoyi.project.coffee.category.service.ITCategoryService;
 import com.ruoyi.project.coffee.product.domain.TProduct;
 import com.ruoyi.project.coffee.product.service.ITProductService;
 import com.ruoyi.project.coffee.profile.service.ProductRecommendationService;
-import com.ruoyi.project.coffee.common.annotation.RateLimit;
 
 /**
  * Mini-program product APIs.
@@ -99,37 +97,6 @@ public class ProductApiController extends BaseController
         userBehaviorEventService.recordProductView(userId, UserBehaviorEventService.SCENE_MALL,
             product.getProductId(), product.getCategoryId(), request.getParameter("source"));
         return AjaxResult.success(product);
-    }
-
-    @GetMapping("/search")
-    @RateLimit(key = "product_search", time = 60, count = 30, limitType = RateLimit.LimitType.IP)
-    public TableDataInfo searchProducts(@RequestParam String keyword, HttpServletRequest request)
-    {
-        if (keyword == null || keyword.trim().isEmpty())
-        {
-            return getDataTable(java.util.Collections.emptyList());
-        }
-
-        keyword = keyword.trim();
-        if (keyword.length() > 50)
-        {
-            keyword = keyword.substring(0, 50);
-        }
-
-        Long userId = wxUserTokenService.resolveUserId(request);
-        if (!"false".equalsIgnoreCase(request.getParameter("trackBehavior")))
-        {
-            userBehaviorEventService.recordSearch(userId, UserBehaviorEventService.SCENE_MALL, keyword);
-        }
-
-        TProduct query = new TProduct();
-        query.setProductName(keyword);
-        query.setStatus(1);
-        List<TProduct> candidates = productService.selectTProductList(query);
-        List<TProduct> ranked = productRecommendationService.recommendMall(userId, candidates);
-        List<TProduct> page = paginate(ranked, request);
-        marketingActivityEngine.enrichProducts(page, userId);
-        return toTableDataInfo(page, ranked.size());
     }
 
     private <T> List<T> paginate(List<T> list, HttpServletRequest request)

@@ -72,9 +72,6 @@ class UserProfileMapperIntegrationTest
                 + "category_id, dedup_key, event_time) values (7, 'PRODUCT_VIEW', 'MALL', 101, 11, 'view-1', ?)",
             dateDaysAgo(2));
         jdbcTemplate.update("insert into t_user_behavior_event(user_id, event_type, scene, product_id, "
-                + "category_id, dedup_key, event_time) values (7, 'SEARCH', 'MALL', null, null, 'search-1', ?)",
-            dateDaysAgo(1));
-        jdbcTemplate.update("insert into t_user_behavior_event(user_id, event_type, scene, product_id, "
                 + "category_id, dedup_key, event_time) values (7, 'CART_REMOVE', 'MALL', 101, 11, 'remove-1', ?)",
             dateDaysAgo(1));
     }
@@ -91,7 +88,7 @@ class UserProfileMapperIntegrationTest
         assertEquals(2, purchases.size());
         assertEquals(1, behaviors.size());
         assertEquals("PRODUCT_VIEW", behaviors.get(0).getEvidenceType());
-        assertEquals(3, mapper.countRecentBehaviorEvents(7L, dateDaysAgo(180)));
+        assertEquals(2, mapper.countRecentBehaviorEvents(7L, dateDaysAgo(180)));
         assertEquals(7L, mapper.selectChangedUserIds().get(0));
 
         List<ProductPopularity> mallPopularity = mapper.selectRecentProductPopularity("MALL", dateDaysAgo(30));
@@ -124,11 +121,12 @@ class UserProfileMapperIntegrationTest
     @Test
     void cleanupDeletesOnlyBehaviorOlderThanRetentionWindow()
     {
-        jdbcTemplate.update("insert into t_user_behavior_event(user_id, event_type, scene, dedup_key, event_time) "
-            + "values (7, 'SEARCH', 'MALL', 'old-search', ?)", dateDaysAgo(181));
+        jdbcTemplate.update("insert into t_user_behavior_event(user_id, event_type, scene, product_id, "
+                + "category_id, dedup_key, event_time) "
+                + "values (7, 'CART_REMOVE', 'MALL', 101, 11, 'old-remove', ?)", dateDaysAgo(181));
 
         assertEquals(1, mapper.deleteExpiredBehavior(dateDaysAgo(180)));
-        assertEquals(3, jdbcTemplate.queryForObject(
+        assertEquals(2, jdbcTemplate.queryForObject(
             "select count(*) from t_user_behavior_event", Integer.class));
     }
 
