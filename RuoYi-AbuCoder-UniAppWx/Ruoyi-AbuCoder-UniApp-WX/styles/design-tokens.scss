@@ -1,27 +1,27 @@
-$accent-primary: #7A4F2D;
-$accent-primary-deep: #241813;
-$accent-primary-soft: #F1E4D7;
-$accent-surface: #FFF7EF;
+$accent-primary: var(--theme-primary, #7A4F2D);
+$accent-primary-deep: var(--theme-text, #241813);
+$accent-primary-soft: var(--theme-page, #F1E4D7);
+$accent-surface: var(--theme-page, #FFF7EF);
 $accent-warm: #B77945;
 $accent-danger: #C86E60;
 $accent-success: #7C8F81;
 
-$text-primary: #201A17;
-$text-secondary: #6E655E;
-$text-tertiary: #9A9188;
+$text-primary: var(--theme-text, #201A17);
+$text-secondary: var(--theme-text-secondary, #6E655E);
+$text-tertiary: var(--theme-text-secondary, #9A9188);
 
-$bg-page-start: #FFF9F3;
-$bg-page-end: #F5ECE3;
-$bg-page: #FFF9F3;
-$bg-card: #FFFFFF;
-$bg-surface: #FFFFFF;
-$bg-muted: #F7EFE6;
-$bg-bottom: rgba(255, 255, 255, 0.98);
-$bg-hero: #FFF7EF;
+$bg-page-start: var(--theme-page, #FFF9F3);
+$bg-page-end: var(--theme-page, #F5ECE3);
+$bg-page: var(--theme-page, #FFF9F3);
+$bg-card: var(--theme-surface, #FFFFFF);
+$bg-surface: var(--theme-surface, #FFFFFF);
+$bg-muted: var(--theme-page, #F7EFE6);
+$bg-bottom: var(--theme-surface, rgba(255, 255, 255, 0.98));
+$bg-hero: var(--theme-surface, #FFF7EF);
 
-$border-subtle: #E8E0D7;
-$border-light: #F4EEE8;
-$border-strong: #D7CCBF;
+$border-subtle: var(--theme-border, #E8E0D7);
+$border-light: var(--theme-border, #F4EEE8);
+$border-strong: var(--theme-border, #D7CCBF);
 
 $font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
 
@@ -46,8 +46,7 @@ $bottom-action-height: 132rpx;
 
 @mixin page-shell($withNav: false) {
 	min-height: 100vh;
-	background:
-		linear-gradient(180deg, $bg-page-start 0%, $bg-page 42%, $bg-page-end 100%);
+	background: linear-gradient(180deg, $bg-page-start 0%, $bg-page 42%, $bg-page-end 100%);
 	display: flex;
 	flex-direction: column;
 	box-sizing: border-box;

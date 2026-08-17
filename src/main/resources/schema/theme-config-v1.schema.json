@@ -1,0 +1,209 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coffee.example.com/schema/theme-config-v1.schema.json",
+  "title": "Coffee ThemeConfig V1",
+  "type": "object",
+  "oneOf": [
+    {
+      "title": "SkinConfig V1",
+      "required": ["schemaVersion", "themeVersion", "page", "slots"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "themeVersion": { "type": "integer", "minimum": 1 },
+        "page": {
+          "type": "object",
+          "required": ["backgroundColor", "textColor", "secondaryTextColor"],
+          "properties": {
+            "backgroundColor": { "$ref": "#/$defs/color" },
+            "background": { "$ref": "#/$defs/background" },
+            "textColor": { "$ref": "#/$defs/color" },
+            "secondaryTextColor": { "$ref": "#/$defs/color" }
+          },
+          "additionalProperties": false
+        },
+        "colors": { "$ref": "#/$defs/skinColors" },
+        "assets": { "$ref": "#/$defs/skinAssets" },
+        "productImages": {
+          "type": "object",
+          "propertyNames": { "pattern": "^[1-9][0-9]*$" },
+          "additionalProperties": { "$ref": "#/$defs/skinAsset" }
+        },
+        "content": { "$ref": "#/$defs/skinContent" },
+        "typography": { "$ref": "#/$defs/typography" },
+        "slots": {
+          "type": "object",
+          "required": ["heroBanner", "orderCard", "shopCard", "welcomeBanner", "aboutSection", "tabBar"],
+          "properties": {
+            "heroBanner": { "type": "object" },
+            "orderCard": { "type": "object" },
+            "shopCard": { "type": "object" },
+            "welcomeBanner": { "type": "object" },
+            "aboutSection": { "type": "object" },
+            "tabBar": { "type": "object" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "title": "Legacy ThemeConfig V1",
+      "required": ["schemaVersion", "tokens", "components"],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "tokens": { "type": "object" },
+        "brand": { "type": "object" },
+        "components": { "type": "object" }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "not": {
+    "anyOf": [
+      { "required": ["merchantId"] },
+      { "required": ["storeId"] },
+      { "required": ["css"] },
+      { "required": ["wxml"] },
+      { "required": ["javascript"] },
+      { "required": ["script"] }
+    ]
+  },
+  "allOf": [
+    {
+      "if": {
+        "anyOf": [
+          { "required": ["colors"] },
+          { "required": ["assets"] },
+          { "required": ["typography"] }
+        ]
+      },
+      "then": { "required": ["colors", "assets", "typography"] }
+    }
+  ],
+  "$defs": {
+    "color": {
+      "type": "string",
+      "pattern": "^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$"
+    },
+    "background": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "color"],
+          "properties": { "type": { "const": "solid" }, "color": { "$ref": "#/$defs/color" } },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["type", "gradient"],
+          "properties": {
+            "type": { "const": "gradient" },
+            "gradient": {
+              "type": "object",
+              "required": ["type", "direction", "colors"],
+              "properties": {
+                "type": { "const": "linear" },
+                "direction": { "type": "number", "minimum": 0, "maximum": 360 },
+                "colors": {
+                  "type": "array", "minItems": 2,
+                  "items": {
+                    "type": "object", "required": ["color", "position"],
+                    "properties": { "color": { "$ref": "#/$defs/color" }, "position": { "type": "integer", "minimum": 0, "maximum": 100 } },
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "skinColors": {
+      "type": "object",
+      "required": ["primary", "pageBackground", "cardBackground", "textPrimary", "textSecondary"],
+      "properties": {
+        "primary": { "$ref": "#/$defs/color" },
+        "pageBackground": { "$ref": "#/$defs/color" },
+        "cardBackground": { "$ref": "#/$defs/color" },
+        "textPrimary": { "$ref": "#/$defs/color" },
+        "textSecondary": { "$ref": "#/$defs/color" }
+      },
+      "additionalProperties": false
+    },
+    "skinAsset": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "integer", "minimum": 1 },
+        { "type": "string", "minLength": 1, "maxLength": 1000 }
+      ]
+    },
+    "skinAssetNoNull": {
+      "oneOf": [
+        { "type": "integer", "minimum": 1 },
+        { "type": "string", "minLength": 1, "maxLength": 1000 }
+      ]
+    },
+    "skinAssets": {
+      "type": "object",
+      "required": ["homeBanner", "actionCard", "sectionBanner", "aboutImage", "productCard", "specPanel", "emptyCart", "cartPanel", "checkoutBar", "memberCard", "tabBar"],
+      "properties": {
+        "homeBanner": {
+          "oneOf": [
+            { "type": "array", "maxItems": 10, "items": { "$ref": "#/$defs/skinAssetNoNull" } },
+            { "$ref": "#/$defs/skinAsset" }
+          ]
+        },
+        "actionCard": { "$ref": "#/$defs/skinAsset" },
+        "sectionBanner": { "$ref": "#/$defs/skinAsset" },
+        "aboutImage": { "$ref": "#/$defs/skinAsset" },
+        "productCard": { "$ref": "#/$defs/skinAsset" },
+        "specPanel": { "$ref": "#/$defs/skinAsset" },
+        "emptyCart": { "$ref": "#/$defs/skinAsset" },
+        "cartPanel": { "$ref": "#/$defs/skinAsset" },
+        "checkoutBar": { "$ref": "#/$defs/skinAsset" },
+        "memberCard": { "$ref": "#/$defs/skinAsset" },
+        "tabBar": { "$ref": "#/$defs/skinAsset" }
+      },
+      "additionalProperties": false
+    },
+    "skinContent": {
+      "type": "object",
+      "required": ["homeBanner"],
+      "properties": {
+        "homeBanner": {
+          "type": "object",
+          "required": ["visible", "title", "subtitle"],
+          "properties": {
+            "visible": { "type": "boolean" },
+            "title": { "type": "string", "maxLength": 40 },
+            "subtitle": { "type": "string", "maxLength": 60 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "typographyToken": {
+      "type": "object",
+      "required": ["color", "fontSize", "fontWeight", "lineHeight"],
+      "properties": {
+        "color": { "$ref": "#/$defs/color" },
+        "fontSize": { "type": "number", "minimum": 10, "maximum": 32 },
+        "fontWeight": { "type": "integer", "enum": [400, 500, 600, 700, 800] },
+        "lineHeight": { "type": "number", "minimum": 1, "maximum": 2 },
+        "letterSpacing": { "type": "number", "minimum": 0, "maximum": 4 },
+        "fontFamily": { "type": "string", "maxLength": 120 },
+        "textShadow": { "type": "string", "maxLength": 120 }
+      },
+      "additionalProperties": false
+    },
+    "typography": {
+      "type": "object",
+      "required": ["pageTitle", "sectionTitle", "bannerTitle", "bannerSubtitle", "actionTitle", "actionSubtitle", "productTitle", "price", "metaText", "bodyText", "panelTitle", "optionTitle", "optionText", "buttonPrimary", "buttonSecondary", "memberTitle", "memberValue", "emptyTitle", "emptyDescription", "tabText", "tabTextActive"],
+      "propertyNames": { "enum": ["pageTitle", "sectionTitle", "bannerTitle", "bannerSubtitle", "actionTitle", "actionSubtitle", "productTitle", "price", "metaText", "bodyText", "panelTitle", "optionTitle", "optionText", "buttonPrimary", "buttonSecondary", "memberTitle", "memberValue", "emptyTitle", "emptyDescription", "tabText", "tabTextActive"] },
+      "additionalProperties": { "$ref": "#/$defs/typographyToken" }
+    }
+  }
+}

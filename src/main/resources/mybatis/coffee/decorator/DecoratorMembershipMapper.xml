@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.coffee.decorator.mapper.DecoratorMembershipMapper">
+    <resultMap id="MerchantAccessResult" type="com.ruoyi.project.coffee.decorator.context.MerchantAccess">
+        <id property="memberId" column="member_id" />
+        <result property="merchantId" column="merchant_id" />
+        <result property="merchantName" column="merchant_name" />
+        <result property="role" column="role" />
+        <result property="storeScope" column="store_scope" />
+    </resultMap>
+
+    <resultMap id="StoreAccessResult" type="com.ruoyi.project.coffee.decorator.context.DecoratorStoreAccess">
+        <id property="storeId" column="store_id" />
+        <result property="storeCode" column="store_code" />
+        <result property="storeName" column="store_name" />
+    </resultMap>
+
+    <select id="selectActiveMemberships" resultMap="MerchantAccessResult">
+        select mm.id member_id, mm.merchant_id, m.name merchant_name, mm.role, mm.store_scope
+        from merchant_members mm
+        inner join merchants m on m.id = mm.merchant_id and m.status = 'ACTIVE'
+        where mm.user_id = #{userId} and mm.status = 'ACTIVE'
+        order by m.name, mm.id
+    </select>
+
+    <select id="selectActiveMembership" resultMap="MerchantAccessResult">
+        select mm.id member_id, mm.merchant_id, m.name merchant_name, mm.role, mm.store_scope
+        from merchant_members mm
+        inner join merchants m on m.id = mm.merchant_id and m.status = 'ACTIVE'
+        where mm.user_id = #{userId} and mm.merchant_id = #{merchantId}
+          and mm.status = 'ACTIVE'
+        limit 1
+    </select>
+
+    <select id="selectAccessibleStores" resultMap="StoreAccessResult">
+        select s.id store_id, s.store_code, s.name store_name
+        from merchant_members mm
+        inner join stores s on s.merchant_id = mm.merchant_id and s.status = 'ACTIVE'
+        where mm.id = #{memberId} and mm.merchant_id = #{merchantId} and mm.status = 'ACTIVE'
+          and (mm.store_scope = 'ALL' or exists (
+              select 1 from merchant_member_stores mms
+              where mms.member_id = mm.id and mms.store_id = s.id
+          ))
+        order by s.name, s.id
+    </select>
+</mapper>

@@ -1,5 +1,5 @@
 <template>
-	<view class="page">
+	<view class="page" :style="themePageStyle">
 		<app-nav title="购物车" :show-back="false" :right-text="cartTotalQuantity ? `共 ${cartTotalQuantity} 件` : '空购物车'" />
 
 		<scroll-view v-if="hasAnyCartItem" class="cart-list" scroll-y>
@@ -53,13 +53,13 @@
 					</view>
 				</view>
 
-				<view class="section-checkout compact-checkout">
+				<view class="section-checkout compact-checkout" data-skin-component="cartPanel" :style="themeSkinAssetStyle('cartPanel')">
 					<view class="checkout-copy">
-						<text class="checkout-label">点单小计</text>
-						<text class="checkout-price">¥{{ scanPayPrice }}</text>
+						<text class="checkout-label" data-text-role="metaText">点单小计</text>
+						<text class="checkout-price" data-text-role="price">¥{{ scanPayPrice }}</text>
 					</view>
 					<view class="checkout-btn" @click="checkoutScan">
-						<text>点单结算</text>
+						<text data-text-role="buttonPrimary">点单结算</text>
 					</view>
 				</view>
 			</view>
@@ -113,14 +113,14 @@
 					</view>
 				</view>
 
-				<view class="section-checkout compact-checkout">
+				<view class="section-checkout compact-checkout" data-skin-component="cartPanel" :style="themeSkinAssetStyle('cartPanel')">
 					<view class="checkout-copy">
-						<text class="checkout-label">商城小计</text>
-						<text class="checkout-price">¥{{ payPrice }}</text>
-						<text v-if="previewInfo.activitySummary" class="checkout-note">{{ previewInfo.activitySummary }}</text>
+						<text class="checkout-label" data-text-role="metaText">商城小计</text>
+						<text class="checkout-price" data-text-role="price">¥{{ payPrice }}</text>
+						<text v-if="previewInfo.activitySummary" class="checkout-note" data-text-role="metaText">{{ previewInfo.activitySummary }}</text>
 					</view>
 					<view class="checkout-btn" @click="checkoutMall">
-						<text>商城结算</text>
+						<text data-text-role="buttonPrimary">商城结算</text>
 					</view>
 				</view>
 			</view>
@@ -128,12 +128,12 @@
 			<view class="bottom-space"></view>
 		</scroll-view>
 
-		<view v-else class="empty-cart">
+		<view v-else class="empty-cart" data-skin-component="emptyCart" :style="themeSkinAssetStyle('emptyCart')">
 			<image class="empty-image" src="/static/empty-cart.svg" mode="aspectFit"></image>
-			<text class="empty-title">购物车还是空的</text>
-				<text class="empty-text">可以去点单页选择现制饮品，也可以去商城挑选商品。</text>
+			<text class="empty-title" data-text-role="emptyTitle">购物车还是空的</text>
+				<text class="empty-text" data-text-role="emptyDescription">可以去点单页选择现制饮品，也可以去商城挑选商品。</text>
 				<view class="empty-btn" @click="goShopping">
-					<text>去逛逛</text>
+					<text data-text-role="buttonPrimary">去逛逛</text>
 				</view>
 		</view>
 
@@ -915,6 +915,13 @@ export default {
 	flex-direction: column;
 	align-items: center;
 	padding: 140rpx 40rpx 0;
+	margin: 24rpx;
+	min-height: 560rpx;
+	background-color: var(--theme-surface, #FFFFFF);
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 100% 100%;
+	box-sizing: border-box;
 }
 
 .empty-image {
@@ -925,18 +932,19 @@ export default {
 .empty-title {
 	margin-top: 20rpx;
 	font-family: $font-family;
-	font-size: 30rpx;
-	font-weight: 600;
-	color: $text-primary;
+	font-size: var(--skin-empty-title-size, 30rpx);
+	font-weight: var(--skin-empty-title-weight, 600);
+	line-height: var(--skin-empty-title-line-height, 1.35);
+	color: var(--skin-empty-title-color, #{$text-primary});
 }
 
 .empty-text {
 	margin-top: 12rpx;
 	font-family: $font-family;
-	font-size: 22rpx;
-	font-weight: 500;
-	line-height: 1.6;
-	color: $text-secondary;
+	font-size: var(--skin-empty-description-size, 22rpx);
+	font-weight: var(--skin-empty-description-weight, 500);
+	line-height: var(--skin-empty-description-line-height, 1.6);
+	color: var(--skin-empty-description-color, #{$text-secondary});
 	text-align: center;
 }
 
@@ -954,9 +962,9 @@ export default {
 
 .empty-btn text {
 	font-family: $font-family;
-	font-size: 24rpx;
-	font-weight: 600;
-	color: #FFFFFF;
+	font-size: var(--skin-button-primary-size, 24rpx);
+	font-weight: var(--skin-button-primary-weight, 600);
+	color: var(--skin-button-primary-color, #FFFFFF);
 }
 
 .bottom-space {
@@ -965,7 +973,10 @@ export default {
 
 .section-checkout {
 	padding: 20rpx 24rpx 24rpx;
-	background: #FFFFFF;
+	background-color: var(--theme-surface, #FFFFFF);
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 100% 100%;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -981,19 +992,19 @@ export default {
 
 .checkout-label {
 	font-family: $font-family;
-	font-size: 20rpx;
-	font-weight: 500;
-	color: $text-secondary;
+	font-size: var(--skin-meta-text-size, 20rpx);
+	font-weight: var(--skin-meta-text-weight, 500);
+	color: var(--skin-meta-text-color, #{$text-secondary});
 }
 
 .checkout-note {
 	display: block;
 	max-width: 400rpx;
 	font-family: $font-family;
-	font-size: 20rpx;
-	font-weight: 500;
+	font-size: var(--skin-meta-text-size, 20rpx);
+	font-weight: var(--skin-meta-text-weight, 500);
 	line-height: 1.4;
-	color: $text-secondary;
+	color: var(--skin-meta-text-color, #{$text-secondary});
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
@@ -1001,9 +1012,9 @@ export default {
 
 .checkout-price {
 	font-family: $font-family;
-	font-size: 34rpx;
-	font-weight: 600;
-	color: $text-primary;
+	font-size: var(--skin-price-size, 34rpx);
+	font-weight: var(--skin-price-weight, 600);
+	color: var(--skin-price-color, #{$text-primary});
 }
 
 .checkout-btn {
@@ -1020,9 +1031,9 @@ export default {
 
 .checkout-btn text {
 	font-family: $font-family;
-	font-size: 24rpx;
-	font-weight: 600;
-	color: #FFFFFF;
+	font-size: var(--skin-button-primary-size, 24rpx);
+	font-weight: var(--skin-button-primary-weight, 600);
+	color: var(--skin-button-primary-color, #FFFFFF);
 }
 
 .checkout-btn-disabled {

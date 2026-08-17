@@ -43,6 +43,10 @@ nbdist/
 coffee-mall-backend-src/
 coffee-mall-backend-src.zip
 
+# Frontend dependencies and generated H5 output
+**/node_modules/
+RuoYi-AbuCoder-UniAppWx/Ruoyi-AbuCoder-UniApp-WX/unpackage/dist/
+
 !*/build/*.java
 !*/build/*.html
 !*/build/*.xml
@@ -54,4 +58,14 @@ coffee-mall-backend-src.zip
 /src/main/resources/application-druid.yml
 
 CONTEXT.md
-docs
+/docs/*
+!/docs/PROJECT_STRUCTURE_AND_PERSONALIZED_SKIN.md
+# 本地配置文件，不上传 GitHub
+src/main/resources/application.yml
+src/main/resources/application-druid.yml
+src/main/resources/templates/application.yml
+
+# 本地配置备份
+配置文件备份/
+# 本地运行产生的上传文件
+uploadPath/

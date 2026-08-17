@@ -17,6 +17,7 @@ import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.file.FileUploadUtils;
 import com.ruoyi.common.utils.file.FileUtils;
 import com.ruoyi.framework.config.properties.CosStorageProperties;
+import com.ruoyi.framework.config.RuoYiConfig;
 
 @Service
 public class CosFileStorageService implements FileStorageService
@@ -31,7 +32,11 @@ public class CosFileStorageService implements FileStorageService
     @Override
     public StoredFileInfo upload(MultipartFile file) throws IOException
     {
-        validateConfiguration();
+        if (!isConfigured())
+        {
+            String url = FileUploadUtils.upload(RuoYiConfig.getUploadPath(), file);
+            return new StoredFileInfo(url, url, FileUtils.getName(url), file.getOriginalFilename());
+        }
 
         String key = buildObjectKey(file);
         COSClient cosClient = createCosClient();
@@ -76,16 +81,13 @@ public class CosFileStorageService implements FileStorageService
         return new COSClient(credentials, clientConfig);
     }
 
-    private void validateConfiguration()
+    private boolean isConfigured()
     {
-        if (StringUtils.isEmpty(cosStorageProperties.getBucket())
-            || StringUtils.isEmpty(cosStorageProperties.getRegion())
-            || StringUtils.isEmpty(cosStorageProperties.getSecretId())
-            || StringUtils.isEmpty(cosStorageProperties.getSecretKey())
-            || StringUtils.isEmpty(cosStorageProperties.getBaseUrl()))
-        {
-            throw new IllegalStateException("COS is enabled, but bucket/region/secretId/secretKey/baseUrl is incomplete");
-        }
+        return StringUtils.isNotEmpty(cosStorageProperties.getBucket())
+            && StringUtils.isNotEmpty(cosStorageProperties.getRegion())
+            && StringUtils.isNotEmpty(cosStorageProperties.getSecretId())
+            && StringUtils.isNotEmpty(cosStorageProperties.getSecretKey())
+            && StringUtils.isNotEmpty(cosStorageProperties.getBaseUrl());
     }
 
     private String buildObjectKey(MultipartFile file)

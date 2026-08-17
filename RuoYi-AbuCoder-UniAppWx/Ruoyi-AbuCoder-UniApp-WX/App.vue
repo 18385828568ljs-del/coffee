@@ -1,9 +1,15 @@
 <script>
 	import { restoreLocalSession } from '@/utils/session.js'
+	import { themeRuntime } from '@/theme/runtime.js'
 
 	export default {
 		onLaunch: async function(e) {
 			await restoreLocalSession();
+			try {
+				if (uni.getSystemInfoSync) themeRuntime.setSystemTheme(uni.getSystemInfoSync().theme)
+				if (uni.onThemeChange) uni.onThemeChange((event) => themeRuntime.setSystemTheme(event && event.theme))
+			} catch (error) {}
+			// #ifdef MP-WEIXIN
 			// 检测是否可以调用getUpdateManager检查更新
 			if (!uni.canIUse("getUpdateManager")) return;
 			const updateManager = uni.getUpdateManager();
@@ -40,6 +46,7 @@
 					})
 				}
 			});
+			// #endif
 		},
 		onShow: function() {},
 		onHide: function() {console.log('App Hide')},
@@ -53,4 +60,28 @@
 <style lang="scss">
 	/*每个页面公共css */
 	@import "@/uni_modules/uview-ui/index.scss";
+
+	/* #ifdef H5 */
+	html,
+	body,
+	#app,
+	uni-app,
+	uni-page,
+	uni-page-wrapper,
+	uni-page-body {
+		width: 100%;
+		min-height: 100%;
+		margin: 0;
+	}
+
+	body {
+		overflow-x: hidden;
+	}
+
+	/* The project renders its own themed Web tab bar. */
+	uni-tabbar.uni-tabbar-bottom {
+		display: none;
+	}
+
+	/* #endif */
 </style>

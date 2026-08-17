@@ -1,7 +1,25 @@
 <template>
-	<view class="page">
+	<view class="page" :style="themePageStyle">
 		<scroll-view class="content" scroll-y>
-			<view v-if="bannerList.length" class="hero-section">
+			<view class="brand-strip">
+				<view class="brand-mark"><text>咖</text></view>
+				<view class="brand-copy">
+					<text class="brand-name">一杯好咖啡</text>
+					<text class="brand-caption">从这里开始</text>
+				</view>
+				<view v-if="decoratorPreview && !isLivePreview" class="skin-switcher" @tap="toggleLocalSkin">
+					<text>{{ activeSkinLabel }}</text>
+					<text class="skin-switcher-arrow">↗</text>
+				</view>
+			</view>
+			<view v-if="isLivePreview" class="preview-environment" :style="previewEnvironmentStyle" data-skin-component="previewEnvironment">
+				<text class="preview-environment-label">装修预览</text>
+				<view class="preview-environment-actions">
+					<button :class="['preview-environment-button', { active: previewEnvironment === 'light' }]" @tap="setPreviewEnvironment('light')">☀ 白天</button>
+					<button :class="['preview-environment-button', { active: previewEnvironment === 'dark' }]" @tap="setPreviewEnvironment('dark')">🌙 夜间</button>
+				</view>
+			</view>
+			<view v-if="themeBannerItems.length" class="hero-section" data-skin-component="homeBanner" :style="themeSkinSlotStyle('heroBanner')">
 				<swiper
 					class="hero-swiper"
 					autoplay
@@ -10,44 +28,44 @@
 					indicator-active-color="#FFFFFF"
 					indicator-color="rgba(255, 255, 255, 0.42)"
 				>
-					<swiper-item v-for="(item, index) in bannerList" :key="getBannerKey(item, index)">
+					<swiper-item v-for="(item, index) in themeBannerItems" :key="item.id || index">
 						<image
-							v-if="getBannerImage(item, index)"
+							v-if="item.image"
 							class="hero-image"
-							:src="getBannerImage(item, index)"
-							mode="aspectFit"
+							:src="item.image"
+							mode="aspectFill"
 							@error="handleBannerImageError(index)"
-							@tap="handleBannerTapByIndex(index)"
+							@tap="handleBannerTap(item.source)"
 						></image>
-						<view
-							v-else
-							class="hero-image hero-fallback"
-							@tap="handleBannerTapByIndex(index)"
-						></view>
+						<view v-else class="hero-image hero-fallback"></view>
 					</swiper-item>
 				</swiper>
+				<view v-if="homeBannerContent.visible && (homeBannerContent.title || homeBannerContent.subtitle)" class="hero-copy">
+					<text v-if="homeBannerContent.title" class="hero-title" data-text-role="bannerTitle">{{ homeBannerContent.title }}</text>
+					<text v-if="homeBannerContent.subtitle" class="hero-subtitle" data-text-role="bannerSubtitle">{{ homeBannerContent.subtitle }}</text>
+				</view>
 			</view>
 
 			<view class="content-wrap">
 				<view class="entry-grid">
-					<view class="entry-card entry-card-primary" @tap="startOrder">
+					<view class="entry-card entry-card-primary" data-skin-component="actionCard" :style="[entryCardStyle('orderCard'), themeSkinAssetStyle('actionCard')]" @tap="startOrder">
 						<view class="entry-icon">
 							<image class="entry-icon-image" src="/static/home/order.svg" mode="aspectFit"></image>
 						</view>
-						<text class="entry-title">点单</text>
-						<text class="entry-label">ORDER</text>
+						<text class="entry-title" data-text-role="actionTitle" :style="entryTextStyle('orderCard')">点单</text>
+						<text class="entry-label" data-text-role="actionSubtitle" :style="entrySecondaryTextStyle('orderCard')">ORDER</text>
 					</view>
 
-					<view class="entry-card entry-card-secondary" @tap="goMall">
+					<view class="entry-card entry-card-secondary" data-skin-component="actionCard" :style="[entryCardStyle('shopCard'), themeSkinAssetStyle('actionCard')]" @tap="goMall">
 						<view class="entry-icon">
 							<image class="entry-icon-image" src="/static/home/shop.svg" mode="aspectFit"></image>
 						</view>
-						<text class="entry-title">商店</text>
-						<text class="entry-label">SHOP</text>
+						<text class="entry-title" data-text-role="actionTitle" :style="entryTextStyle('shopCard')">商店</text>
+						<text class="entry-label" data-text-role="actionSubtitle" :style="entrySecondaryTextStyle('shopCard')">SHOP</text>
 					</view>
 				</view>
 
-				<image class="welcome-image" src="/static/banner/welcome.png" mode="widthFix"></image>
+				<image class="welcome-image" data-skin-component="sectionBanner" :src="themeSkinAsset('sectionBanner') || welcomeImage" :style="themeSkinSlotStyle('welcomeBanner')" mode="widthFix"></image>
 
 				<view v-if="featuredActivity" class="activity-section">
 					<view class="activity-section-head">
@@ -75,11 +93,11 @@
 					</view>
 				</view>
 
-				<view class="about-section">
+				<view class="about-section" :style="aboutSectionStyle">
 					<view class="about-section-head">
 						<text class="about-section-title">关于我们</text>
 					</view>
-					<image class="about-image" src="/static/banner/about-us.jpg" mode="widthFix"></image>
+					<image class="about-image" data-skin-component="aboutImage" :src="aboutImage" mode="widthFix"></image>
 				</view>
 
 				<view class="content-bottom-space"></view>
@@ -113,8 +131,10 @@ import { getToken } from '@/utils/auth.js'
 import { requestPromise, isSuccessResponse } from '@/utils/request-helper.js'
 import { loginByWxAuth } from '@/utils/wx-login.js'
 import { getLocalUserInfo } from '@/utils/session.js'
+import { themeRuntime } from '@/theme/runtime.js'
 
 const DEFAULT_SHOP_ID = 1
+const DEFAULT_STORE_CODE = String(DEFAULT_SHOP_ID)
 const DEFAULT_SHOP_NAME = 'XX 咖啡'
 const SCAN_MENU_CONTEXT_KEY = 'scanMenuEntryContext'
 const WX_LOGIN_DISMISSED_KEY = 'wxLoginDismissed'
@@ -149,23 +169,40 @@ export default {
 		return {
 			shopId: DEFAULT_SHOP_ID,
 			shopName: DEFAULT_SHOP_NAME,
+			storeCode: '',
 			tableNo: '',
 			bannerList: [],
 			activityList: [],
 			bannerImageErrorMap: {},
 			showWxLogin: false,
-			wxLoginLoading: false
+			wxLoginLoading: false,
+			decoratorPreview: false,
+			previewToken: ''
 		}
 	},
 
-	onLoad(options = {}) {
+	async onLoad(options = {}) {
 		this.resolveEntryContext(options)
+		this.decoratorPreview = this.themePreviewMode || String(options.decoratorPreview || '') === '1'
+		const sceneToken = String(options.scene || '').trim()
+		this.previewToken = String(options.previewToken || this.previewToken || '').trim()
+		if (!this.previewToken && /^(?:[A-Za-z0-9_-]{22}|[A-Za-z0-9_-]{43})$/.test(sceneToken)) this.previewToken = sceneToken
+		if (this.decoratorPreview) {
+			themeRuntime.setPreviewMode(true)
+			if (this.previewToken) {
+				const preview = await themeRuntime.loadPreview(this.storeCode, this.previewToken)
+				if (preview && preview.storeCode && !this.storeCode) this.storeCode = preview.storeCode
+			}
+		} else {
+			await themeRuntime.loadPublished(this.storeCode)
+		}
 		this.loadBanners()
 		this.loadActivities()
 		this.maybeShowWxLogin()
 	},
 
-	onShow() {
+	async onShow() {
+		if (!this.decoratorPreview) await themeRuntime.loadPublished(this.storeCode)
 		this.maybeShowWxLogin()
 	},
 
@@ -179,21 +216,106 @@ export default {
 	},
 
 	computed: {
+		homeBannerContent() {
+			return this.themeSkinContent('homeBanner')
+		},
+		themeBannerItems() {
+				const skinImages = this.themeSkinAssets('homeBanner')
+				if (skinImages.length) {
+					return skinImages.map((image, index) => ({
+						id: `skin-home-banner-${index}`,
+						image,
+						title: '一杯好咖啡',
+						source: null
+					}))
+				}
+				const hero = this.themeSkinSlot('heroBanner')
+				const heroImage = hero.backgroundImage || this.themeAssetUrl(hero.assetId)
+				if (hero.backgroundType === 'image' && heroImage) {
+					return [{ id: 'skin-hero-banner', image: heroImage, title: '当季推荐', source: null }]
+			}
+			const items = this.bannerList.map((item, index) => ({
+				id: this.getBannerKey(item, index),
+				image: this.getBannerImage(item, index),
+				title: item.bannerTitle || '',
+				source: item
+			})).filter((item) => item.image)
+			return items.length ? items : [{ id: 'default-home-banner', image: '/static/banner/welcome.png', title: 'Fresh coffee', source: null }]
+		},
+		homeEntries() {
+			return [
+				{ key: 'order', skinSlot: 'orderCard', label: '点单', icon: '/static/home/order.svg' },
+				{ key: 'mall', skinSlot: 'shopCard', label: '商店', icon: '/static/home/shop.svg' }
+			]
+		},
+		welcomeImage() {
+			const slot = this.themeSkinSlot('welcomeBanner')
+			return slot.backgroundType === 'image' && slot.backgroundImage ? slot.backgroundImage : '/static/banner/welcome.png'
+		},
+		aboutImage() {
+			return this.themeSkinAsset('aboutImage')
+				|| this.themeSkinSlot('aboutSection').image
+				|| '/static/banner/about-us.jpg'
+		},
+		aboutSectionStyle() {
+			const slot = this.themeSkinSlot('aboutSection')
+			return {
+				backgroundColor: slot.backgroundColor || 'transparent',
+				'--about-title-color': slot.titleColor || 'var(--theme-text)'
+			}
+		},
 		featuredActivity() {
 			return this.activityList[0] || null
+		},
+		activeSkinLabel() {
+			return themeRuntime.state.versionId === 'midnight' ? '夜幕' : '复古'
+		},
+		isLivePreview() {
+			return themeRuntime.state.source === 'PREVIEW'
+		},
+		previewEnvironment() {
+			return themeRuntime.effectiveTheme()
+		},
+		previewEnvironmentStyle() {
+			return this.previewEnvironment === 'dark'
+				? { backgroundColor: '#1D1D1F', color: '#FFFFFF' }
+				: { backgroundColor: '#F5F5F7', color: '#1D1D1F' }
 		}
 	},
 
 	methods: {
+		entryCardStyle(slotKey) {
+			return this.themeSkinSlotStyle(slotKey)
+		},
+		entryTextStyle(slotKey) {
+			const slot = this.themeSkinSlot(slotKey)
+			return { color: slot.textColor || '' }
+		},
+		entrySecondaryTextStyle(slotKey) {
+			const slot = this.themeSkinSlot(slotKey)
+			return { color: slot.secondaryTextColor || '' }
+		},
+		toggleLocalSkin() {
+			const next = themeRuntime.state.versionId === 'midnight' ? 'vintage' : 'midnight'
+			themeRuntime.useLocalSkin(next)
+			uni.showToast({ title: next === 'midnight' ? '已切换夜幕皮肤' : '已切换复古皮肤', icon: 'none' })
+		},
+		setPreviewEnvironment(theme) {
+			themeRuntime.setPreviewEnvironment(theme)
+		},
 		resolveEntryContext(options = {}) {
 			const sceneData = parseScene(options.scene)
 			const shopId = options.shopId || sceneData.shopId
 			const tableNo = options.tableNo || sceneData.tableNo
 			const shopName = options.shopName || sceneData.shopName
+			const storeCode = options.storeCode || sceneData.storeCode
+			this.previewToken = options.previewToken || sceneData.previewToken || ''
 
 			this.shopId = Number(shopId || DEFAULT_SHOP_ID) || DEFAULT_SHOP_ID
 			this.tableNo = tableNo ? String(tableNo).trim() : ''
 			this.shopName = shopName ? decodeValue(shopName) : DEFAULT_SHOP_NAME
+			// 开发者工具直接打开首页时没有 scene/storeCode，仍需加载默认门店的线上皮肤。
+			this.storeCode = storeCode ? String(storeCode).trim() : DEFAULT_STORE_CODE
 		},
 
 		async loadBanners() {
@@ -284,6 +406,7 @@ export default {
 			const context = {
 				shopId: this.shopId
 			}
+			if (this.storeCode) context.storeCode = this.storeCode
 			if (this.shopName) {
 				context.shopName = this.shopName
 			}
@@ -329,6 +452,10 @@ export default {
 		},
 
 		maybeShowWxLogin() {
+			if (this.decoratorPreview) {
+				this.showWxLogin = false
+				return
+			}
 			const userInfo = getLocalUserInfo()
 			const dismissed = uni.getStorageSync(WX_LOGIN_DISMISSED_KEY)
 			this.showWxLogin = !(userInfo && userInfo.userId) && !dismissed
@@ -340,6 +467,7 @@ export default {
 		},
 
 		handleWxLogin() {
+			if (this.decoratorPreview) return
 			if (this.wxLoginLoading) {
 				return
 			}
@@ -369,7 +497,7 @@ export default {
 
 .page {
 	@include page-shell(true);
-	background: linear-gradient(180deg, #f3ede6 0%, #fbf8f4 48%, #ffffff 100%);
+	background: var(--theme-page);
 }
 
 .content {
@@ -377,11 +505,96 @@ export default {
 	min-height: 0;
 }
 
+.brand-strip {
+	display: flex;
+	align-items: center;
+	gap: 18rpx;
+	padding: 30rpx $space-page 18rpx;
+}
+
+.brand-mark {
+	width: 72rpx;
+	height: 72rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: 2rpx solid var(--theme-primary);
+	border-radius: 50%;
+	color: var(--theme-primary);
+	font-size: 38rpx;
+	font-weight: 800;
+}
+
+.brand-copy {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 2rpx;
+}
+
+.brand-name { color: var(--theme-text); font-size: 34rpx; font-weight: 800; letter-spacing: 2rpx; }
+.brand-caption { color: var(--theme-text-secondary); font-size: 21rpx; letter-spacing: 3rpx; }
+
+.skin-switcher {
+	display: flex;
+	align-items: center;
+	gap: 8rpx;
+	padding: 12rpx 16rpx;
+	border: 2rpx solid var(--theme-primary);
+	border-radius: 999rpx;
+	color: var(--theme-primary);
+	font-size: 21rpx;
+	font-weight: 700;
+	@include active-press;
+}
+
+.skin-switcher-arrow { font-size: 26rpx; line-height: 1; }
+
+.preview-environment {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 14rpx $space-page 0;
+	box-sizing: border-box;
+}
+
+.preview-environment-label {
+	font-size: 22rpx;
+	font-weight: 700;
+	color: inherit;
+}
+
+.preview-environment-actions {
+	display: flex;
+	gap: 10rpx;
+}
+
+.preview-environment-button {
+	margin: 0;
+	padding: 0 18rpx;
+	height: 54rpx;
+	line-height: 54rpx;
+	border: 2rpx solid var(--theme-border);
+	border-radius: 27rpx;
+	background: var(--theme-surface);
+	color: var(--theme-text-secondary);
+	font-size: 21rpx;
+}
+
+.preview-environment-button::after { border: 0; }
+.preview-environment-button.active {
+	border-color: var(--theme-primary);
+	background: var(--theme-primary);
+	color: var(--theme-button-text);
+}
+
 .hero-section {
 	position: relative;
+	display: block;
+	width: 100%;
 	height: 562.5rpx;
 	overflow: hidden;
-	background: #ffffff;
+	background-color: var(--theme-surface, #ffffff);
 }
 
 .hero-swiper,
@@ -389,6 +602,45 @@ export default {
 	width: 100%;
 	height: 562.5rpx;
 	display: block;
+}
+
+.hero-copy {
+	position: absolute;
+	left: 42rpx;
+	top: 50%;
+	width: 54%;
+	z-index: 2;
+	display: flex;
+	flex-direction: column;
+	gap: 14rpx;
+	transform: translateY(-50%);
+	pointer-events: none;
+}
+
+.hero-title {
+	display: -webkit-box;
+	overflow: hidden;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	word-break: break-word;
+	font-size: var(--skin-banner-title-size, 52rpx);
+	font-weight: var(--skin-banner-title-weight, 800);
+	line-height: var(--skin-banner-title-line-height, 1.2);
+	letter-spacing: var(--skin-banner-title-letter-spacing, 0);
+	color: var(--skin-banner-title-color, var(--theme-text));
+	text-shadow: var(--skin-banner-title-shadow, none);
+}
+
+.hero-subtitle {
+	display: -webkit-box;
+	overflow: hidden;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	word-break: break-word;
+	font-size: var(--skin-banner-subtitle-size, 24rpx);
+	font-weight: var(--skin-banner-subtitle-weight, 500);
+	line-height: var(--skin-banner-subtitle-line-height, 1.5);
+	color: var(--skin-banner-subtitle-color, var(--theme-text-secondary));
 }
 
 .hero-fallback {
@@ -419,7 +671,7 @@ export default {
 	min-height: 190rpx;
 	padding: 24rpx 22rpx 22rpx;
 	border-radius: 22rpx;
-	background: rgba(255, 255, 255, 0.96);
+	background: var(--theme-surface);
 	border: 2rpx solid rgba(232, 224, 215, 0.9);
 	box-shadow: 0 10rpx 26rpx rgba(32, 26, 23, 0.08);
 	display: flex;
@@ -431,13 +683,13 @@ export default {
 }
 
 .entry-card-primary {
-	background: rgba(255, 255, 255, 0.96);
+	background: var(--theme-surface);
 	border-color: rgba(232, 224, 215, 0.9);
 	box-shadow: 0 10rpx 26rpx rgba(32, 26, 23, 0.08);
 }
 
 .entry-card-secondary {
-	background: rgba(255, 255, 255, 0.96);
+	background: var(--theme-surface);
 }
 
 .entry-icon {
@@ -465,19 +717,19 @@ export default {
 
 .entry-title {
 	margin-top: 16rpx;
-	font-size: 30rpx;
-	font-weight: 700;
-	letter-spacing: 4rpx;
+	font-size: var(--skin-action-title-size, 30rpx);
+	font-weight: var(--skin-action-title-weight, 700);
+	letter-spacing: var(--skin-action-title-letter-spacing, 4rpx);
 	text-indent: 4rpx;
-	color: $text-primary;
+	color: var(--skin-action-title-color, #{$text-primary});
 }
 
 .entry-label {
 	margin-top: 6rpx;
-	font-size: 17rpx;
-	font-weight: 700;
-	letter-spacing: 2rpx;
-	color: $text-tertiary;
+	font-size: var(--skin-action-subtitle-size, 17rpx);
+	font-weight: var(--skin-action-subtitle-weight, 700);
+	letter-spacing: var(--skin-action-subtitle-letter-spacing, 2rpx);
+	color: var(--skin-action-subtitle-color, #{$text-tertiary});
 }
 
 .entry-card-primary .entry-label {
@@ -487,6 +739,10 @@ export default {
 .welcome-image {
 	width: 100%;
 	display: block;
+}
+
+.welcome-banner {
+	overflow: hidden;
 }
 
 .activity-section {
@@ -547,7 +803,7 @@ export default {
 	font-family: $font-family;
 	font-size: 32rpx;
 	font-weight: 700;
-	color: $text-primary;
+	color: var(--about-title-color);
 }
 
 .about-image {

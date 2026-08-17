@@ -1,5 +1,5 @@
 <template>
-	<view class="page">
+	<view class="page" :style="themePageStyle">
 		<app-nav title="确认订单" fallback-url="/pages/cart/cart" />
 
 		<scroll-view v-if="draftItems.length > 0" class="content" scroll-y>
@@ -136,13 +136,13 @@
 			</view>
 		</view>
 
-		<view class="bottom-bar">
+		<view class="bottom-bar" data-skin-component="checkoutBar" :style="themeSkinAssetStyle('checkoutBar')">
 			<view class="bottom-info">
-				<text class="bottom-label">实付款</text>
-				<text class="bottom-price">¥{{ payAmount }}</text>
+				<text class="bottom-label" data-text-role="metaText">实付款</text>
+				<text class="bottom-price" data-text-role="price">¥{{ payAmount }}</text>
 			</view>
 			<view class="submit-btn" :class="{ disabled: submitting || !canSubmit }" @click="submitOrder">
-				<text>{{ submitting ? '提交中...' : '提交订单' }}</text>
+				<text data-text-role="buttonPrimary">{{ submitting ? '提交中...' : '提交订单' }}</text>
 			</view>
 		</view>
 	</view>
@@ -211,8 +211,9 @@ export default {
 		}
 	},
 
-	onLoad() {
-		if (!ensureLocalLogin()) {
+	onLoad(options = {}) {
+		const decoratorPreview = this.themePreviewMode || String(options.decoratorPreview || '') === '1'
+		if (!decoratorPreview && !ensureLocalLogin()) {
 			setTimeout(() => {
 				this.goBack()
 			}, 300)
@@ -694,7 +695,10 @@ export default {
 	justify-content: space-between;
 	gap: 16rpx;
 	padding: 16rpx $space-page calc(24rpx + env(safe-area-inset-bottom));
-	background: $bg-bottom;
+	background-color: var(--theme-surface, #{$bg-bottom});
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 100% 100%;
 	border-top: 2rpx solid rgba(232, 224, 215, 0.84);
 	backdrop-filter: blur(24rpx);
 	-webkit-backdrop-filter: blur(24rpx);
@@ -709,16 +713,16 @@ export default {
 
 .bottom-label {
 	font-family: $font-family;
-	font-size: 20rpx;
-	font-weight: 500;
-	color: $text-secondary;
+	font-size: var(--skin-meta-text-size, 20rpx);
+	font-weight: var(--skin-meta-text-weight, 500);
+	color: var(--skin-meta-text-color, #{$text-secondary});
 }
 
 .bottom-price {
 	font-family: $font-family;
-	font-size: 34rpx;
-	font-weight: 600;
-	color: $text-primary;
+	font-size: var(--skin-price-size, 34rpx);
+	font-weight: var(--skin-price-weight, 600);
+	color: var(--skin-price-color, #{$text-primary});
 }
 
 .submit-btn {
@@ -740,9 +744,9 @@ export default {
 
 .submit-btn text {
 	font-family: $font-family;
-	font-size: 24rpx;
-	font-weight: 600;
-	color: #FFFFFF;
+	font-size: var(--skin-button-primary-size, 24rpx);
+	font-weight: var(--skin-button-primary-weight, 600);
+	color: var(--skin-button-primary-color, #FFFFFF);
 }
 
 /* 支付方式选择 */

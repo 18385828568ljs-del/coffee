@@ -3,8 +3,18 @@ import App from './App'
 import share from '@/utils/share.js'
 import uView from '@/uni_modules/uview-ui'
 import AppNav from '@/components/app-nav.vue'
+import BottomTabBar from '@/components/bottom-tab-bar.vue'
+import { themeMixin, themeRuntime } from '@/theme/runtime.js'
+import { installDecoratorPreviewBridge } from '@/theme/preview-bridge.js'
+
+// #ifdef H5
+import '@dcloudio/uni-h5/dist/index.css'
+// #endif
 
 Vue.mixin(share)
+Vue.mixin(themeMixin)
+themeRuntime.restore()
+installDecoratorPreviewBridge()
 
 const LOGIN_LANDING_URL = '/pages/me/me'
 const AUTH_REQUIRED_PATTERNS = [
@@ -104,6 +114,7 @@ uni.addInterceptor('request', {
 	},
 	success(res) {
 		if ((res && res.statusCode === 401) || (res && res.data && res.data.code === 401)) {
+			if (themeRuntime.state.preview) return
 			clearWxLoginState(true, true)
 		}
 	}
@@ -115,6 +126,7 @@ if (!uni.getStorageSync('token') && (uni.getStorageSync('userInfo') || uni.getSt
 
 Vue.use(uView)
 Vue.component('app-nav', AppNav)
+Vue.component('bottom-tab-bar', BottomTabBar)
 Vue.config.productionTip = false
 App.mpType = 'app'
 
