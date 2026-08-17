@@ -13,7 +13,7 @@
  3. coffee_all_business.sql - 本文件（咖啡商城业务表）
 
  【包含内容】
-  本文件包含咖啡商城的所有业务表，分为4个模块：
+ 本文件包含咖啡商城基础业务表，并在末尾加载装修平台迁移脚本，共分为5个模块：
 
  第一部分: 商城核心业务
    - 商品相关: t_category, t_product, t_cart, t_banner
@@ -36,6 +36,12 @@
  第四部分: 后台菜单配置
    - sys_menu 数据配置
    - sys_job 定时任务配置
+
+ 第五部分: 商家装修平台（15个表）
+   - 租户门店: merchants, merchant_members, stores, merchant_member_stores
+   - 主题发布: system_theme_templates, themes, theme_drafts, theme_versions, store_theme_bindings
+   - 素材与生成: assets, theme_asset_refs, component_background_slots, ai_generation_tasks, ai_generation_results
+   - 真机预览: theme_preview_sessions
 
  【注意事项】
  1. 本脚本可重复执行，不删除已有表和业务数据
@@ -789,6 +795,8 @@ VALUES
 (2083, '活动修改', 2080, 3, '#', '', 'F', '0', '1', 'coffee:offlineActivity:edit', '#', 'admin', NOW(), '', NULL, ''),
 (2084, '活动删除', 2080, 4, '#', '', 'F', '0', '1', 'coffee:offlineActivity:remove', '#', 'admin', NOW(), '', NULL, ''),
 
+(2090, '商家装修', 2000, 13, '/coffee/decorator/workbench', '', 'C', '0', '1', 'coffee:decorator:view', 'fa fa-paint-brush', 'admin', NOW(), '', NULL, '商家小程序个性化装修入口'),
+
 -- 支付日志菜单
 -- 注意: 后台 IndexController 会过滤若依内置的“日志管理”,这里不能命名为“日志管理”。
 (2200, '支付日志', 0, 3, '#', '', 'M', '0', '1', '', 'fa fa-file-text-o', 'admin', NOW(), '', NULL, '支付日志目录'),
@@ -828,3 +836,7 @@ WHERE (`menu_id` BETWEEN 2000 AND 2199)
    OR (`menu_id` BETWEEN 2200 AND 2299);
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+-- 装修平台表、系统模板和背景插槽由独立迁移维护；从项目根目录执行本脚本时一并加载。
+SOURCE sql/coffee_theme_decorator.sql;
+SOURCE sql/coffee_theme_scope_v2.sql;

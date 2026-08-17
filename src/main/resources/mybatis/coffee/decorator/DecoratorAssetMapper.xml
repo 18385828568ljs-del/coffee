@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.coffee.decorator.mapper.DecoratorAssetMapper">
+    <resultMap id="AssetResult" type="com.ruoyi.project.coffee.decorator.asset.domain.DecoratorAsset">
+        <id property="id" column="id" />
+        <result property="scopeType" column="scope_type" />
+        <result property="merchantId" column="merchant_id" />
+        <result property="sourceStoreId" column="source_store_id" />
+        <result property="assetType" column="asset_type" />
+        <result property="name" column="name" />
+        <result property="storageKey" column="storage_key" />
+        <result property="mimeType" column="mime_type" />
+        <result property="width" column="width" />
+        <result property="height" column="height" />
+        <result property="byteSize" column="byte_size" />
+        <result property="checksumSha256" column="checksum_sha256" />
+        <result property="auditStatus" column="audit_status" />
+        <result property="status" column="status" />
+        <result property="createdBy" column="created_by" />
+        <result property="createdAt" column="created_at" />
+        <result property="updatedAt" column="updated_at" />
+    </resultMap>
+
+    <select id="selectAssets" resultMap="AssetResult">
+        select id, scope_type, merchant_id, source_store_id, asset_type, name, storage_key, mime_type,
+               width, height, byte_size, checksum_sha256, audit_status, status, created_by, created_at, updated_at
+        from assets
+        where merchant_id = #{merchantId} and status = 'ACTIVE'
+        <if test="assetType != null and assetType != ''">and asset_type = #{assetType}</if>
+        order by created_at desc, id desc
+        limit 200
+    </select>
+
+    <select id="selectAsset" resultMap="AssetResult">
+        select id, scope_type, merchant_id, source_store_id, asset_type, name, storage_key, mime_type,
+               width, height, byte_size, checksum_sha256, audit_status, status, created_by, created_at, updated_at
+        from assets where merchant_id = #{merchantId} and id = #{assetId}
+    </select>
+
+    <insert id="insertAsset" parameterType="com.ruoyi.project.coffee.decorator.asset.domain.DecoratorAsset"
+            useGeneratedKeys="true" keyProperty="id">
+        insert into assets (scope_type, merchant_id, source_store_id, asset_type, name, storage_key, mime_type,
+            width, height, byte_size, checksum_sha256, audit_status, status, created_by, created_at, updated_at)
+        values (#{scopeType}, #{merchantId}, #{sourceStoreId}, #{assetType}, #{name}, #{storageKey}, #{mimeType},
+            #{width}, #{height}, #{byteSize}, #{checksumSha256}, #{auditStatus}, #{status}, #{createdBy}, now(), now())
+    </insert>
+
+    <update id="archiveAsset">
+        update assets set status = 'ARCHIVED', updated_at = now()
+        where merchant_id = #{merchantId} and id = #{assetId} and status = 'ACTIVE'
+    </update>
+
+    <select id="countPublishedReferences" resultType="int">
+        select count(*) from theme_asset_refs
+        where merchant_id = #{merchantId} and asset_id = #{assetId} and version_id is not null
+    </select>
+
+    <delete id="deleteDraftReferences">
+        delete from theme_asset_refs
+        where merchant_id = #{merchantId} and theme_id = #{themeId} and draft_id = #{draftId}
+    </delete>
+
+    <delete id="deleteVersionReferences">
+        delete from theme_asset_refs
+        where merchant_id = #{merchantId} and theme_id = #{themeId} and version_id = #{versionId}
+    </delete>
+
+    <insert id="insertReference">
+        insert into theme_asset_refs (merchant_id, theme_id, draft_id, version_id, asset_id, usage_key, created_at)
+        values (#{merchantId}, #{themeId}, #{draftId}, #{versionId}, #{assetId}, #{usageKey}, now())
+    </insert>
+
+    <select id="selectVersionAssetUrls" resultMap="AssetResult">
+        select r.asset_id id, a.storage_key
+        from theme_asset_refs r
+        inner join assets a on a.id = r.asset_id and a.merchant_id = r.merchant_id
+        where r.merchant_id = #{merchantId} and r.version_id = #{versionId}
+          and a.status = 'ACTIVE' and a.audit_status = 'APPROVED'
+    </select>
+
+    <select id="selectUsableAssetUrls" resultMap="AssetResult">
+        select id, storage_key
+        from assets
+        where id in
+        <foreach item="assetId" collection="assetIds" open="(" separator="," close=")">#{assetId}</foreach>
+          and status = 'ACTIVE' and audit_status = 'APPROVED'
+          and (scope_type = 'SYSTEM' or (scope_type = 'MERCHANT' and merchant_id = #{merchantId}))
+    </select>
+
+    <select id="selectUsableAssets" resultMap="AssetResult">
+        select id, scope_type, merchant_id, source_store_id, asset_type, name, storage_key, mime_type,
+               width, height, byte_size, checksum_sha256, audit_status, status, created_by, created_at, updated_at
+        from assets
+        where id in
+        <foreach item="assetId" collection="assetIds" open="(" separator="," close=")">#{assetId}</foreach>
+          and status = 'ACTIVE' and audit_status = 'APPROVED'
+          and (scope_type = 'SYSTEM' or (scope_type = 'MERCHANT' and merchant_id = #{merchantId}))
+    </select>
+</mapper>

@@ -1,15 +1,15 @@
 <template>
-	<view class="immersive-card-wrap" :class="{ 'is-compact': compact, 'is-active-card': visualActive, 'is-fill': fillHeight }">
+	<view class="immersive-card-wrap" :class="[`theme-${themeVariant}`, { 'is-compact': compact, 'is-active-card': visualActive, 'is-fill': fillHeight }]">
 		<view class="flip-card" :class="{ 'is-flipped-card': keepFlipFrame }" :style="activeCardHeightStyle">
 			<view class="flip-card-inner" :class="{ 'is-flipped': flipped }" :style="activeCardHeightStyle">
 				<view class="flip-face flip-face-front" @tap="handleTap">
-					<view class="immersive-card front-card-measure" :style="activeCardHeightStyle">
-						<view class="card-image-wrap">
+					<view class="immersive-card front-card-measure" data-skin-component="productCard" :style="[activeCardHeightStyle, themeSkinAssetStyle('productCard')]">
+						<view class="card-image-wrap" data-skin-component="productImages" :data-product-id="product.productId || product.id">
 							<image
 								v-if="productImage"
 								class="card-image"
 								:src="productImage"
-								:mode="fillHeight ? 'aspectFill' : 'widthFix'"
+								:mode="fillHeight || themeVariant === 'horizontal' ? 'aspectFill' : 'widthFix'"
 								@load="handleImageLoad"
 							/>
 							<view v-else class="card-image-empty">
@@ -20,12 +20,12 @@
 						<view class="card-body">
 							<view class="card-info-col">
 								<view class="card-price-wrap">
-									<text class="card-price-symbol">¥</text>
-									<text class="card-price">{{ displayPrice }}</text>
-									<text v-if="showMonthlySales" class="card-sales">月售 {{ product.monthSales }}</text>
+									<text class="card-price-symbol" data-text-role="price">¥</text>
+									<text class="card-price" data-text-role="price">{{ displayPrice }}</text>
+									<text v-if="showMonthlySales" class="card-sales" data-text-role="metaText">月售 {{ product.monthSales }}</text>
 								</view>
-								<text class="card-title">{{ product.productName }}</text>
-								<text v-if="subtitleText" class="card-subtitle">{{ subtitleText }}</text>
+								<text class="card-title" data-text-role="productTitle">{{ product.productName }}</text>
+								<text v-if="subtitleText" class="card-subtitle" data-text-role="bodyText">{{ subtitleText }}</text>
 							</view>
 							<view class="card-cart-btn" @tap.stop="handleQuickAdd">
 								<image class="card-cart-icon-image" src="/static/tabbar/cart-active.svg" mode="aspectFit"></image>
@@ -40,6 +40,7 @@
 						:product="product"
 						:shop-id="shopId"
 						:table-no="tableNo"
+						:image-override="imageOverride"
 						:active="flipped"
 						@close="onBackClose"
 						@play-video="onBackPlayVideo"
@@ -66,9 +67,12 @@ export default {
 		},
 		flipped: { type: Boolean, default: false },
 		compact: { type: Boolean, default: false },
+		fillHeight: { type: Boolean, default: false },
+		themeVariant: { type: String, default: 'vertical' },
 		activeCard: { type: Boolean, default: false },
 		shopId: { type: [Number, String], default: 1 },
-		tableNo: { type: String, default: '' }
+		tableNo: { type: String, default: '' },
+		imageOverride: { type: String, default: '' }
 	},
 	data: function () {
 		return {
@@ -110,7 +114,7 @@ export default {
 	},
 	computed: {
 		productImage() {
-			return resolveImageUrl(this.product.imageUrl || this.product.productImage || '')
+			return resolveImageUrl(this.imageOverride || this.product.imageUrl || this.product.productImage || '')
 		},
 		subtitleText() {
 			return this.product.subTitle || this.product.flavorNotes || this.product.description || this.product.remark || '点击查看商品详情'
@@ -489,10 +493,10 @@ export default {
 	height: auto;
 	display: flex;
 	flex-direction: column;
-	background: #FFFFFF;
-	border-radius: 30rpx;
-	border: 2rpx solid rgba(122, 79, 45, 0.12);
-	box-shadow: 0 14rpx 28rpx rgba(36, 24, 19, 0.16);
+	background: var(--theme-surface, #FFFFFF);
+	border-radius: var(--theme-card-radius, 30rpx);
+	border: 2rpx solid var(--theme-border, rgba(122, 79, 45, 0.12));
+	box-shadow: var(--theme-card-shadow, 0 14rpx 28rpx rgba(36, 24, 19, 0.16));
 	overflow: hidden;
 	box-sizing: border-box;
 }
@@ -516,6 +520,29 @@ export default {
 	display: flex;
 	align-items: center;
 	justify-content: center;
+}
+
+.immersive-card-wrap.theme-horizontal:not(.is-compact) .immersive-card {
+	min-height: 420rpx;
+	flex-direction: row;
+}
+
+.immersive-card-wrap.theme-horizontal:not(.is-compact) .card-image-wrap {
+	width: 44%;
+	min-height: 420rpx;
+	flex: 0 0 44%;
+}
+
+.immersive-card-wrap.theme-horizontal:not(.is-compact) .card-image {
+	width: 100%;
+	height: 100%;
+}
+
+.immersive-card-wrap.theme-horizontal:not(.is-compact) .card-body {
+	min-width: 0;
+	flex: 1;
+	border-top: 0;
+	border-left: 2rpx solid var(--theme-border, rgba(122, 79, 45, 0.1));
 }
 
 .card-image {
@@ -545,8 +572,8 @@ export default {
 	position: relative;
 	z-index: 2;
 	padding: 30rpx 30rpx 32rpx;
-	background: #FFFFFF;
-	border-top: 2rpx solid rgba(122, 79, 45, 0.1);
+	background: transparent;
+	border-top: 2rpx solid var(--theme-border, rgba(122, 79, 45, 0.1));
 	border-bottom-left-radius: 30rpx;
 	border-bottom-right-radius: 30rpx;
 	display: flex;
@@ -568,11 +595,14 @@ export default {
 
 .card-title {
 	max-width: 100%;
+	overflow-wrap: anywhere;
+	word-break: break-word;
 	font-family: $font-family;
-	font-size: 38rpx;
-	font-weight: 800;
-	line-height: 1.2;
-	color: $text-primary;
+	font-size: var(--skin-product-title-size, 38rpx);
+	font-weight: var(--skin-product-title-weight, 800);
+	line-height: var(--skin-product-title-line-height, 1.2);
+	letter-spacing: var(--skin-product-title-letter-spacing, 0);
+	color: var(--skin-product-title-color, var(--theme-text, #{$text-primary}));
 	text-align: left;
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
@@ -583,10 +613,10 @@ export default {
 .card-subtitle {
 	max-width: 100%;
 	font-family: $font-family;
-	font-size: 24rpx;
-	font-weight: 500;
-	line-height: 1.45;
-	color: $text-secondary;
+	font-size: var(--skin-body-text-size, 24rpx);
+	font-weight: var(--skin-body-text-weight, 500);
+	line-height: var(--skin-body-text-line-height, 1.45);
+	color: var(--skin-body-text-color, var(--theme-text-secondary, #{$text-secondary}));
 	text-align: left;
 	display: -webkit-box;
 	-webkit-line-clamp: 1;
@@ -606,22 +636,22 @@ export default {
 	font-family: $font-family;
 	font-size: 26rpx;
 	font-weight: 700;
-	color: $accent-primary;
+	color: var(--skin-price-color, var(--theme-primary, #{$accent-primary}));
 	margin-bottom: 6rpx;
 }
 
 .card-price {
 	font-family: $font-family;
-	font-size: 48rpx;
-	font-weight: 800;
-	color: $accent-primary;
-	line-height: 1;
+	font-size: var(--skin-price-size, 48rpx);
+	font-weight: var(--skin-price-weight, 800);
+	color: var(--skin-price-color, var(--theme-primary, #{$accent-primary}));
+	line-height: var(--skin-price-line-height, 1);
 }
 
 .card-sales {
 	font-family: $font-family;
-	font-size: 22rpx;
-	color: $text-secondary;
+	font-size: var(--skin-meta-text-size, 22rpx);
+	color: var(--skin-meta-text-color, #{$text-secondary});
 	margin: 0 0 3rpx 6rpx;
 	text-align: left;
 	white-space: nowrap;
@@ -631,8 +661,8 @@ export default {
 	width: 86rpx;
 	height: 86rpx;
 	border-radius: 50%;
-	background: $accent-primary-soft;
-	border: 2rpx solid rgba(122, 79, 45, 0.18);
+	background: var(--theme-page, $accent-primary-soft);
+	border: 2rpx solid var(--theme-border, rgba(122, 79, 45, 0.18));
 	display: flex;
 	align-items: center;
 	justify-content: center;

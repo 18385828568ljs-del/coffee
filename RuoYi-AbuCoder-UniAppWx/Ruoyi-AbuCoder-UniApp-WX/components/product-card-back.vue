@@ -1,12 +1,12 @@
 <template>
-	<view class="card-back-shell" @tap.stop>
+	<view class="card-back-shell" data-skin-component="specPanel" :style="themeSkinAssetStyle('specPanel')" @tap.stop>
 		<view class="back-head">
 			<view v-if="productImage" class="back-thumb-wrap">
 				<image class="back-thumb-image" :src="productImage" mode="widthFix" />
 			</view>
 			<view class="back-head-copy">
-				<text class="back-title">{{ headTitle }}</text>
-				<text v-if="headSubtitle" class="back-subtitle">{{ headSubtitle }}</text>
+				<text class="back-title" data-text-role="panelTitle">{{ headTitle }}</text>
+				<text v-if="headSubtitle" class="back-subtitle" data-text-role="bodyText">{{ headSubtitle }}</text>
 			</view>
 			<view
 				v-if="hasVideo"
@@ -30,8 +30,8 @@
 			<view v-if="hasSpecs" class="back-section">
 				<view v-for="spec in detailProduct.specs" :key="spec.specId" class="spec-block">
 					<view class="spec-head">
-						<text class="spec-title">{{ spec.specName }}</text>
-						<text class="spec-rule">{{ specRuleText(spec) }}</text>
+						<text class="spec-title" data-text-role="optionTitle">{{ spec.specName }}</text>
+						<text class="spec-rule" data-text-role="metaText">{{ specRuleText(spec) }}</text>
 					</view>
 					<view class="spec-options">
 						<view
@@ -41,8 +41,8 @@
 							:class="{ 'spec-chip-active': isOptionSelected(spec, option) }"
 							@tap.stop="toggleOption(spec, option)"
 						>
-							<text class="spec-chip-name">{{ option.optionName }}</text>
-							<text v-if="toNumber(option.extraPrice) > 0" class="spec-chip-price">
+							<text class="spec-chip-name" data-text-role="optionText">{{ option.optionName }}</text>
+							<text v-if="toNumber(option.extraPrice) > 0" class="spec-chip-price" data-text-role="price">
 								+¥{{ formatMoney(option.extraPrice) }}
 							</text>
 						</view>
@@ -118,7 +118,7 @@
 		<view class="back-bottom">
 			<view class="bottom-total">
 				<text class="bottom-total-symbol">¥</text>
-				<text class="bottom-total-value">{{ formatMoney(totalPrice) }}</text>
+				<text class="bottom-total-value" data-text-role="price">{{ formatMoney(totalPrice) }}</text>
 			</view>
 			<view class="bottom-actions">
 				<view v-if="cartAdded" class="cart-inline-stepper">
@@ -134,14 +134,14 @@
 					:class="{ 'bottom-btn-disabled': submitting || !detailProduct }"
 					@tap.stop="addToCart"
 				>
-					<text class="bottom-btn-text">{{ addButtonText }}</text>
+					<text class="bottom-btn-text" data-text-role="buttonSecondary">{{ addButtonText }}</text>
 				</view>
 				<view
 					class="bottom-btn"
 					:class="{ 'bottom-btn-disabled': submitting || !detailProduct }"
 					@tap.stop="buyNow"
 				>
-					<text class="bottom-btn-text">{{ submitting ? '处理中...' : '立即购买' }}</text>
+					<text class="bottom-btn-text" data-text-role="buttonPrimary">{{ submitting ? '处理中...' : '立即购买' }}</text>
 				</view>
 			</view>
 		</view>
@@ -183,7 +183,8 @@ export default {
 		product: { type: Object, default: function () { return null } },
 		shopId: { type: [Number, String], default: 1 },
 		tableNo: { type: String, default: '' },
-		active: { type: Boolean, default: false }
+		active: { type: Boolean, default: false },
+		imageOverride: { type: String, default: '' }
 	},
 	data: function () {
 		return {
@@ -266,6 +267,7 @@ export default {
 			return source.description || source.remark || source.flavorNotes || ''
 		},
 		productImage: function () {
+			if (this.imageOverride) return this.imageOverride
 			const source = this.detailProduct || this.product || {}
 			return resolveImageUrl(source.imageUrl || source.productImage || '')
 		},
@@ -571,8 +573,10 @@ export default {
 	height: 100%;
 	display: flex;
 	flex-direction: column;
-	background:
-		linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(251, 247, 242, 0.98) 100%);
+	background-color: var(--theme-surface, #FFFFFF);
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 100% 100%;
 	border-radius: 30rpx;
 	border: 2rpx solid rgba(122, 79, 45, 0.12);
 	box-shadow: 0 14rpx 28rpx rgba(36, 24, 19, 0.16);
@@ -617,10 +621,10 @@ export default {
 
 .back-title {
 	font-family: $font-family;
-	font-size: 34rpx;
-	font-weight: 800;
-	color: $text-primary;
-	line-height: 1.2;
+	font-size: var(--skin-panel-title-size, 34rpx);
+	font-weight: var(--skin-panel-title-weight, 800);
+	color: var(--skin-panel-title-color, #{$text-primary});
+	line-height: var(--skin-panel-title-line-height, 1.2);
 	display: -webkit-box;
 	-webkit-line-clamp: 1;
 	-webkit-box-orient: vertical;
@@ -629,9 +633,9 @@ export default {
 
 .back-subtitle {
 	font-family: $font-family;
-	font-size: 23rpx;
-	color: $text-secondary;
-	line-height: 1.5;
+	font-size: var(--skin-body-text-size, 23rpx);
+	color: var(--skin-body-text-color, #{$text-secondary});
+	line-height: var(--skin-body-text-line-height, 1.5);
 	display: -webkit-box;
 	-webkit-line-clamp: 1;
 	-webkit-box-orient: vertical;
@@ -727,17 +731,17 @@ export default {
 
 .spec-title {
 	font-family: $font-family;
-	font-size: 26rpx;
-	font-weight: 600;
-	color: $text-primary;
+	font-size: var(--skin-option-title-size, 26rpx);
+	font-weight: var(--skin-option-title-weight, 600);
+	color: var(--skin-option-title-color, #{$text-primary});
 	flex: 1;
 	min-width: 0;
 }
 
 .spec-rule {
 	font-family: $font-family;
-	font-size: 22rpx;
-	color: $text-tertiary;
+	font-size: var(--skin-meta-text-size, 22rpx);
+	color: var(--skin-meta-text-color, #{$text-tertiary});
 	white-space: nowrap;
 	flex-shrink: 0;
 	text-align: right;
@@ -771,10 +775,10 @@ export default {
 
 .spec-chip-name {
 	font-family: $font-family;
-	font-size: 24rpx;
-	font-weight: 600;
-	color: $text-primary;
-	line-height: 1.2;
+	font-size: var(--skin-option-text-size, 24rpx);
+	font-weight: var(--skin-option-text-weight, 600);
+	color: var(--skin-option-text-color, #{$text-primary});
+	line-height: var(--skin-option-text-line-height, 1.2);
 	text-align: center;
 }
 
@@ -786,8 +790,8 @@ export default {
 .spec-chip-price {
 	margin-top: 2rpx;
 	font-family: $font-family;
-	font-size: 22rpx;
-	color: $text-secondary;
+	font-size: var(--skin-price-size, 22rpx);
+	color: var(--skin-price-color, #{$text-secondary});
 	line-height: 1.1;
 	text-align: center;
 }
@@ -878,10 +882,10 @@ export default {
 
 .bottom-total-value {
 	font-family: $font-family;
-	font-size: 42rpx;
-	font-weight: 700;
-	color: $text-primary;
-	line-height: 1;
+	font-size: var(--skin-price-size, 42rpx);
+	font-weight: var(--skin-price-weight, 700);
+	color: var(--skin-price-color, #{$text-primary});
+	line-height: var(--skin-price-line-height, 1);
 }
 
 .bottom-actions {
@@ -913,13 +917,13 @@ export default {
 
 .bottom-btn-text {
 	font-family: $font-family;
-	font-size: 24rpx;
-	font-weight: 600;
-	color: #ffffff;
+	font-size: var(--skin-button-primary-size, 24rpx);
+	font-weight: var(--skin-button-primary-weight, 600);
+	color: var(--skin-button-primary-color, #ffffff);
 }
 
 .bottom-btn-secondary .bottom-btn-text {
-	color: $accent-primary;
+	color: var(--skin-button-secondary-color, #{$accent-primary});
 }
 
 .bottom-btn-disabled { opacity: 0.5; }

@@ -1,21 +1,12 @@
 <template>
 	<view class="bottom-nav">
-		<view
-			v-for="item in navItems"
-			:key="item.key"
-			class="nav-item"
-			:class="{ 'nav-item-active': item.key === current }"
-			@tap="switchTab(item)"
-		>
-			<view class="nav-icon-wrap">
-				<image class="nav-icon" :src="getIcon(item)" mode="aspectFit"></image>
-			</view>
-			<text class="nav-label">{{ item.label }}</text>
-		</view>
+		<theme-tab-bar class="bottom-tab-bar-fill" :items="navItems" :current="current" :readonly="readonly" @select="switchTab" />
 	</view>
 </template>
 
 <script>
+import ThemeTabBar from '@/components/theme/theme-tab-bar.vue'
+
 const NAV_ITEMS = [
 	{
 		key: 'home',
@@ -49,11 +40,13 @@ const NAV_ITEMS = [
 
 export default {
 	name: 'BottomTabBar',
+	components: { ThemeTabBar },
 	props: {
 		current: {
 			type: String,
 			default: 'home'
-		}
+		},
+		readonly: { type: Boolean, default: false }
 	},
 	data() {
 		return {
@@ -61,9 +54,6 @@ export default {
 		}
 	},
 	methods: {
-		getIcon(item) {
-			return item.key === this.current ? item.activeIcon : item.icon
-		},
 		switchTab(item) {
 			if (!item || !item.url || item.key === this.current) {
 				return
@@ -82,41 +72,14 @@ export default {
 .bottom-nav {
 	@include bottom-tab-shell;
 	z-index: 60;
+	padding: 0;
+	background: transparent;
+	border-top: 0;
 }
 
-.nav-item {
-	@include bottom-tab-item;
-	@include active-press;
-	color: $text-secondary;
-	border-radius: 999rpx;
-}
-
-.nav-icon-wrap {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
-.nav-item-active {
-	background: $accent-primary-soft;
-	box-shadow: inset 0 0 0 2rpx rgba(122, 79, 45, 0.14);
-}
-
-.nav-icon {
-	width: 48rpx;
-	height: 48rpx;
-	display: block;
-}
-
-.nav-label {
-	font-family: $font-family;
-	font-size: 22rpx;
-	font-weight: 700;
-	line-height: 1;
-	color: $text-secondary;
-}
-
-.nav-item-active .nav-label {
-	color: $accent-primary-deep;
+.bottom-tab-bar-fill {
+	flex: 1;
+	width: 100%;
+	min-width: 0;
 }
 </style>

@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.coffee.decorator.mapper.DecoratorThemeMapper">
+    <resultMap id="ThemeResult" type="com.ruoyi.project.coffee.decorator.theme.domain.DecoratorTheme">
+        <id property="id" column="id" />
+        <result property="merchantId" column="merchant_id" />
+        <result property="name" column="name" />
+        <result property="scopeType" column="scope_type" />
+        <result property="ownerStoreId" column="owner_store_id" />
+        <result property="sourceTemplateId" column="source_template_id" />
+        <result property="status" column="status" />
+        <result property="clonedFromThemeId" column="cloned_from_theme_id" />
+        <result property="clonedFromVersionId" column="cloned_from_version_id" />
+        <result property="latestVersionNo" column="latest_version_no" />
+        <result property="draftRevision" column="draft_revision" />
+        <result property="hasUnpublishedChanges" column="has_unpublished_changes" />
+        <result property="active" column="is_active" />
+        <result property="updatedAt" column="updated_at" />
+    </resultMap>
+
+    <resultMap id="TemplateResult" type="com.ruoyi.project.coffee.decorator.theme.domain.SystemThemeTemplate">
+        <id property="id" column="id" />
+        <result property="name" column="name" />
+        <result property="schemaVersion" column="schema_version" />
+        <result property="configJson" column="config_json" />
+        <result property="revision" column="revision" />
+    </resultMap>
+
+    <resultMap id="DraftResult" type="com.ruoyi.project.coffee.decorator.theme.domain.ThemeDraft">
+        <id property="id" column="id" />
+        <result property="merchantId" column="merchant_id" />
+        <result property="themeId" column="theme_id" />
+        <result property="basedOnVersionId" column="based_on_version_id" />
+        <result property="schemaVersion" column="schema_version" />
+        <result property="configJson" column="config_json" />
+        <result property="revision" column="revision" />
+        <result property="updatedBy" column="updated_by" />
+        <result property="updatedAt" column="updated_at" />
+    </resultMap>
+
+    <resultMap id="VersionResult" type="com.ruoyi.project.coffee.decorator.theme.domain.ThemeVersion">
+        <id property="id" column="id" />
+        <result property="merchantId" column="merchant_id" />
+        <result property="themeId" column="theme_id" />
+        <result property="versionNo" column="version_no" />
+        <result property="sourceDraftRevision" column="source_draft_revision" />
+        <result property="schemaVersion" column="schema_version" />
+        <result property="configJson" column="config_json" />
+        <result property="configHash" column="config_hash" />
+        <result property="publishNote" column="publish_note" />
+        <result property="idempotencyKey" column="idempotency_key" />
+        <result property="publishedBy" column="published_by" />
+        <result property="publishedAt" column="published_at" />
+    </resultMap>
+
+    <resultMap id="StoreSummaryResult" type="com.ruoyi.project.coffee.decorator.theme.domain.StoreThemeSummary">
+        <id property="storeId" column="store_id" />
+        <result property="storeCode" column="store_code" />
+        <result property="storeName" column="store_name" />
+        <result property="storeStatus" column="store_status" />
+        <result property="bindingMode" column="binding_mode" />
+        <result property="themeId" column="theme_id" />
+        <result property="publishedVersionId" column="published_version_id" />
+    </resultMap>
+
+    <resultMap id="PublishedThemeResult" type="com.ruoyi.project.coffee.decorator.theme.domain.PublishedStoreTheme">
+        <result property="storeCode" column="store_code" />
+        <result property="storeName" column="store_name" />
+        <result property="storeStatus" column="store_status" />
+        <result property="merchantId" column="merchant_id" />
+        <result property="storeId" column="store_id" />
+        <result property="themeId" column="theme_id" />
+        <result property="versionId" column="version_id" />
+        <result property="versionNo" column="version_no" />
+        <result property="schemaVersion" column="schema_version" />
+        <result property="configJson" column="config_json" />
+        <result property="configHash" column="config_hash" />
+    </resultMap>
+
+    <resultMap id="PreviewSessionResult" type="com.ruoyi.project.coffee.decorator.theme.domain.ThemePreviewSession">
+        <id property="id" column="id" />
+        <result property="merchantId" column="merchant_id" />
+        <result property="storeId" column="store_id" />
+        <result property="themeId" column="theme_id" />
+        <result property="draftId" column="draft_id" />
+        <result property="draftRevision" column="draft_revision" />
+        <result property="schemaVersion" column="schema_version" />
+        <result property="configJson" column="config_json" />
+        <result property="tokenHash" column="token_hash" />
+        <result property="createdBy" column="created_by" />
+        <result property="expiresAt" column="expires_at" />
+        <result property="revokedAt" column="revoked_at" />
+        <result property="createdAt" column="created_at" />
+    </resultMap>
+
+    <resultMap id="PreviewThemeResult" type="com.ruoyi.project.coffee.decorator.theme.domain.PreviewTheme">
+        <id property="previewId" column="preview_id" />
+        <result property="themeId" column="theme_id" />
+        <result property="storeCode" column="store_code" />
+        <result property="storeName" column="store_name" />
+        <result property="merchantId" column="merchant_id" />
+        <result property="draftRevision" column="draft_revision" />
+        <result property="schemaVersion" column="schema_version" />
+        <result property="configJson" column="config_json" />
+        <result property="expiresAt" column="expires_at" />
+    </resultMap>
+
+    <select id="selectTheme" resultMap="ThemeResult">
+        select id, merchant_id, name, scope_type, owner_store_id, source_template_id, status,
+               cloned_from_theme_id, cloned_from_version_id, updated_at
+        from themes
+        where merchant_id = #{merchantId} and id = #{themeId} and status = 'ACTIVE'
+    </select>
+
+    <select id="selectMasterTheme" resultMap="ThemeResult">
+        select id, merchant_id, name, scope_type, owner_store_id, source_template_id, status,
+               cloned_from_theme_id, cloned_from_version_id, updated_at
+        from themes
+        where merchant_id = #{merchantId} and scope_type = 'MERCHANT' and status = 'ACTIVE'
+        limit 1
+    </select>
+
+    <select id="selectThemes" resultMap="ThemeResult">
+        select t.id, t.merchant_id, t.name, t.scope_type, t.owner_store_id, t.source_template_id,
+               t.status, t.cloned_from_theme_id, t.cloned_from_version_id, t.updated_at,
+               v.version_no latest_version_no, d.revision draft_revision,
+               case when exists (
+                   select 1 from store_theme_bindings active_binding
+                   where active_binding.merchant_id = t.merchant_id
+                     and active_binding.theme_id = t.id
+                     <if test="scopeType == 'STORE'">and active_binding.store_id = #{scopeId}</if>
+                     <if test="scopeType == 'MERCHANT'">and active_binding.mode = 'FOLLOW_MERCHANT'</if>
+               ) then 1 else 0 end is_active,
+               case when d.id is null then 0
+                    when v.id is null then 1
+                    when d.config_json = v.config_json then 0 else 1 end has_unpublished_changes
+        from themes t
+        left join theme_drafts d on d.merchant_id = t.merchant_id and d.theme_id = t.id
+        left join theme_versions v on v.id = (
+            select latest.id from theme_versions latest
+            where latest.merchant_id = t.merchant_id and latest.theme_id = t.id
+            order by latest.version_no desc limit 1
+        )
+        where t.merchant_id = #{merchantId} and t.status = 'ACTIVE'
+          and t.scope_type = #{scopeType}
+          <choose>
+              <when test="scopeType == 'STORE'">and t.owner_store_id = #{scopeId}</when>
+              <otherwise>and t.owner_store_id is null</otherwise>
+          </choose>
+        order by is_active desc, t.updated_at desc, t.id desc
+    </select>
+
+    <select id="selectActiveTheme" resultMap="ThemeResult">
+        select t.id, t.merchant_id, t.name, t.scope_type, t.owner_store_id, t.source_template_id,
+               t.status, t.cloned_from_theme_id, t.cloned_from_version_id, t.updated_at
+        from themes t
+        inner join store_theme_bindings b on b.merchant_id = t.merchant_id and b.theme_id = t.id
+        where t.merchant_id = #{merchantId} and t.scope_type = #{scopeType}
+          and t.status = 'ACTIVE'
+          <choose>
+              <when test="scopeType == 'STORE'">and b.store_id = #{scopeId}</when>
+              <otherwise>and b.mode = 'FOLLOW_MERCHANT'</otherwise>
+          </choose>
+        order by b.updated_at desc, t.id desc
+        limit 1
+    </select>
+
+    <select id="selectTemplates" resultMap="TemplateResult">
+        select id, name, schema_version, config_json, revision
+        from system_theme_templates
+        where status = 'ACTIVE'
+        order by id
+    </select>
+
+    <select id="selectTemplate" resultMap="TemplateResult">
+        select id, name, schema_version, config_json, revision
+        from system_theme_templates
+        where id = #{templateId} and status = 'ACTIVE'
+    </select>
+
+    <select id="selectDraft" resultMap="DraftResult">
+        select id, merchant_id, theme_id, based_on_version_id, schema_version, config_json,
+               revision, updated_by, updated_at
+        from theme_drafts
+        where merchant_id = #{merchantId} and theme_id = #{themeId}
+    </select>
+
+    <select id="selectDraftForUpdate" resultMap="DraftResult">
+        select id, merchant_id, theme_id, based_on_version_id, schema_version, config_json,
+               revision, updated_by, updated_at
+        from theme_drafts
+        where merchant_id = #{merchantId} and theme_id = #{themeId}
+        for update
+    </select>
+
+    <update id="updateDraft">
+        update theme_drafts
+        set config_json = #{configJson}, schema_version = #{schemaVersion},
+            based_on_version_id = #{basedOnVersionId}, revision = revision + 1,
+            updated_by = #{userId}, updated_at = now()
+        where merchant_id = #{merchantId} and theme_id = #{themeId} and revision = #{revision}
+    </update>
+
+    <insert id="insertDraft" parameterType="com.ruoyi.project.coffee.decorator.theme.domain.ThemeDraft" useGeneratedKeys="true" keyProperty="id">
+        insert into theme_drafts
+            (merchant_id, theme_id, based_on_version_id, schema_version, config_json, revision, updated_by, updated_at)
+        values
+            (#{merchantId}, #{themeId}, #{basedOnVersionId}, #{schemaVersion}, #{configJson}, #{revision}, #{updatedBy}, now())
+    </insert>
+
+    <insert id="insertDraftIfAbsent" parameterType="com.ruoyi.project.coffee.decorator.theme.domain.ThemeDraft">
+        insert into theme_drafts
+            (merchant_id, theme_id, based_on_version_id, schema_version, config_json, revision, updated_by, updated_at)
+        select #{merchantId}, #{themeId}, #{basedOnVersionId}, #{schemaVersion}, #{configJson}, #{revision}, #{updatedBy}, now()
+        where not exists (select 1 from theme_drafts where merchant_id = #{merchantId} and theme_id = #{themeId})
+    </insert>
+
+    <insert id="insertTheme" parameterType="com.ruoyi.project.coffee.decorator.theme.domain.DecoratorTheme" useGeneratedKeys="true" keyProperty="id">
+        insert into themes (merchant_id, name, scope_type, owner_store_id, source_template_id,
+            cloned_from_theme_id, cloned_from_version_id, status, created_by, created_at, updated_at)
+        values (#{merchantId}, #{name}, #{scopeType}, #{ownerStoreId}, #{sourceTemplateId},
+            #{clonedFromThemeId}, #{clonedFromVersionId}, #{status}, #{createdBy}, now(), now())
+    </insert>
+
+    <select id="selectVersion" resultMap="VersionResult">
+        select id, merchant_id, theme_id, version_no, source_draft_revision, schema_version,
+               config_json, config_hash, publish_note, idempotency_key, published_by, published_at
+        from theme_versions
+        where merchant_id = #{merchantId} and theme_id = #{themeId} and id = #{versionId}
+    </select>
+
+    <select id="selectVersionByIdempotencyKey" resultMap="VersionResult">
+        select id, merchant_id, theme_id, version_no, source_draft_revision, schema_version,
+               config_json, config_hash, publish_note, idempotency_key, published_by, published_at
+        from theme_versions
+        where merchant_id = #{merchantId} and theme_id = #{themeId} and idempotency_key = #{idempotencyKey}
+        limit 1
+    </select>
+
+    <select id="selectLatestVersion" resultMap="VersionResult">
+        select id, merchant_id, theme_id, version_no, source_draft_revision, schema_version,
+               config_json, config_hash, publish_note, idempotency_key, published_by, published_at
+        from theme_versions
+        where merchant_id = #{merchantId} and theme_id = #{themeId}
+        order by version_no desc
+        limit 1
+    </select>
+
+    <select id="selectVersions" resultMap="VersionResult">
+        select id, merchant_id, theme_id, version_no, source_draft_revision, schema_version,
+               config_json, config_hash, publish_note, idempotency_key, published_by, published_at
+        from theme_versions
+        where merchant_id = #{merchantId} and theme_id = #{themeId}
+        order by version_no desc
+    </select>
+
+    <select id="selectNextVersionNo" resultType="int">
+        select coalesce(max(version_no), 0) + 1
+        from theme_versions
+        where merchant_id = #{merchantId} and theme_id = #{themeId}
+    </select>
+
+    <insert id="insertVersion" parameterType="com.ruoyi.project.coffee.decorator.theme.domain.ThemeVersion" useGeneratedKeys="true" keyProperty="id">
+        insert into theme_versions
+            (merchant_id, theme_id, version_no, source_draft_revision, schema_version, config_json,
+             config_hash, publish_note, idempotency_key, published_by, published_at)
+        values
+            (#{merchantId}, #{themeId}, #{versionNo}, #{sourceDraftRevision}, #{schemaVersion}, #{configJson},
+             #{configHash}, #{publishNote}, #{idempotencyKey}, #{publishedBy}, now())
+    </insert>
+
+    <select id="selectStores" resultMap="StoreSummaryResult">
+        select s.id store_id, s.store_code, s.name store_name, s.status store_status,
+               b.mode binding_mode, b.theme_id, b.published_version_id
+        from stores s
+        left join store_theme_bindings b on b.merchant_id = s.merchant_id and b.store_id = s.id
+        where s.merchant_id = #{merchantId}
+          and (#{storeScope} = 'ALL' or exists (
+              select 1 from merchant_member_stores mms
+              where mms.member_id = #{memberId} and mms.merchant_id = s.merchant_id and mms.store_id = s.id
+          ))
+        order by s.status, s.name, s.id
+    </select>
+
+    <select id="selectStore" resultMap="StoreSummaryResult">
+        select s.id store_id, s.store_code, s.name store_name, s.status store_status,
+               b.mode binding_mode, b.theme_id, b.published_version_id
+        from stores s
+        left join store_theme_bindings b on b.merchant_id = s.merchant_id and b.store_id = s.id
+        where s.merchant_id = #{merchantId} and s.id = #{storeId}
+    </select>
+
+    <insert id="bindFollowingStores">
+        insert into store_theme_bindings
+            (merchant_id, store_id, mode, theme_id, published_version_id, updated_by, updated_at)
+        select #{merchantId}, s.id, 'FOLLOW_MERCHANT', #{themeId}, #{versionId}, #{userId}, now()
+        from stores s
+        left join store_theme_bindings b on b.merchant_id = s.merchant_id and b.store_id = s.id
+        where s.merchant_id = #{merchantId} and s.status = 'ACTIVE'
+          and (b.id is null or b.mode = 'FOLLOW_MERCHANT')
+        on duplicate key update theme_id = values(theme_id), published_version_id = values(published_version_id),
+            updated_by = values(updated_by), updated_at = values(updated_at)
+    </insert>
+
+    <insert id="bindIndependentStore">
+        insert into store_theme_bindings
+            (merchant_id, store_id, mode, theme_id, published_version_id, updated_by, updated_at)
+        values (#{merchantId}, #{storeId}, 'INDEPENDENT', #{themeId}, #{versionId}, #{userId}, now())
+        on duplicate key update mode = 'INDEPENDENT', theme_id = values(theme_id),
+            published_version_id = values(published_version_id), updated_by = values(updated_by), updated_at = values(updated_at)
+    </insert>
+
+    <insert id="bindStoreToMaster">
+        insert into store_theme_bindings
+            (merchant_id, store_id, mode, theme_id, published_version_id, updated_by, updated_at)
+        values (#{merchantId}, #{storeId}, 'FOLLOW_MERCHANT', #{themeId}, #{versionId}, #{userId}, now())
+        on duplicate key update mode = 'FOLLOW_MERCHANT', theme_id = values(theme_id),
+            published_version_id = values(published_version_id), updated_by = values(updated_by), updated_at = values(updated_at)
+    </insert>
+
+    <select id="selectPublishedStoreTheme" resultMap="PublishedThemeResult">
+        select s.store_code, s.name store_name, s.status store_status, s.merchant_id, s.id store_id,
+               b.theme_id,
+               v.id version_id, v.version_no, v.schema_version, v.config_json, v.config_hash
+        from stores s
+        inner join store_theme_bindings b on b.merchant_id = s.merchant_id and b.store_id = s.id
+        inner join theme_versions v on v.merchant_id = b.merchant_id and v.id = b.published_version_id
+        where (s.store_code = #{storeCode} or cast(s.id as char) = #{storeCode})
+          and s.status = 'ACTIVE'
+        limit 1
+    </select>
+
+    <select id="countUsableAssets" resultType="int">
+        select count(distinct id)
+        from assets
+        where id in
+        <foreach item="assetId" collection="assetIds" open="(" separator="," close=")">
+            #{assetId}
+        </foreach>
+          and status = 'ACTIVE' and audit_status = 'APPROVED'
+          and (scope_type = 'SYSTEM' or (scope_type = 'MERCHANT' and merchant_id = #{merchantId}))
+    </select>
+
+    <insert id="insertPreviewSession" parameterType="com.ruoyi.project.coffee.decorator.theme.domain.ThemePreviewSession" useGeneratedKeys="true" keyProperty="id">
+        insert into theme_preview_sessions
+            (merchant_id, store_id, theme_id, draft_id, draft_revision, schema_version, config_json,
+             token_hash, created_by, expires_at, created_at)
+        values
+            (#{merchantId}, #{storeId}, #{themeId}, #{draftId}, #{draftRevision}, #{schemaVersion}, #{configJson},
+             #{tokenHash}, #{createdBy}, #{expiresAt}, now())
+    </insert>
+
+    <select id="selectPreviewSessionByTokenHash" resultMap="PreviewSessionResult">
+        select id, merchant_id, store_id, theme_id, draft_id, draft_revision, schema_version, config_json, token_hash,
+               created_by, expires_at, revoked_at, created_at
+        from theme_preview_sessions
+        where token_hash = #{tokenHash}
+        limit 1
+    </select>
+
+    <update id="revokePreviewSession">
+        update theme_preview_sessions
+        set revoked_at = now()
+        where merchant_id = #{merchantId} and id = #{sessionId}
+          and created_by = #{userId} and revoked_at is null
+    </update>
+
+    <select id="selectPreviewTheme" resultMap="PreviewThemeResult">
+        select p.id preview_id, p.theme_id, s.store_code, s.name store_name, p.merchant_id, p.draft_revision,
+               p.schema_version, p.config_json, p.expires_at
+        from theme_preview_sessions p
+        inner join stores s on s.id = p.store_id and s.merchant_id = p.merchant_id
+        where p.token_hash = #{tokenHash}
+          and p.revoked_at is null
+          and p.expires_at > now()
+          and s.status = 'ACTIVE'
+        limit 1
+    </select>
+</mapper>

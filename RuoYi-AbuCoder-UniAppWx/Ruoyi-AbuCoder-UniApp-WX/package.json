@@ -1,0 +1,47 @@
+{
+  "name": "ruoyi-abucoder-uniapp-wx",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "postinstall": "node scripts/patch-uni-template-loader.js",
+    "dev:h5": "cross-env NODE_ENV=development UNI_PLATFORM=h5 UNI_INPUT_DIR=. UNI_CLI_CONTEXT=. vue-cli-service uni-serve --port 18081",
+    "build:h5": "cross-env NODE_ENV=production UNI_PLATFORM=h5 UNI_INPUT_DIR=. UNI_CLI_CONTEXT=. vue-cli-service uni-build"
+  },
+  "dependencies": {
+    "@babel/polyfill": "^7.12.1",
+    "@babel/plugin-proposal-nullish-coalescing-operator": "^7.18.6",
+    "@babel/plugin-proposal-optional-chaining": "^7.21.0",
+    "@dcloudio/uni-app": "2.0.2-5020420260812001",
+    "@dcloudio/uni-h5": "2.0.2-5020420260812001",
+    "@dcloudio/uni-i18n": "2.0.2-5020420260812001",
+    "@dcloudio/uni-stat": "2.0.2-5020420260812001",
+    "core-js": "2.6.12",
+    "vue": "2.6.14",
+    "vuex": "^3.6.2"
+  },
+  "devDependencies": {
+    "@dcloudio/uni-cli-i18n": "2.0.2-5020420260812001",
+    "@dcloudio/uni-cli-shared": "2.0.2-5020420260812001",
+    "@dcloudio/uni-migration": "2.0.2-5020420260812001",
+    "@dcloudio/uni-template-compiler": "2.0.2-5020420260812001",
+    "@dcloudio/webpack-uni-mp-loader": "2.0.2-5020420260812001",
+    "@dcloudio/webpack-uni-pages-loader": "2.0.2-5020420260812001",
+    "@dcloudio/vue-cli-plugin-uni": "2.0.2-5020420260812001",
+    "@vue/cli-plugin-babel": "~3.12.1",
+    "@vue/cli-service": "~3.12.1",
+    "cross-env": "^7.0.3",
+    "copy-webpack-plugin": "5.1.2",
+    "cache-loader": "4.1.0",
+    "thread-loader": "2.1.3",
+    "babel-loader": "8.1.0",
+    "css-loader": "3.6.0",
+    "file-loader": "4.3.0",
+    "postcss": "7.0.39",
+    "url-loader": "2.3.0",
+    "postcss-loader": "3.0.0",
+    "html-webpack-plugin": "3.2.0",
+    "sass": "^1.77.8",
+    "sass-loader": "8.0.2",
+    "vue-template-compiler": "2.6.14"
+  }
+}

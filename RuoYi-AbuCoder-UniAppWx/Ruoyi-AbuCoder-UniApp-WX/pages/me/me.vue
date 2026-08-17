@@ -1,61 +1,47 @@
 <template>
-	<view class="page">
+	<view class="page" :style="themePageStyle">
 		<app-nav title="我的" :show-back="false" />
 
 		<scroll-view class="content" scroll-y>
 			<view class="content-wrap">
-				<view class="profile-card" @click="handleProfileAction">
-					<view class="profile-top">
-						<view class="profile-user">
-							<view class="user-avatar">
-								<image v-if="userInfo.avatar" :src="userInfo.avatar" mode="aspectFill"></image>
-								<view v-else class="user-avatar-fallback">
-									<text class="user-avatar-fallback-text">{{ avatarFallbackText }}</text>
-								</view>
-							</view>
-							<view class="user-copy">
-								<text class="user-name">{{ isLogin ? userInfo.nickName : '点击登录' }}</text>
-								<text class="user-desc">{{ isLogin ? '点击编辑头像和昵称' : '微信登录后同步订单与地址' }}</text>
-							</view>
-						</view>
-						<view v-if="isLogin" class="profile-arrow">
-							<text>›</text>
-						</view>
+				<view :class="['profile-header', `profile-header-${profileHeaderVariant}`]" @tap="handleProfileAction">
+					<view class="profile-header-avatar">
+						<image v-if="userInfo.avatar" class="profile-header-avatar-image" :src="userInfo.avatar" mode="aspectFill"></image>
+						<text v-else>{{ avatarFallbackText }}</text>
 					</view>
-					<button
-						v-if="!isLogin"
-						class="profile-login-btn"
-						@click.stop="handleWxLogin"
-						:disabled="loginLoading"
-					>
-						{{ loginLoading ? '登录中...' : '微信登录' }}
+					<view class="profile-header-copy">
+						<text class="profile-header-name">{{ isLogin ? userInfo.nickName : '点击登录' }}</text>
+						<text class="profile-header-desc">{{ isLogin ? '点击编辑头像和昵称' : '微信登录后同步订单与地址' }}</text>
+					</view>
+					<button v-if="!isLogin" class="profile-header-login" :disabled="loginLoading" @tap.stop="handleWxLogin">
+						{{ loginLoading ? '登录中...' : '登录' }}
 					</button>
 				</view>
 
 				<!-- 会员卡区域 -->
-				<view v-if="isLogin" class="member-card" :class="memberCardThemeClass" @click="goMemberCard">
+				<view v-if="isLogin" class="member-card" :class="memberCardThemeClass" data-skin-component="memberCard" :style="themeSkinAssetStyle('memberCard')" @click="goMemberCard">
 					<view class="member-card-shine"></view>
 					<view class="member-top">
 						<view class="member-level">
 							<view class="level-copy">
-								<text class="level-name">{{ memberLevelName }}</text>
-								<text class="level-subtitle">咖啡会员卡</text>
+								<text class="level-name" data-text-role="memberTitle">{{ memberLevelName }}</text>
+								<text class="level-subtitle" data-text-role="metaText">咖啡会员卡</text>
 							</view>
 						</view>
 						<view class="member-discount">
-							<text class="discount-text">{{ discountText }}</text>
+							<text class="discount-text" data-text-role="metaText">{{ discountText }}</text>
 						</view>
 					</view>
 					<view class="member-bottom">
 						<view class="balance-block">
-							<text class="balance-value">¥{{ formatMoney(walletInfo.balance) }}</text>
-							<text class="balance-label">余额</text>
+							<text class="balance-value" data-text-role="memberValue">¥{{ formatMoney(walletInfo.balance) }}</text>
+							<text class="balance-label" data-text-role="metaText">余额</text>
 						</view>
 						<view class="member-entry">
-							<text>查看会员卡</text>
+							<text data-text-role="buttonSecondary">查看会员卡</text>
 						</view>
 						<view class="recharge-btn" @click.stop="goRecharge">
-							<text>充值</text>
+							<text data-text-role="buttonSecondary">充值</text>
 						</view>
 					</view>
 				</view>
@@ -115,6 +101,7 @@ import { clearLocalSession, ensureLocalLogin, normalizeWxUserInfo } from '@/util
 import { requestPromise, isSuccessResponse } from '@/utils/request-helper.js'
 import { loginByWxAuth } from '@/utils/wx-login.js'
 import { showConfirm, showError, showSuccess } from '@/utils/ui-feedback.js'
+import { themeRuntime } from '@/theme/runtime.js'
 
 const ORDER_TABS = [
 	{ name: '全部' },
@@ -153,6 +140,10 @@ export default {
 	},
 
 	computed: {
+		profileHeaderVariant() {
+			return this.themeComponent('profileHeader').variant || 'brand'
+		},
+
 		isLogin() {
 			return !!(this.userInfo && this.userInfo.userId)
 		},
@@ -213,16 +204,25 @@ export default {
 
 	onLoad() {
 		this.loadUserInfo()
+		this.loadThemeForContext()
 	},
 
 	onShow() {
 		this.loadUserInfo()
+		this.loadThemeForContext()
 		if (this.isLogin) {
 			this.loadMemberAndWallet()
 		}
 	},
 
 	methods: {
+		loadThemeForContext() {
+			const runtimeStoreCode = themeRuntime.state && themeRuntime.state.storeCode
+			const scanContext = uni.getStorageSync('scanMenuEntryContext')
+			const storeCode = scanContext && scanContext.storeCode
+			themeRuntime.loadPublished(runtimeStoreCode || storeCode)
+		},
+
 		formatMoney(value) {
 			return Number(value || 0).toFixed(2)
 		},
@@ -406,6 +406,7 @@ export default {
 
 .page {
 	@include page-shell(true);
+	background: var(--theme-page);
 }
 
 .content {
@@ -419,6 +420,81 @@ export default {
 	flex-direction: column;
 	gap: 24rpx;
 	box-sizing: border-box;
+}
+
+.profile-header {
+	padding: 28rpx;
+	display: flex;
+	align-items: center;
+	gap: 22rpx;
+	border: 2rpx solid var(--theme-border);
+	border-radius: var(--theme-card-radius);
+	background: var(--theme-surface);
+	box-shadow: var(--theme-card-shadow);
+	box-sizing: border-box;
+	@include active-press;
+}
+
+.profile-header-brand {
+	color: var(--theme-button-text);
+	border-color: var(--theme-primary);
+	background: var(--theme-primary);
+}
+
+.profile-header-avatar {
+	width: 104rpx;
+	height: 104rpx;
+	flex: 0 0 auto;
+	overflow: hidden;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	background: var(--theme-border);
+	font-size: 36rpx;
+	font-weight: 700;
+}
+
+.profile-header-avatar-image {
+	width: 100%;
+	height: 100%;
+}
+
+.profile-header-copy {
+	min-width: 0;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 7rpx;
+}
+
+.profile-header-name {
+	font-size: 34rpx;
+	font-weight: 700;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.profile-header-desc {
+	font-size: 22rpx;
+	opacity: 0.74;
+}
+
+.profile-header-login {
+	margin: 0;
+	padding: 0 24rpx;
+	height: 64rpx;
+	color: var(--theme-button-text);
+	background: var(--theme-button);
+	border: 2rpx solid currentColor;
+	border-radius: var(--theme-button-radius);
+	font-size: 24rpx;
+	line-height: 60rpx;
+}
+
+.profile-header-login::after {
+	border: 0;
 }
 
 .profile-card {
@@ -551,6 +627,9 @@ export default {
 	border-radius: 28rpx;
 	box-shadow: 0 18rpx 38rpx rgba(32, 26, 23, 0.18);
 	box-sizing: border-box;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 100% 100%;
 	@include active-press;
 }
 
@@ -598,9 +677,9 @@ export default {
 
 .level-name {
 	font-family: $font-family;
-	font-size: 28rpx;
-	font-weight: 600;
-	color: #FFFFFF;
+	font-size: var(--skin-member-title-size, 28rpx);
+	font-weight: var(--skin-member-title-weight, 600);
+	color: var(--skin-member-title-color, #FFFFFF);
 }
 
 .level-copy {
@@ -612,9 +691,9 @@ export default {
 
 .level-subtitle {
 	font-family: $font-family;
-	font-size: 20rpx;
-	font-weight: 500;
-	color: rgba(255, 255, 255, 0.58);
+	font-size: var(--skin-meta-text-size, 20rpx);
+	font-weight: var(--skin-meta-text-weight, 500);
+	color: var(--skin-meta-text-color, rgba(255, 255, 255, 0.72));
 }
 
 .member-discount {
@@ -655,16 +734,16 @@ export default {
 
 .balance-value {
 	font-family: $font-family;
-	font-size: 36rpx;
-	font-weight: 700;
-	color: #FFFFFF;
+	font-size: var(--skin-member-value-size, 36rpx);
+	font-weight: var(--skin-member-value-weight, 700);
+	color: var(--skin-member-value-color, #FFFFFF);
 }
 
 .balance-label {
 	font-family: $font-family;
-	font-size: 20rpx;
-	font-weight: 500;
-	color: rgba(255, 255, 255, 0.6);
+	font-size: var(--skin-meta-text-size, 20rpx);
+	font-weight: var(--skin-meta-text-weight, 500);
+	color: var(--skin-meta-text-color, rgba(255, 255, 255, 0.72));
 }
 
 .member-entry {
@@ -673,9 +752,9 @@ export default {
 
 .member-entry text {
 	font-family: $font-family;
-	font-size: 22rpx;
-	font-weight: 600;
-	color: rgba(255, 255, 255, 0.76);
+	font-size: var(--skin-button-secondary-size, 22rpx);
+	font-weight: var(--skin-button-secondary-weight, 600);
+	color: var(--skin-button-secondary-color, rgba(255, 255, 255, 0.86));
 }
 
 .recharge-btn {
@@ -691,9 +770,9 @@ export default {
 
 .recharge-btn text {
 	font-family: $font-family;
-	font-size: 22rpx;
-	font-weight: 600;
-	color: #FFFFFF;
+	font-size: var(--skin-button-secondary-size, 22rpx);
+	font-weight: var(--skin-button-secondary-weight, 600);
+	color: var(--skin-button-secondary-color, #FFFFFF);
 }
 
 /* 以下为现有样式保留 */

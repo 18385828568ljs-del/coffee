@@ -1,5 +1,5 @@
 <template>
-	<view class="page">
+	<view class="page" :style="themePageStyle">
 		<app-nav
 			class="scan-nav"
 			title="点单"
@@ -39,11 +39,11 @@
 						:key="index"
 						:id="'single-product-' + index"
 						class="product-list-item product-list-item-single"
-						:class="{
+						:class="[`theme-product-card-${themeComponent('productCard').variant || 'vertical'}`, {
 							'product-list-item-current': index === singleCurrentIndex,
 							'product-list-item-last': index === products.length - 1
-						}"
-						:style="singleCardStyle"
+						}]"
+						:style="[singleCardStyle, themeBackgroundStyle('productCard')]"
 					>
 						<immersive-product-card
 							:product="prod"
@@ -51,6 +51,8 @@
 							:active-card="isFlipped(prod)"
 							:shop-id="shopId"
 							:table-no="tableNo"
+							:image-override="themeSkinProductImage(prod.productId || prod.id)"
+							:theme-variant="themeComponent('productCard').variant || 'vertical'"
 							@flip="onCardFlip"
 							@close="onCardBackClose"
 							@quick-add="onQuickAdd"
@@ -73,6 +75,8 @@
 						v-for="(prod, index) in products"
 						:key="index"
 						class="product-list-item"
+						:class="`theme-product-card-${themeComponent('productCard').variant || 'vertical'}`"
+						:style="themeBackgroundStyle('productCard')"
 					>
 						<immersive-product-card
 							:product="prod"
@@ -80,7 +84,9 @@
 							:active-card="isFlipped(prod)"
 							:shop-id="shopId"
 							:table-no="tableNo"
+							:image-override="themeSkinProductImage(prod.productId || prod.id)"
 							:compact="true"
+							:theme-variant="themeComponent('productCard').variant || 'vertical'"
 							@flip="onCardFlip"
 							@close="onCardBackClose"
 							@quick-add="onQuickAdd"
@@ -113,6 +119,8 @@
 				:active-card="true"
 				:shop-id="shopId"
 				:table-no="tableNo"
+				:image-override="themeSkinProductImage(activeLayerProduct.productId || activeLayerProduct.id)"
+				:theme-variant="themeComponent('productCard').variant || 'vertical'"
 				@close="onCardBackClose"
 				@play-video="onPlayVideo"
 				@added="onProductAdded"
@@ -194,6 +202,7 @@ import { getToken } from '@/utils/auth.js'
 import { showError, showSuccess } from '@/utils/ui-feedback.js'
 import ImmersiveProductCard from '@/components/immersive-product-card.vue'
 import ProductVideoPlayer from '@/components/product-video-player.vue'
+import { themeRuntime } from '@/theme/runtime.js'
 
 const SCAN_MENU_CONTEXT_KEY = 'scanMenuEntryContext'
 
@@ -212,6 +221,7 @@ export default {
 			shopId: 1,
 			tableNo: '',
 			shopName: '咖啡门店',
+			storeCode: '',
 			products: [],
 			loading: false,
 			loadError: '',
@@ -261,18 +271,22 @@ export default {
 			return ''
 		}
 	},
-	onLoad(options = {}) {
+	async onLoad(options = {}) {
 		if (Object.keys(options || {}).length) {
 			this.resolveScanContext(options)
 		} else {
 			this.applyStoredScanContext()
 		}
+		await themeRuntime.loadPublished(this.storeCode)
 		this.loadAllProducts()
 		this.loadCartList()
 		this.initialized = true
 	},
-	onShow() {
+	async onShow() {
 		const contextChanged = this.applyStoredScanContext()
+		if (contextChanged) {
+			await themeRuntime.loadPublished(this.storeCode)
+		}
 		if (this.initialized && (!this.products.length || contextChanged)) {
 			this.loadAllProducts()
 		}
@@ -320,11 +334,13 @@ export default {
 			const previousShopId = this.shopId
 			const previousTableNo = this.tableNo
 			const previousShopName = this.shopName
+			const previousStoreCode = this.storeCode
 			let shopId = options.shopId
 			let tableNo = options.tableNo
+			let storeCode = options.storeCode
 			const scene = options.scene
 			const shopName = options.shopName
-			if (!shopId && !tableNo && scene) {
+			if (!shopId && !tableNo && !storeCode && scene) {
 				try {
 					const decoded = decodeURIComponent(String(scene))
 					const parts = decoded.split('&')
@@ -332,19 +348,22 @@ export default {
 						const kv = part.split('=')
 						if (kv[0] === 'shopId') shopId = kv[1]
 						if (kv[0] === 'tableNo') tableNo = kv[1]
+						if (kv[0] === 'storeCode') storeCode = kv[1]
 						if (kv[0] === 'shopName') this.shopName = decodeURIComponent(kv[1] || '') || this.shopName
 					})
 				} catch (error) {}
 			}
 			this.shopId = toNumber(shopId) || 1
 			this.tableNo = tableNo ? String(tableNo).trim() : ''
+			this.storeCode = storeCode ? String(storeCode).trim() : ''
 			if (shopName) {
 				this.shopName = decodeURIComponent(String(shopName))
 			}
 			return (
 				this.shopId !== previousShopId ||
 				this.tableNo !== previousTableNo ||
-				this.shopName !== previousShopName
+				this.shopName !== previousShopName ||
+				this.storeCode !== previousStoreCode
 			)
 		},
 		authHeader() {
@@ -855,10 +874,7 @@ export default {
 	height: 100vh;
 	display: flex;
 	flex-direction: column;
-	background:
-		radial-gradient(circle at 18% 8%, rgba(244, 210, 139, 0.28), transparent 34%),
-		radial-gradient(circle at 88% 22%, rgba(111, 78, 55, 0.22), transparent 30%),
-		linear-gradient(180deg, #2b211c 0%, #6f4e37 42%, #f4eee8 100%);
+	background: var(--theme-page);
 	box-sizing: border-box;
 	overflow: hidden;
 }

@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <!-- 日志存放路径 -->
-	<property name="log.path" value="/home/ruoyi/logs" />
+	<property name="log.path" value="${LOG_PATH:-logs}" />
     <!-- 日志输出格式 -->
 	<property name="log.pattern" value="%d{HH:mm:ss.SSS} [%thread] %-5level %logger{20} - [%method,%line] - %msg%n" />
 
 	<!-- 控制台输出 -->
 	<appender name="console" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder>
+			<charset>UTF-8</charset>
 			<pattern>${log.pattern}</pattern>
 		</encoder>
 	</appender>
@@ -23,6 +24,7 @@
 			<maxHistory>60</maxHistory>
 		</rollingPolicy>
 		<encoder>
+			<charset>UTF-8</charset>
 			<pattern>${log.pattern}</pattern>
 		</encoder>
 		<filter class="ch.qos.logback.classic.filter.LevelFilter">
@@ -45,6 +47,7 @@
 			<maxHistory>60</maxHistory>
         </rollingPolicy>
         <encoder>
+			<charset>UTF-8</charset>
             <pattern>${log.pattern}</pattern>
         </encoder>
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
@@ -67,6 +70,7 @@
             <maxHistory>60</maxHistory>
         </rollingPolicy>
         <encoder>
+			<charset>UTF-8</charset>
             <pattern>${log.pattern}</pattern>
         </encoder>
     </appender>
@@ -90,4 +94,4 @@
     <logger name="sys-user" level="info">
         <appender-ref ref="sys-user"/>
     </logger>
-</configuration> 
+</configuration>

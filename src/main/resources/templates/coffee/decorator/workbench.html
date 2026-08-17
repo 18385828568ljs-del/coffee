@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('商家装修工作台')" />
+    <style>
+        :root { --workbench-accent:#24543b; --workbench-border:#dfe4e1; --workbench-muted:#68736d; }
+        body { background:#f4f6f5; color:#1f2924; }
+        .decorator-shell { min-height:100vh; display:flex; flex-direction:column; }
+        .workbench-bar { min-height:58px; padding:10px 16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; border-bottom:1px solid var(--workbench-border); background:#fff; }
+        .workbench-title { margin-right:4px; font-size:17px; font-weight:700; white-space:nowrap; }
+        .workbench-control { display:flex; flex-direction:column; gap:3px; }
+        .workbench-control > span { color:var(--workbench-muted); font-size:11px; line-height:1; }
+        .workbench-select { width:190px; height:36px; border-radius:4px; }
+        .save-state { margin-left:auto; color:var(--workbench-muted); font-size:13px; white-space:nowrap; }
+        .save-state.is-dirty { color:#a15c00; }
+        .save-state.is-saving { color:#24543b; }
+        .skin-v1-panel { padding:12px; margin-bottom:16px; border:1px solid #dfe4e1; border-radius:4px; background:#f8faf9; }
+        .skin-v1-panel h3 { margin-top:0; }
+        .skin-v1-help { margin:7px 0 0; color:#68736d; font-size:12px; line-height:1.5; }
+        .skin-page-tabs { display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; }
+        .skin-page-tab { min-width:58px; padding:7px 9px; border:1px solid var(--workbench-border); border-radius:4px; color:#53615a; background:#fff; white-space:nowrap; }
+        .skin-page-tab.is-active { border-color:var(--workbench-accent); color:#fff; background:var(--workbench-accent); }
+        .skin-component-list { display:grid; gap:6px; margin-top:10px; }
+        .skin-component-option { width:100%; padding:9px 10px; display:flex; align-items:center; justify-content:space-between; gap:8px; border:1px solid var(--workbench-border); border-radius:4px; background:#fff; text-align:left; }
+        .skin-component-option.is-active { border-color:var(--workbench-accent); box-shadow:inset 3px 0 0 var(--workbench-accent); }
+        .skin-component-option small { color:var(--workbench-muted); }
+        .skin-editor-tabs { display:grid; grid-template-columns:1fr 1fr; margin:10px 0 12px; border-bottom:1px solid var(--workbench-border); }
+        .skin-editor-tab { padding:8px; border:0; border-bottom:2px solid transparent; color:#68736d; background:transparent; }
+        .skin-editor-tab.is-active { border-bottom-color:var(--workbench-accent); color:#1f2924; font-weight:700; }
+        .skin-asset-preview { min-height:116px; margin:10px 0; display:flex; align-items:center; justify-content:center; overflow:hidden; border:1px solid var(--workbench-border); border-radius:4px; background:#edf1ef; }
+        .skin-asset-preview img { width:100%; max-height:180px; object-fit:cover; }
+        .skin-asset-preview span { color:var(--workbench-muted); font-size:12px; }
+        .skin-carousel-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
+        .skin-carousel-count { color:var(--workbench-muted); font-size:12px; white-space:nowrap; }
+        .skin-banner-list { display:grid; gap:8px; }
+        .skin-banner-row { display:grid; grid-template-columns:76px minmax(0,1fr); gap:9px; padding:8px; border:1px solid var(--workbench-border); border-radius:4px; background:#fff; }
+        .skin-banner-thumb-wrap { position:relative; width:76px; height:58px; overflow:hidden; border-radius:3px; background:#edf1ef; }
+        .skin-banner-thumb { width:100%; height:100%; display:block; object-fit:cover; }
+        .skin-banner-index { position:absolute; top:4px; left:4px; min-width:20px; padding:1px 4px; border-radius:3px; color:#fff; background:rgba(31,41,36,.82); font-size:10px; line-height:18px; text-align:center; }
+        .skin-banner-copy { min-width:0; }
+        .skin-banner-copy strong, .skin-banner-copy small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .skin-banner-copy small { margin:2px 0 5px; color:var(--workbench-muted); font-size:11px; }
+        .skin-banner-select { height:30px !important; padding:4px 7px; font-size:12px; }
+        .skin-banner-actions { grid-column:1 / -1; display:grid; grid-template-columns:repeat(4,1fr); gap:5px; }
+        .skin-banner-actions .btn { min-width:0; padding:5px 7px; }
+        .skin-banner-empty { padding:20px 12px; border:1px dashed #cfd8d3; color:var(--workbench-muted); background:#f8faf9; text-align:center; font-size:12px; }
+        .skin-carousel-toolbar { display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:6px; margin-top:9px; }
+        .skin-carousel-toolbar .form-control { height:34px; }
+        .skin-spec { margin:8px 0 12px; padding:8px 10px; color:#53615a; font-size:12px; line-height:1.6; background:#f2f5f3; }
+        .skin-action-row { display:flex; gap:8px; margin-top:8px; }
+        .skin-action-row .btn { flex:1; min-width:0; }
+        .skin-content-fields { padding-bottom:12px; margin-bottom:12px; border-bottom:1px solid var(--workbench-border); }
+        .skin-content-fields .field-row + .field-row { margin-top:10px; }
+        .skin-single-asset-editor[hidden], .skin-product-image-editor[hidden] { display:none !important; }
+        .skin-product-image-list { display:grid; gap:10px; }
+        .skin-product-image-row { display:grid; grid-template-columns:72px minmax(0,1fr); gap:10px; padding:10px 0; border-bottom:1px solid #e6ebe8; }
+        .skin-product-image-row:last-child { border-bottom:0; }
+        .skin-product-image-thumb { width:72px; height:88px; border:1px solid var(--workbench-border); border-radius:4px; object-fit:cover; background:#edf1ef; }
+        .skin-product-image-copy { min-width:0; }
+        .skin-product-image-copy strong, .skin-product-image-copy small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .skin-product-image-copy small { margin:3px 0 7px; color:var(--workbench-muted); font-size:11px; }
+        .skin-product-image-actions { display:flex; gap:6px; margin-top:7px; }
+        .skin-product-image-actions .btn { flex:1; min-width:0; }
+        .skin-pane[hidden] { display:none !important; }
+        .legacy-editor-section { display:none !important; }
+        .workbench-actions { display:flex; gap:8px; flex-wrap:wrap; }
+        .workbench-actions .btn { min-width:82px; }
+        .scope-notice { padding:10px 16px; display:flex; align-items:center; justify-content:space-between; gap:14px; border-bottom:1px solid #ead7ad; color:#654b16; background:#fff8e8; }
+        .scope-notice strong, .scope-notice span { display:block; }
+        .scope-notice span { margin-top:2px; font-size:12px; }
+        .workbench-main { flex:1; display:grid; grid-template-columns:minmax(250px, 310px) minmax(260px, 330px) minmax(360px, 1fr); min-height:0; }
+        .workbench-main.skin-v1-active { grid-template-columns:minmax(280px, 330px) minmax(375px, 1fr); }
+        .skin-v1-active > .editor-column:nth-child(2), .skin-v1-active > .editor-column:first-child > .editor-section { display:none; }
+        .editor-column { padding:14px 16px 24px; overflow:auto; border-right:1px solid var(--workbench-border); background:#fff; }
+        .editor-column h3 { margin:2px 0 12px; font-size:14px; font-weight:700; }
+        .editor-section { padding:0 0 16px; margin-bottom:16px; border-bottom:1px solid #edf0ee; }
+        .editor-section:last-child { border-bottom:0; }
+        .template-list { display:grid; gap:8px; }
+        .template-option { padding:10px 12px; display:flex; align-items:center; justify-content:space-between; gap:10px; border:1px solid var(--workbench-border); border-radius:4px; cursor:pointer; background:#fff; }
+        .template-option:hover, .template-option.is-active { border-color:var(--workbench-accent); box-shadow:inset 3px 0 0 var(--workbench-accent); }
+        .template-name { font-weight:600; }
+        .template-meta { color:var(--workbench-muted); font-size:12px; }
+        .field-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px 12px; }
+        .field-row { min-width:0; }
+        .field-row label { display:block; margin-bottom:5px; color:#53615a; font-size:12px; font-weight:600; }
+        .color-control { display:grid; grid-template-columns:40px minmax(0, 1fr); gap:6px; }
+        .color-control input[type=color] { width:40px; height:34px; padding:2px; border:1px solid #cfd6d2; border-radius:4px; background:#fff; }
+        .field-row .form-control { height:34px; border-radius:4px; }
+        .component-row { display:grid; grid-template-columns:minmax(0, 1fr) minmax(110px, 145px); gap:10px; align-items:center; min-height:46px; border-bottom:1px solid #edf0ee; }
+        .component-row:last-child { border-bottom:0; }
+        .component-label strong { display:block; font-size:13px; }
+        .component-label span { color:var(--workbench-muted); font-size:12px; }
+        .toggle-line { display:flex; align-items:center; justify-content:space-between; min-height:42px; }
+        .asset-upload { display:grid; grid-template-columns:110px minmax(0,1fr) auto; gap:8px; align-items:center; }
+        .asset-upload .form-control { height:34px; }
+        .asset-control { display:grid; grid-template-columns:minmax(0,1fr) 72px; gap:8px; align-items:center; margin-bottom:9px; }
+        .asset-control label { margin:0; color:#53615a; font-size:12px; }
+        .asset-control select, .asset-control input { height:34px; }
+        .asset-library { max-height:240px; margin-top:10px; overflow:auto; border-top:1px solid #edf0ee; }
+        .asset-item { min-height:54px; padding:7px 0; display:grid; grid-template-columns:44px minmax(0,1fr) auto; gap:9px; align-items:center; border-bottom:1px solid #edf0ee; }
+        .asset-thumb { width:44px; height:44px; border:1px solid var(--workbench-border); border-radius:4px; object-fit:cover; background:#edf1ef; }
+        .asset-copy { min-width:0; }
+        .asset-copy strong, .asset-copy span { display:block; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+        .asset-copy span { color:var(--workbench-muted); font-size:11px; }
+        .preview-column { min-width:0; padding:16px; overflow:auto; background:#edf1ef; }
+        .preview-head { margin:0 auto 10px; max-width:430px; display:flex; align-items:center; justify-content:space-between; color:#53615a; font-size:12px; }
+        .preview-head-tools { display:flex; align-items:center; gap:8px; }
+        .h5-preview-frame { width:375px; max-width:100%; height:720px; margin:0 auto; display:block; border:8px solid #202522; border-radius:32px; background:#fff; box-shadow:0 14px 34px rgba(25,38,31,.2); box-sizing:border-box; }
+        .preview-unavailable { width:375px; max-width:100%; min-height:180px; margin:0 auto; padding:28px 22px; border:1px solid #d3d9d6; border-radius:6px; color:#68736d; background:#fff; text-align:center; box-sizing:border-box; }
+        .versions-band { padding:14px 16px 22px; border-top:1px solid var(--workbench-border); background:#fff; }
+        .versions-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+        .versions-head h3 { margin:0; font-size:14px; }
+        .empty-state, .loading-state, .error-state { padding:30px 16px; text-align:center; color:var(--workbench-muted); }
+        .error-state { color:#a94442; }
+        .is-disabled { opacity:.58; pointer-events:none; }
+        @media (max-width:1050px) { .workbench-main { grid-template-columns:1fr 1fr; } .preview-column { grid-column:1 / -1; } }
+        @media (max-width:700px) { .workbench-main { display:block; } .editor-column { border-right:0; border-bottom:1px solid var(--workbench-border); } .save-state { width:100%; margin-left:0; } .workbench-actions { width:100%; } .workbench-actions .btn { flex:1; } .field-grid { grid-template-columns:1fr; } .asset-upload { grid-template-columns:1fr; } }
+    </style>
+</head>
+<body>
+<div class="decorator-shell">
+    <header class="workbench-bar">
+        <span class="workbench-title">商家装修</span>
+        <label class="workbench-control"><span>商家</span><select id="merchantSelect" class="form-control workbench-select" aria-label="当前商家"><option value="">选择商家</option></select></label>
+        <label class="workbench-control"><span>装修范围</span><select id="storeSelect" class="form-control workbench-select" aria-label="装修范围"><option value="master">商家统一装修</option></select></label>
+        <label class="workbench-control"><span>装修方案</span><select id="themeSelect" class="form-control workbench-select" aria-label="装修方案" disabled><option value="">选择装修方案</option></select></label>
+        <button id="newThemeBtn" type="button" class="btn btn-default" disabled><i class="fa fa-plus"></i> 新建装修方案</button>
+        <span id="roleText" class="label label-default">未选择</span>
+        <span id="editingStatus" class="text-muted"></span>
+        <span id="themeStatus" class="text-muted"></span>
+        <span id="saveState" class="save-state">等待加载</span>
+        <div class="workbench-actions">
+            <button id="independentBtn" type="button" class="btn btn-default" style="display:none"><i class="fa fa-copy"></i> 独立装修</button>
+            <button id="followBtn" type="button" class="btn btn-default" style="display:none"><i class="fa fa-link"></i> 重新跟随</button>
+        <button id="restorePublishedBtn" type="button" class="btn btn-default" disabled><i class="fa fa-undo"></i> 恢复线上样式</button>
+        <button id="versionsBtn" type="button" class="btn btn-default" disabled><i class="fa fa-history"></i> 版本记录</button>
+        <button id="validateBtn" type="button" class="btn btn-default" disabled><i class="fa fa-check-circle"></i> 校验</button>
+        <button id="previewBtn" type="button" class="btn btn-default" disabled><i class="fa fa-mobile"></i> 真机预览</button>
+        <button id="saveBtn" type="button" class="btn btn-primary" disabled><i class="fa fa-save"></i> 保存草稿</button>
+        <button id="publishBtn" type="button" class="btn btn-success" disabled><i class="fa fa-cloud-upload"></i> 发布</button>
+        </div>
+    </header>
+
+    <div id="scopeNotice" class="scope-notice" style="display:none">
+        <div><strong id="scopeNoticeTitle">该门店当前跟随商家统一装修</strong><span id="scopeNoticeText">如需单独修改，请先开启独立装修。</span></div>
+        <button id="scopeNoticeIndependentBtn" type="button" class="btn btn-warning"><i class="fa fa-copy"></i> 开启独立装修</button>
+    </div>
+
+    <div id="loadingState" class="loading-state">正在加载商家装修数据...</div>
+    <div id="emptyState" class="empty-state" style="display:none"></div>
+
+    <main id="workbenchMain" class="workbench-main skin-v1-active" style="display:none">
+        <section class="editor-column" aria-label="主题和颜色设置">
+            <div class="skin-v1-panel">
+                <h3>页面皮肤</h3>
+                <div class="field-row" style="margin-top:12px">
+                    <label for="skinPageBackgroundType">页面背景</label>
+                    <select id="skinPageBackgroundType" class="form-control"><option value="solid">纯色</option><option value="gradient">渐变</option></select>
+                </div>
+                <div id="skinPageSolidBackground" class="field-row" style="margin-top:10px">
+                    <label for="skinPageBackground">背景颜色</label>
+                    <div class="color-control"><input id="skinPageBackground-swatch" type="color" data-color-target="skinPageBackground"><input id="skinPageBackground" class="form-control skin-input" maxlength="9" data-path="page.backgroundColor" value="#FFFFFF"></div>
+                </div>
+                <div id="skinPageGradientBackground" class="field-grid" style="display:none;margin-top:10px">
+                    <div class="field-row"><label for="skinPageGradientStart">起始颜色</label><div class="color-control"><input id="skinPageGradientStart-swatch" type="color" data-color-target="skinPageGradientStart"><input id="skinPageGradientStart" class="form-control skin-input" maxlength="9" data-path="page.background.gradient.colors.0.color" value="#FFF3E8"></div></div>
+                    <div class="field-row"><label for="skinPageGradientEnd">结束颜色</label><div class="color-control"><input id="skinPageGradientEnd-swatch" type="color" data-color-target="skinPageGradientEnd"><input id="skinPageGradientEnd" class="form-control skin-input" maxlength="9" data-path="page.background.gradient.colors.1.color" value="#8A5A44"></div></div>
+                    <div class="field-row"><label for="skinPageGradientDirection">渐变方向</label><select id="skinPageGradientDirection" class="form-control skin-input" data-path="page.background.gradient.direction"><option value="180">从上到下</option><option value="90">从左到右</option><option value="135">左上到右下</option><option value="225">右上到左下</option></select></div>
+                </div>
+                <p class="skin-v1-help">渐变使用双色线性配置，保存为结构化主题数据，可随时恢复为纯色。</p>
+            </div>
+            <div class="skin-v1-panel">
+                <h3>组件导航</h3>
+                <div id="skinPageTabs" class="skin-page-tabs"></div>
+                <div id="skinComponentList" class="skin-component-list"></div>
+            </div>
+            <div class="skin-v1-panel" id="skinComponentEditor">
+                <h3 id="skinComponentTitle">组件外观</h3>
+                <p id="skinComponentKey" class="skin-v1-help"></p>
+                <div class="skin-editor-tabs">
+                    <button type="button" class="skin-editor-tab is-active" data-skin-tab="background">背景</button>
+                    <button type="button" class="skin-editor-tab" data-skin-tab="typography">文字</button>
+                </div>
+                <div id="skinBackgroundPane" class="skin-pane">
+                    <div id="skinSingleAssetEditor" class="skin-single-asset-editor">
+                        <div class="field-row"><label id="skinComponentAssetLabel" for="skinComponentAsset">当前背景素材</label><select id="skinComponentAsset" class="form-control"></select></div>
+                        <div id="skinAssetPreview" class="skin-asset-preview"><span>未设置背景素材</span></div>
+                        <div id="skinComponentSpec" class="skin-spec"></div>
+                        <input id="skinAssetName" class="form-control" maxlength="160" placeholder="素材名称">
+                        <div class="skin-action-row">
+                            <button id="skinAssetUploadBtn" type="button" class="btn btn-default"><i class="fa fa-upload"></i> 上传</button>
+                            <button id="skinAssetRestoreBtn" type="button" class="btn btn-default"><i class="fa fa-undo"></i> 恢复默认</button>
+                        </div>
+                    </div>
+                    <div id="skinCarouselAssetEditor" class="skin-carousel-asset-editor" hidden>
+                        <div class="skin-carousel-head">
+                            <strong>轮播图片</strong>
+                            <span id="skinBannerCount" class="skin-carousel-count">0 / 10 张</span>
+                        </div>
+                        <div id="skinBannerList" class="skin-banner-list"></div>
+                        <div class="skin-carousel-toolbar">
+                            <select id="skinBannerLibraryAdd" class="form-control" aria-label="从素材库添加轮播图"></select>
+                            <button id="skinBannerAddBtn" type="button" class="btn btn-default"><i class="fa fa-upload"></i> 上传多张</button>
+                            <button id="skinBannerClearBtn" type="button" class="btn btn-default" title="删除全部轮播图"><i class="fa fa-trash"></i></button>
+                        </div>
+                        <p class="skin-v1-help">可一次选择多张图片，最多 10 张。列表顺序就是轮播顺序。</p>
+                        <div class="skin-spec">建议画布：750×360 rpx<br>适配方式：等比裁切铺满<br>布局与尺寸由组件固定</div>
+                    </div>
+                    <div id="skinProductImageEditor" class="skin-product-image-editor" hidden>
+                        <div id="skinProductImageList" class="skin-product-image-list"></div>
+                        <p class="skin-v1-help">未指定装修图片时继续使用商品资料中的原图。</p>
+                    </div>
+                    <input id="skinAssetFileInput" type="file" accept="image/jpeg,image/png,image/gif" multiple style="display:none">
+                    <input id="skinProductImageFileInput" type="file" accept="image/jpeg,image/png,image/gif" style="display:none">
+                </div>
+                <div id="skinTypographyPane" class="skin-pane" hidden>
+                    <div id="skinContentFields" class="skin-content-fields" hidden>
+                        <div class="toggle-line"><strong>Banner 叠加文字</strong><label><input id="skinBannerTextVisible" type="checkbox"> 显示</label></div>
+                        <div class="field-row"><label for="skinBannerTitle">主标题</label><input id="skinBannerTitle" type="text" class="form-control" maxlength="40"></div>
+                        <div class="field-row"><label for="skinBannerSubtitle">副标题</label><input id="skinBannerSubtitle" type="text" class="form-control" maxlength="60"></div>
+                    </div>
+                    <div class="field-row"><label for="skinTextRole">文字角色</label><select id="skinTextRole" class="form-control"></select></div>
+                    <div id="skinTypographyFields" class="field-grid" style="margin-top:10px"></div>
+                    <p class="skin-v1-help">其他组件的文字内容保持为小程序真实数据。</p>
+                </div>
+            </div>
+            <div class="editor-section">
+                <h3>系统模板</h3>
+                <div id="templateList" class="template-list"></div>
+            </div>
+            <div class="editor-section legacy-editor-section">
+                <h3>品牌颜色</h3>
+                <div id="colorFields" class="field-grid"></div>
+            </div>
+            <div class="editor-section legacy-editor-section">
+                <h3>形状与层次</h3>
+                <div class="field-grid">
+                    <div class="field-row"><label for="radiusCard">卡片圆角</label><input id="radiusCard" class="form-control theme-input" type="number" min="0" max="32" data-path="tokens.radius.card"></div>
+                    <div class="field-row"><label for="radiusButton">按钮圆角</label><input id="radiusButton" class="form-control theme-input" type="number" min="0" max="32" data-path="tokens.radius.button"></div>
+                    <div class="field-row"><label for="radiusImage">图片圆角</label><input id="radiusImage" class="form-control theme-input" type="number" min="0" max="32" data-path="tokens.radius.image"></div>
+                    <div class="field-row"><label for="shadowCard">卡片阴影</label><select id="shadowCard" class="form-control theme-input" data-path="tokens.shadow.card"><option value="none">无</option><option value="soft">柔和</option><option value="medium">清晰</option></select></div>
+                </div>
+            </div>
+            <div class="editor-section legacy-editor-section">
+                <h3>品牌素材</h3>
+                <div class="asset-control"><label for="brandLogoAsset">品牌 Logo</label><select id="brandLogoAsset" class="form-control asset-binding" data-path="brand.logoAssetId" data-asset-type="LOGO"></select></div>
+                <div class="asset-control"><label for="brandHeaderAsset">头部背景图</label><select id="brandHeaderAsset" class="form-control asset-binding" data-path="brand.headerAssetId" data-asset-type="HEADER"></select></div>
+            </div>
+        </section>
+
+        <section class="editor-column" aria-label="组件设置">
+            <div class="editor-section legacy-editor-section">
+                <h3>组件样式</h3>
+                <div id="componentFields"></div>
+            </div>
+            <div class="editor-section legacy-editor-section">
+                <div class="toggle-line"><span><strong>活动横幅</strong><br><small class="text-muted">非核心营销模块</small></span><label><input id="bannerVisible" type="checkbox"> 显示</label></div>
+            </div>
+            <div class="editor-section legacy-editor-section">
+                <h3>组件背景</h3>
+                <div id="backgroundFields"></div>
+            </div>
+            <div class="editor-section">
+                <h3>素材库</h3>
+                <div class="asset-upload">
+                    <select id="uploadAssetType" class="form-control"><option value="LOGO">Logo</option><option value="HEADER">头部背景</option><option value="COMPONENT_BACKGROUND">组件背景</option></select>
+                    <input id="uploadAssetName" class="form-control" maxlength="160" placeholder="素材名称">
+                    <button id="chooseAssetBtn" type="button" class="btn btn-default"><i class="fa fa-upload"></i> 上传</button>
+                    <input id="assetFileInput" type="file" accept="image/jpeg,image/png,image/gif" style="display:none">
+                </div>
+                <div id="assetLibrary" class="asset-library"></div>
+            </div>
+            <div class="editor-section">
+                <h3>发布说明</h3>
+                <textarea id="publishNote" class="form-control" maxlength="255" rows="3" placeholder="本次发布内容"></textarea>
+            </div>
+            <div id="editorError" class="error-state" style="display:none"></div>
+        </section>
+
+        <section class="preview-column" aria-label="实时预览">
+            <div class="preview-head"><span>真实小程序首页</span><div class="preview-head-tools"><span id="previewSchema">ThemeConfig V1</span></div></div>
+            <iframe id="miniProgramPreview" class="h5-preview-frame" title="真实 uni-app 首页预览" referrerpolicy="strict-origin" allow="unload" style="display:none"></iframe>
+            <div id="previewUnavailable" class="preview-unavailable" style="display:none">H5 预览地址未配置或不可用。请启动 uni-app H5 服务并配置 decorator.preview.h5-url。</div>
+        </section>
+    </main>
+
+    <section id="versionsBand" class="versions-band" style="display:none">
+        <div class="versions-head"><h3>发布记录</h3><button id="refreshVersionsBtn" type="button" class="btn btn-default btn-xs"><i class="fa fa-refresh"></i> 刷新</button></div>
+        <div class="table-responsive"><table class="table table-striped table-condensed"><thead><tr><th>版本</th><th>草稿修订</th><th>发布时间</th><th>说明</th><th>操作</th></tr></thead><tbody id="versionRows"></tbody></table></div>
+    </section>
+</div>
+
+<th:block th:include="include :: footer" />
+<script th:inline="javascript">
+var decoratorBase = ctx + 'coffee/decorator';
+var configuredH5PreviewUrl = /*[[${h5PreviewUrl}]]*/ '';
+var h5PreviewOrigin = '';
+var state = { merchantId:null, role:'', permissions:[], stores:[], templates:[], themes:[], assets:[], skinProducts:[], theme:null, draft:null, publishedVersion:null, publishedConfig:null, draftRevision:null, savedConfig:null, draftConfig:null, config:null, dirty:false, saving:false, publishing:false, saveFailed:false, savePromise:null, h5Ready:false, autoSaveTimer:null, versionItems:[], versionDialog:null, scopeReadOnly:false, activeSkinPage:'home', activeSkinComponent:'homeBanner', activeTextRole:'bannerTitle', skinEditorTab:'background', activeProductUploadId:null, activeBannerReplaceIndex:null };
+var colorLabels = { primary:'品牌主色', pageBackground:'页面背景', surface:'内容表面', textPrimary:'主要文字', textSecondary:'次要文字', buttonBackground:'按钮背景', buttonText:'按钮文字', border:'边框颜色' };
+var componentOptions = {
+    shopHeader:{ label:'店铺头部', options:{centered:'居中品牌',compact:'紧凑横排'} },
+    activityBanner:{ label:'活动横幅', options:{single:'单图',carousel:'轮播'} },
+    categoryNav:{ label:'分类导航', options:{'icon-grid':'图标网格','text-row':'文字横排'} },
+    productCard:{ label:'商品卡片', options:{vertical:'纵向',horizontal:'横向'} },
+    tabBar:{ label:'底部导航', options:{standard:'标准',brand:'品牌线'} },
+    profileHeader:{ label:'个人头部', options:{brand:'品牌色',minimal:'简洁'} }
+};
+var backgroundSlots = {
+    shopHeader:{ label:'店铺头部', slotKey:'shopHeader.background', renderMode:'cover' },
+    activityBanner:{ label:'活动横幅', slotKey:'activityBanner.background', renderMode:'cover' },
+    productCard:{ label:'商品卡片纹理', slotKey:'productCard.background', renderMode:'repeat' }
+};
+
+var skinPages = [ {key:'home',name:'首页'}, {key:'menu',name:'点单'}, {key:'cart',name:'购物车'}, {key:'checkout',name:'确认订单'}, {key:'me',name:'我的'}, {key:'global',name:'全局'} ];
+var skinComponents = [
+    {key:'homeBanner',name:'头部 Banner 轮播图',page:'home',stretchMode:'cover',width:750,height:360,textRoles:['bannerTitle','bannerSubtitle'],collection:true},
+    {key:'actionCard',name:'功能按钮卡片背景',page:'home',stretchMode:'fill',width:335,height:180,textRoles:['actionTitle','actionSubtitle']},
+    {key:'sectionBanner',name:'欢迎牌 / 分区横幅背景',page:'home',stretchMode:'fill',width:686,height:144,textRoles:['sectionTitle']},
+    {key:'aboutImage',name:'关于我们图片',page:'home',stretchMode:'contain',width:686,height:1000,textRoles:['sectionTitle'],kind:'image'},
+    {key:'productImages',name:'商品主图',page:'menu',textRoles:[],kind:'productImages',collection:true},
+    {key:'productCard',name:'商品卡片背景',page:'menu',stretchMode:'fill',width:686,height:320,textRoles:['productTitle','price','metaText','bodyText','buttonPrimary']},
+    {key:'specPanel',name:'商品规格弹窗背景',page:'menu',stretchMode:'fill',width:686,height:720,textRoles:['panelTitle','optionTitle','optionText','price','buttonPrimary','buttonSecondary']},
+    {key:'emptyCart',name:'空购物车面板背景',page:'cart',stretchMode:'fill',width:686,height:560,textRoles:['emptyTitle','emptyDescription','buttonPrimary']},
+    {key:'cartPanel',name:'购物车结算面板背景',page:'cart',stretchMode:'fill',width:686,height:180,textRoles:['panelTitle','price','metaText','buttonPrimary']},
+    {key:'checkoutBar',name:'确认订单底部操作条背景',page:'checkout',stretchMode:'fill',width:750,height:124,textRoles:['price','metaText','buttonPrimary']},
+    {key:'memberCard',name:'会员卡片背景',page:'me',stretchMode:'fill',width:686,height:224,textRoles:['memberTitle','memberValue','metaText','buttonSecondary']},
+    {key:'tabBar',name:'底部 TabBar 背景',page:'global',stretchMode:'fill',width:750,height:112,textRoles:['tabText','tabTextActive']}
+];
+var typographyLabels = { pageTitle:'页面标题',sectionTitle:'分区标题',bannerTitle:'Banner 标题',bannerSubtitle:'Banner 副标题',actionTitle:'功能标题',actionSubtitle:'功能副标题',productTitle:'商品名称',price:'价格',metaText:'辅助文字',bodyText:'正文',panelTitle:'面板标题',optionTitle:'规格组标题',optionText:'规格选项',buttonPrimary:'主要按钮',buttonSecondary:'次要按钮',memberTitle:'会员标题',memberValue:'会员数值',emptyTitle:'空状态标题',emptyDescription:'空状态说明',tabText:'Tab 文字',tabTextActive:'选中 Tab 文字'};
+function typographyToken(color,fontSize,fontWeight,lineHeight) { return {color:color,fontSize:fontSize,fontWeight:fontWeight,lineHeight:lineHeight}; }
+var skinTypographyDefaults = {
+    pageTitle:typographyToken('#332C28',18,700,1.3), sectionTitle:typographyToken('#332C28',16,700,1.35), bannerTitle:typographyToken('#332C28',26,800,1.2), bannerSubtitle:typographyToken('#88776A',12,500,1.5),
+    actionTitle:typographyToken('#38271F',15,700,1.3), actionSubtitle:typographyToken('#88776A',10,500,1.4), productTitle:typographyToken('#38271F',18,700,1.3), price:typographyToken('#875629',22,800,1.2),
+    metaText:typographyToken('#88776A',11,400,1.4), bodyText:typographyToken('#57483E',13,400,1.55), panelTitle:typographyToken('#332C28',17,700,1.35), optionTitle:typographyToken('#38271F',14,700,1.35),
+    optionText:typographyToken('#57483E',13,500,1.35), buttonPrimary:typographyToken('#FFFFFF',15,700,1.2), buttonSecondary:typographyToken('#6F4E37',14,600,1.2), memberTitle:typographyToken('#FFF9EF',16,700,1.3),
+    memberValue:typographyToken('#FFFFFF',22,800,1.2), emptyTitle:typographyToken('#38271F',17,700,1.35), emptyDescription:typographyToken('#88776A',12,400,1.55), tabText:typographyToken('#8A7B70',11,400,1.2), tabTextActive:typographyToken('#875629',11,700,1.2)
+};
+var DEFAULT_SKIN_CONFIG = { schemaVersion:1, themeVersion:1, page:{ backgroundColor:'#FFFFFF', background:{type:'solid',color:'#FFFFFF'}, textColor:'#332C28', secondaryTextColor:'#8A7D74' }, colors:{primary:'#6F4E37',pageBackground:'#FFFFFF',cardBackground:'#FFFFFF',textPrimary:'#332C28',textSecondary:'#8A7D74'}, content:{homeBanner:{visible:true,title:'一杯好咖啡，从这里开始',subtitle:'现点现做，认真对待每一杯'}}, assets:{}, productImages:{}, typography:clone(skinTypographyDefaults), slots:{ heroBanner:{backgroundType:'color',backgroundColor:'#6F4E37',backgroundImage:null,fit:'cover'}, orderCard:{backgroundType:'color',backgroundColor:'#FFFFFF',backgroundImage:null,iconColor:'#745848',textColor:'#302720',secondaryTextColor:'#C28B62',radius:20,shadow:'light'}, shopCard:{backgroundType:'color',backgroundColor:'#FFFFFF',backgroundImage:null,iconColor:'#332C28',textColor:'#302720',secondaryTextColor:'#8A7D74',radius:20,shadow:'light'}, welcomeBanner:{backgroundType:'color',backgroundColor:'#E8D4C3',backgroundImage:null,fit:'cover',radius:8}, aboutSection:{backgroundColor:'#FFFFFF',titleColor:'#332C28',image:''}, tabBar:{backgroundColor:'#FFFFFF',textColor:'#777777',activeTextColor:'#44352C',iconColor:'#999999',activeIconColor:'#44352C',activeBackgroundColor:'#F3E4D6'} } };
+skinComponents.filter(function(item){return item.kind!=='productImages';}).forEach(function(item){ DEFAULT_SKIN_CONFIG.assets[item.key]=item.key==='homeBanner' ? [] : null; });
+
+function clone(value) { return JSON.parse(JSON.stringify(value)); }
+function asArray(value) { return value == null ? [] : (Array.isArray(value) ? value : [value]); }
+function toSkinConfig(raw) {
+    if (raw && Number(raw.schemaVersion) === 1 && raw.page) return ensureCanonicalSkinConfig(clone(raw));
+    var skin=clone(DEFAULT_SKIN_CONFIG), colors=raw && raw.tokens && raw.tokens.colors;
+    if (colors && /^#[0-9a-fA-F]{3,8}$/.test(colors.pageBackground || '')) skin.page.backgroundColor=colors.pageBackground;
+    if (colors && /^#[0-9a-fA-F]{3,8}$/.test(colors.textPrimary || '')) skin.page.textColor=colors.textPrimary;
+    if (colors && /^#[0-9a-fA-F]{3,8}$/.test(colors.textSecondary || '')) skin.page.secondaryTextColor=colors.textSecondary;
+    return ensureCanonicalSkinConfig(skin);
+}
+function ensureCanonicalSkinConfig(skin) {
+    skin.page=Object.assign({},DEFAULT_SKIN_CONFIG.page,skin.page || {});
+    var pageBackground=skin.page.background;
+    if (!pageBackground || pageBackground.type==='solid' && !/^#[0-9a-fA-F]{3,8}$/.test(pageBackground.color || '')) {
+        skin.page.background=clone(DEFAULT_SKIN_CONFIG.page.background);
+    }
+    skin.colors=Object.assign({},DEFAULT_SKIN_CONFIG.colors,skin.colors || {},{pageBackground:skin.page.backgroundColor,textPrimary:skin.page.textColor,textSecondary:skin.page.secondaryTextColor});
+    var bannerContent=skin.content && skin.content.homeBanner || {};
+    skin.content={homeBanner:{
+        visible:typeof bannerContent.visible==='boolean' ? bannerContent.visible : DEFAULT_SKIN_CONFIG.content.homeBanner.visible,
+        title:typeof bannerContent.title==='string' && bannerContent.title.length<=40 ? bannerContent.title : DEFAULT_SKIN_CONFIG.content.homeBanner.title,
+        subtitle:typeof bannerContent.subtitle==='string' && bannerContent.subtitle.length<=60 ? bannerContent.subtitle : DEFAULT_SKIN_CONFIG.content.homeBanner.subtitle
+    }};
+    skin.assets=Object.assign({},DEFAULT_SKIN_CONFIG.assets,skin.assets || {});
+    var homeBannerAssets=skin.assets.homeBanner;
+    if (!Array.isArray(homeBannerAssets)) homeBannerAssets=homeBannerAssets==null ? [] : [homeBannerAssets];
+    skin.assets.homeBanner=homeBannerAssets.filter(function(value){return value!=null && (typeof value==='string' || (Number.isInteger(value) && value>0));}).slice(0,10);
+    skin.productImages=skin.productImages && typeof skin.productImages==='object' && !Array.isArray(skin.productImages) ? skin.productImages : {};
+    skin.typography=Object.keys(skinTypographyDefaults).reduce(function(result,role){ result[role]=Object.assign({},skinTypographyDefaults[role],skin.typography && skin.typography[role] || {}); return result; },{});
+    var slots=skin.slots || {};
+    if (!skin.assets.homeBanner.length && slots.heroBanner && slots.heroBanner.assetId) skin.assets.homeBanner=[String(slots.heroBanner.assetId)];
+    if (!skin.assets.homeBanner.length && slots.heroBanner && slots.heroBanner.backgroundImage) skin.assets.homeBanner=[slots.heroBanner.backgroundImage];
+    if (slots.heroBanner && skin.assets.homeBanner.length) {
+        delete slots.heroBanner.assetId;
+        slots.heroBanner.backgroundType='color';
+        slots.heroBanner.backgroundImage=null;
+    }
+    if (skin.assets.actionCard==null && slots.orderCard && slots.orderCard.backgroundImage) skin.assets.actionCard=slots.orderCard.backgroundImage;
+    if (skin.assets.sectionBanner==null && slots.welcomeBanner && slots.welcomeBanner.backgroundImage) skin.assets.sectionBanner=slots.welcomeBanner.backgroundImage;
+    if (skin.assets.aboutImage==null && slots.aboutSection && slots.aboutSection.image) skin.assets.aboutImage=slots.aboutSection.image;
+    return skin;
+}
+function skinPageColor() { return state.config && state.config.page ? state.config.page.backgroundColor : '#FFFFFF'; }
+function skinPageBackground() { return state.config && state.config.page && state.config.page.background || DEFAULT_SKIN_CONFIG.page.background; }
+function renderPageBackgroundEditor() {
+    var background=skinPageBackground(), type=background.type==='gradient' ? 'gradient' : 'solid';
+    $('#skinPageBackgroundType').val(type);
+    $('#skinPageSolidBackground').toggle(type==='solid');
+    $('#skinPageGradientBackground').toggle(type==='gradient');
+    $('#skinPageBackground').val(skinPageColor());
+    $('#skinPageBackground-swatch').val(/^#[0-9a-fA-F]{6}$/.test(skinPageColor()) ? skinPageColor() : '#FFFFFF');
+    if (type==='gradient') {
+        var colors=background.gradient && background.gradient.colors || [];
+        $('#skinPageGradientStart').val(colors[0] && colors[0].color || '#FFF3E8');
+        $('#skinPageGradientEnd').val(colors[1] && colors[1].color || '#8A5A44');
+        $('#skinPageGradientStart-swatch').val($('#skinPageGradientStart').val());
+        $('#skinPageGradientEnd-swatch').val($('#skinPageGradientEnd').val());
+        $('#skinPageGradientDirection').val(String(background.gradient && background.gradient.direction || 180));
+    }
+}
+$(function() {
+    buildFields();
+    bindEvents();
+    configureH5Preview();
+    loadMerchants();
+    window.addEventListener('beforeunload', function(event) {
+        if (!state.dirty) return;
+        event.preventDefault();
+        event.returnValue = '当前还有未保存修改';
+    });
+});
+
+function configureH5Preview() {
+    if (!configuredH5PreviewUrl) { $('#previewUnavailable').show(); return; }
+    try {
+        var url=new URL(configuredH5PreviewUrl,window.location.href);
+        if (url.protocol!=='http:' && url.protocol!=='https:') throw new Error('unsupported preview protocol');
+        if (url.hash) {
+            var hashUrl=new URL(url.hash.substring(1),url.origin);
+            hashUrl.searchParams.set('decoratorPreview','1');
+            url.hash=hashUrl.pathname + hashUrl.search;
+        } else {
+            url.searchParams.set('decoratorPreview','1');
+        }
+        h5PreviewOrigin=url.origin;
+        state.h5Ready=false;
+        window.addEventListener('message',function(event) {
+            var frame=document.getElementById('miniProgramPreview');
+            if (!frame || event.source!==frame.contentWindow || event.origin!==h5PreviewOrigin) return;
+            if (!event.data) return;
+            if (event.data.type==='MINI_PREVIEW_READY') { state.h5Ready=true; postH5Preview(); return; }
+            if (event.data.type==='SKIN_EDITOR_SELECT') selectSkinEditorTarget(event.data.componentKey,event.data.textRole);
+        });
+        $('#miniProgramPreview').attr('src',url.href).show();
+    } catch (error) { $('#previewUnavailable').show(); }
+}
+
+function api(method, path, body) {
+    return $.ajax({ url: decoratorBase + path, type:method, contentType:'application/json;charset=UTF-8', data:body === undefined ? undefined : JSON.stringify(body) }).then(function(res) {
+        if (!res || Number(res.code) !== 0) return $.Deferred().reject(res || { msg:'请求失败' }).promise();
+        return res.data;
+    });
+}
+
+function uploadApi(path, formData) {
+    return $.ajax({ url:decoratorBase + path, type:'POST', data:formData, processData:false, contentType:false }).then(function(res) {
+        if (!res || Number(res.code) !== 0) return $.Deferred().reject(res || { msg:'上传失败' }).promise();
+        return res.data;
+    });
+}
+
+function loadSkinProducts() {
+    return $.ajax({ url:ctx + 'api/scanMenu/products', type:'GET' }).then(function(res) {
+        if (!res || Number(res.code)!==0) return [];
+        return Array.isArray(res.data) ? res.data : [];
+    }, function() { return []; });
+}
+
+function loadMerchants() {
+    api('GET', '/context/merchants').done(function(items) {
+        items = asArray(items);
+        var select = $('#merchantSelect').empty().append('<option value="">选择商家</option>');
+        (items || []).forEach(function(item) { select.append($('<option>').val(item.merchantId).text(item.merchantName)); });
+        $('#loadingState').hide();
+        if (!items || !items.length) return showEmpty('当前账号未加入任何商家');
+        select.val(String(items[0].merchantId)).trigger('change');
+    }).fail(showFailure);
+}
+
+function selectMerchant(merchantId) {
+    showLoading('正在切换商家...');
+    api('POST', '/context/select', { merchantId:String(merchantId) }).done(function(context) {
+        state.merchantId = String(context.merchantId); state.role = context.role; state.permissions = context.permissions || [];
+        state.scopeReadOnly = false;
+        $('#roleText').text(context.role || 'VIEWER');
+        $.when(api('GET','/templates'), api('GET','/stores'), api('GET','/assets'), loadSkinProducts()).done(function(templates, stores, assets, products) {
+            state.templates = asArray(templates); state.stores = asArray(stores); state.assets = asArray(assets); state.skinProducts = asArray(products);
+            renderTemplates(); renderStores(); renderAssets(); loadScopeThemes('MERCHANT', state.merchantId);
+        }).fail(showFailure);
+    }).fail(showFailure);
+}
+
+function loadMaster() {
+    loadScopeThemes('MERCHANT', state.merchantId);
+}
+
+function initializeMaster() {
+    if (!hasPermission('THEME_EDIT')) return showEditorError('当前角色无权初始化主题');
+    if (!state.templates.length) return showEmpty('暂无可用系统模板');
+    api('POST','/themes/master',{ templateId:String(state.templates[0].id) }).done(function(theme) {
+        state.themes = [theme]; renderThemes(); openTheme(theme);
+    }).fail(showFailure);
+}
+
+function loadScopeThemes(scopeType, scopeId, preferredThemeId) {
+    if (!state.merchantId) return;
+    var query = '?scopeType=' + encodeURIComponent(scopeType) + '&scopeId=' + encodeURIComponent(scopeId || state.merchantId);
+    api('GET','/themes' + query).done(function(themes) {
+        state.themes = asArray(themes);
+        renderThemes();
+        var selected = state.themes.find(function(item) { return preferredThemeId && String(item.id) === String(preferredThemeId); })
+            || state.themes.find(function(item) { return item.active === true || item.active === 1; }) || state.themes[0];
+        if (selected) return openTheme(selected);
+        if (scopeType === 'MERCHANT') return initializeMaster();
+        showEmpty('该门店尚未创建独立装修方案，请先开启独立装修');
+    }).fail(showFailure);
+}
+
+function renderThemes() {
+    var select = $('#themeSelect').empty();
+    if (!state.themes.length) {
+        select.append('<option value="">暂无装修方案</option>').prop('disabled', true);
+        $('#newThemeBtn').prop('disabled', !hasPermission('THEME_EDIT'));
+        updateThemeStatus();
+        return;
+    }
+    state.themes.forEach(function(theme) {
+        var status = theme.active ? ' · 当前线上' : '';
+        if (theme.hasUnpublishedChanges) status += ' · 已保存未发布';
+        else if (theme.latestVersionNo) status += ' · V' + theme.latestVersionNo;
+        select.append($('<option></option>').val(theme.id).text(theme.name + status));
+    });
+    select.prop('disabled', false);
+    $('#newThemeBtn').prop('disabled', !hasPermission('THEME_EDIT'));
+    if (state.theme) select.val(String(state.theme.id));
+    updateThemeStatus();
+}
+
+function updateThemeStatus() {
+    var active = state.themes.find(function(item) { return item.active === true || item.active === 1; });
+    if (!active) return $('#themeStatus').text('暂无线上版本');
+    var version = active.latestVersionNo || (state.theme && String(active.id) === String(state.theme.id) ? state.publishedVersion : null);
+    $('#themeStatus').text('当前线上：' + active.name + (version ? ' · V' + version : ''));
+}
+
+function createThemeDialog() {
+    if (!hasPermission('THEME_EDIT')) return showEditorError('当前角色无权创建装修方案');
+    var scopeType = $('#storeSelect').val() === 'master' ? 'MERCHANT' : 'STORE';
+    var scopeId = scopeType === 'MERCHANT' ? state.merchantId : $('#storeSelect').val();
+    var active = state.themes.find(function(item) { return item.active === true || item.active === 1; });
+    var activeLabel = active ? active.name + (active.latestVersionNo ? ' · V' + active.latestVersionNo : '') : '当前线上样式';
+    var options = '<option value="ACTIVE_VERSION">复制当前线上样式：' + $('<div>').text(activeLabel).html() + '</option>';
+    (state.themes || []).forEach(function(item) { options += '<option value="THEME:' + item.id + '">复制“' + $('<div>').text(item.name).html() + '”</option>'; });
+    (state.templates || []).forEach(function(item) { options += '<option value="TEMPLATE:' + item.id + '">使用系统模板：' + $('<div>').text(item.name).html() + '</option>'; });
+    options += '<option value="DEFAULT">使用系统默认样式（基础）</option>';
+    var content = $('<div style="padding:20px 24px"></div>');
+    content.append('<div class="form-group"><label>方案名称</label><input id="newThemeName" class="form-control" maxlength="120" placeholder="例如：圣诞限定"></div>');
+    content.append('<div class="form-group"><label>初始样式</label><select id="newThemeSource" class="form-control">' + options + '</select></div>');
+    content.append('<p class="text-muted">创建后只会生成新的草稿，不影响当前线上小程序。</p>');
+    content.append('<div id="newThemeError" class="alert alert-danger" style="display:none;margin-bottom:12px"></div>');
+    content.append('<div class="text-right"><button id="cancelNewTheme" class="btn btn-default">取消</button> <button id="submitNewTheme" class="btn btn-primary">创建并装修</button></div>');
+    var index = layer.open({ type:1, title:'新建装修方案', area:['460px','auto'], content:content.prop('outerHTML'), success:function() {
+        $('#cancelNewTheme').on('click', function(){ layer.close(index); });
+        $('#submitNewTheme').on('click', function(){
+            var name = $.trim($('#newThemeName').val()), source = $('#newThemeSource').val() || 'ACTIVE_VERSION';
+            if (!name) return $('#newThemeError').text('请输入方案名称').show();
+            var payload = { scopeType:scopeType, scopeId:scopeId, name:name, sourceType:source.split(':')[0] };
+            if (source.indexOf('THEME:') === 0) payload.sourceThemeId = source.substring(6);
+            if (source.indexOf('TEMPLATE:') === 0) payload.sourceTemplateId = source.substring(9);
+            $('#newThemeError').hide().empty();
+            $('#submitNewTheme').prop('disabled', true).text('正在创建...');
+            api('POST','/themes',payload).done(function(theme){
+                layer.close(index);
+                showEditorSuccess('装修方案已创建，正在进入草稿');
+                loadScopeThemes(scopeType, scopeId, theme.id);
+            }).fail(function(error){
+                $('#submitNewTheme').prop('disabled', false).text('创建并装修');
+                $('#newThemeError').text(requestErrorMessage(error)).show();
+            });
+        });
+    }});
+}
+
+function confirmDirtyLeave(onLeave, onCancel) {
+    if (!state.dirty) return onLeave();
+    var content = $('<div style="padding:20px 24px"></div>');
+    content.append('<p>当前还有未保存修改。</p>');
+    content.append('<div class="text-right"><button id="dirtyCancel" class="btn btn-default">取消</button> <button id="dirtyDiscard" class="btn btn-warning">不保存并离开</button> <button id="dirtySave" class="btn btn-primary">保存并离开</button></div>');
+    var index = layer.open({ type:1, title:'离开当前装修方案', area:['430px','auto'], content:content.prop('outerHTML'), success:function() {
+        $('#dirtyCancel').on('click', function(){ layer.close(index); if (onCancel) onCancel(); });
+        $('#dirtyDiscard').on('click', function(){ layer.close(index); onLeave(); });
+        $('#dirtySave').on('click', function(){
+            $('#dirtySave,#dirtyDiscard').prop('disabled', true);
+            saveDraft().done(function(){ layer.close(index); onLeave(); }).fail(function(){ $('#dirtySave,#dirtyDiscard').prop('disabled', false); });
+        });
+    }});
+}
+
+function openTheme(theme) {
+    state.theme = theme;
+    $('#versionsBtn').prop('disabled', false);
+    renderThemes();
+    $('#editingStatus').text('正在编辑：' + (theme.name || '未命名方案'));
+    $('#themeStatus').text(theme.active ? '当前线上方案' : '未发布方案');
+    state.publishedVersion = null;
+    state.publishedConfig = null;
+    $('#restorePublishedBtn').prop('disabled',true).attr('title','正在加载当前装修样式');
+    api('GET','/themes/' + theme.id + '/draft').done(function(draft) {
+        state.draft = draft; state.draftRevision = draft.revision; state.config = toSkinConfig(JSON.parse(draft.configJson)); state.draftConfig = state.config; state.savedConfig = clone(state.config); state.dirty = false; state.saveFailed = false;
+        fillEditor(); renderPreview(); updateState(); showWorkbench(); loadVersions();
+    }).fail(showFailure);
+}
+
+function buildFields() {
+    Object.keys(colorLabels).forEach(function(key) {
+        var id = 'color-' + key;
+        $('#colorFields').append('<div class="field-row"><label for="' + id + '">' + colorLabels[key] + '</label><div class="color-control"><input id="' + id + '-swatch" type="color" data-color-target="' + id + '"><input id="' + id + '" class="form-control theme-input" maxlength="7" data-path="tokens.colors.' + key + '"></div></div>');
+    });
+    Object.keys(componentOptions).forEach(function(key) {
+        var item = componentOptions[key], options = '';
+        Object.keys(item.options).forEach(function(value) { options += '<option value="' + value + '">' + item.options[value] + '</option>'; });
+        $('#componentFields').append('<div class="component-row"><div class="component-label"><strong>' + item.label + '</strong><span>' + key + '</span></div><select class="form-control theme-input" data-path="components.' + key + '.variant">' + options + '</select></div>');
+    });
+    Object.keys(backgroundSlots).forEach(function(key) {
+        var item=backgroundSlots[key];
+        $('#backgroundFields').append('<div class="asset-control"><label for="background-' + key + '">' + item.label + '</label><select id="background-' + key + '" class="form-control background-binding" data-component="' + key + '"></select></div>');
+    });
+    renderSkinNavigation();
+}
+
+function renderSkinNavigation() {
+    var tabs=$('#skinPageTabs').empty();
+    skinPages.forEach(function(page) {
+        $('<button type="button" class="skin-page-tab"></button>').text(page.name).toggleClass('is-active',page.key===state.activeSkinPage).attr('data-page',page.key).appendTo(tabs);
+    });
+    var components=skinComponents.filter(function(item){ return item.page===state.activeSkinPage; });
+    if (!components.some(function(item){return item.key===state.activeSkinComponent;})) state.activeSkinComponent=components[0] ? components[0].key : 'tabBar';
+    var list=$('#skinComponentList').empty();
+    components.forEach(function(item) {
+        var button=$('<button type="button" class="skin-component-option"><span></span><small></small></button>');
+        button.attr('data-component',item.key).toggleClass('is-active',item.key===state.activeSkinComponent);
+        button.find('span').text(item.name); button.find('small').text(item.key); list.append(button);
+    });
+    renderSkinComponentEditor();
+}
+
+function activeSkinComponent() { return skinComponents.find(function(item){return item.key===state.activeSkinComponent;}) || skinComponents[0]; }
+
+function renderSkinComponentEditor() {
+    if (!state.config) return;
+    var component=activeSkinComponent();
+    var productImageEditor=component.kind==='productImages';
+    var carouselEditor=component.key==='homeBanner';
+    if (productImageEditor) state.skinEditorTab='background';
+    if (component.textRoles.length && component.textRoles.indexOf(state.activeTextRole)<0) state.activeTextRole=component.textRoles[0];
+    $('#skinComponentTitle').text(component.name);
+    $('#skinComponentKey').text(component.key + ' · 布局锁定');
+    $('.skin-editor-tab[data-skin-tab="background"]').text(component.kind==='image' || productImageEditor ? '图片' : '背景');
+    $('.skin-editor-tab[data-skin-tab="typography"]').toggle(!!component.textRoles.length);
+    $('.skin-editor-tabs').css('grid-template-columns',component.textRoles.length ? '1fr 1fr' : '1fr');
+    $('.skin-editor-tab').toggleClass('is-active',false).filter('[data-skin-tab="' + state.skinEditorTab + '"]').toggleClass('is-active',true);
+    $('#skinBackgroundPane').prop('hidden',state.skinEditorTab!=='background');
+    $('#skinTypographyPane').prop('hidden',state.skinEditorTab!=='typography');
+    $('#skinSingleAssetEditor').prop('hidden',productImageEditor || carouselEditor);
+    $('#skinCarouselAssetEditor').prop('hidden',!carouselEditor);
+    $('#skinProductImageEditor').prop('hidden',!productImageEditor);
+    $('#skinAssetFileInput').prop('multiple',carouselEditor);
+    if (productImageEditor) renderSkinProductImageEditor();
+    else if (carouselEditor) renderSkinBannerEditor();
+    else renderSkinAssetEditor(component);
+    if (component.textRoles.length) renderTypographyEditor(component);
+    applySkinEditorPermissions();
+}
+
+function applySkinEditorPermissions() {
+    var editable=hasPermission('THEME_EDIT'), assetManage=hasPermission('ASSET_MANAGE');
+    $('#skinComponentAsset,#skinAssetRestoreBtn,.skin-product-image-select,.skin-product-image-restore,.skin-typography-input,#skinBannerTextVisible,#skinBannerTitle,#skinBannerSubtitle,#skinBannerLibraryAdd,#skinBannerClearBtn,.skin-banner-select,.skin-banner-delete').prop('disabled',!editable);
+    if (!editable) $('.skin-banner-move').prop('disabled',true);
+    $('#skinAssetUploadBtn,#skinAssetName,.skin-product-image-upload,#skinBannerAddBtn,.skin-banner-upload-replace').prop('disabled',!assetManage || !editable);
+    var bannerCount=skinBannerValues().length;
+    $('#skinBannerAddBtn').prop('disabled',!editable || !assetManage || bannerCount>=10);
+    $('#skinBannerLibraryAdd').prop('disabled',!editable || bannerCount>=10);
+    $('#skinBannerClearBtn').prop('disabled',!editable || !bannerCount);
+}
+
+function skinBannerValues() {
+    if (!state.config || !state.config.assets) return [];
+    var value=state.config.assets.homeBanner;
+    if (Array.isArray(value)) return value;
+    state.config.assets.homeBanner=value==null ? [] : [value];
+    return state.config.assets.homeBanner;
+}
+
+function renderSkinBannerEditor() {
+    var values=skinBannerValues(), list=$('#skinBannerList').empty();
+    var options=state.assets.filter(function(item){return item.assetType==='COMPONENT_BACKGROUND';});
+    $('#skinBannerCount').text(values.length + ' / 10 张');
+    var addSelect=$('#skinBannerLibraryAdd').empty().append('<option value="">从素材库添加</option>');
+    options.forEach(function(item){addSelect.append($('<option>').val(String(item.id)).text(item.name));});
+    if (!values.length) list.append('<div class="skin-banner-empty">还没有轮播图，请上传图片或从素材库添加。</div>');
+    values.forEach(function(value,index){
+        var current=String(value), asset=state.assets.find(function(item){return String(item.id)===current;});
+        var url=asset && asset.url ? asset.url : (typeof value==='string' && !/^\d+$/.test(value) ? value : '');
+        var row=$('<div class="skin-banner-row"><div class="skin-banner-thumb-wrap"><img class="skin-banner-thumb" alt="轮播图预览"><span class="skin-banner-index"></span></div><div class="skin-banner-copy"><strong></strong><small></small><select class="form-control skin-banner-select" aria-label="替换轮播素材"></select></div><div class="skin-banner-actions"><button type="button" class="btn btn-default btn-xs skin-banner-move" data-direction="up" title="向前移动"><i class="fa fa-arrow-up"></i></button><button type="button" class="btn btn-default btn-xs skin-banner-move" data-direction="down" title="向后移动"><i class="fa fa-arrow-down"></i></button><button type="button" class="btn btn-default btn-xs skin-banner-upload-replace" title="上传图片替换"><i class="fa fa-refresh"></i> 替换</button><button type="button" class="btn btn-default btn-xs skin-banner-delete" title="删除这张轮播图"><i class="fa fa-trash"></i></button></div></div>');
+        row.attr('data-banner-index',index);
+        row.find('.skin-banner-index').text(index+1);
+        row.find('img').attr('src',url).on('error',function(){$(this).hide();});
+        row.find('strong').text(asset ? asset.name : '模板默认素材');
+        row.find('small').text(asset && asset.width && asset.height ? asset.width + '×' + asset.height + ' px' : '轮播图 ' + (index+1));
+        var select=row.find('select').append('<option value="">选择素材替换</option>');
+        options.forEach(function(item){select.append($('<option>').val(String(item.id)).text(item.name));});
+        if (!asset && current) select.append($('<option>').val(current).text('模板默认素材'));
+        select.val(current);
+        row.find('[data-direction="up"]').prop('disabled',index===0);
+        row.find('[data-direction="down"]').prop('disabled',index===values.length-1);
+        list.append(row);
+    });
+}
+
+function commitSkinBannerChange(message) {
+    var slot=state.config && state.config.slots && state.config.slots.heroBanner;
+    if (slot) {
+        delete slot.assetId;
+        slot.backgroundType='color';
+        slot.backgroundImage=null;
+    }
+    markDirty(); renderSkinBannerEditor(); applySkinEditorPermissions(); renderPreview(); scheduleAutoSave();
+    if (message) showEditorSuccess(message);
+}
+
+function renderSkinAssetEditor(component) {
+    var current=state.config && state.config.assets ? state.config.assets[component.key] : null;
+    var imageMode=component.kind==='image';
+    $('#skinComponentAssetLabel').text(imageMode ? '当前图片素材' : '当前背景素材');
+    var select=$('#skinComponentAsset').empty().append($('<option>').val('').text(imageMode ? '使用页面默认图片' : '不使用背景素材'));
+    state.assets.filter(function(item){return item.assetType==='COMPONENT_BACKGROUND';}).forEach(function(item){select.append($('<option>').val(String(item.id)).text(item.name));});
+    if (current && !state.assets.some(function(item){return String(item.id)===String(current);})) select.append($('<option>').val(String(current)).text('模板默认素材'));
+    select.val(current==null ? '' : String(current));
+    var asset=state.assets.find(function(item){return String(item.id)===String(current);});
+    var url=asset && asset.url ? asset.url : (typeof current==='string' && !/^\d+$/.test(current) ? current : '');
+    var preview=$('#skinAssetPreview').empty();
+    if (url) preview.append($('<img>').attr({alt:imageMode ? '组件图片预览' : '组件背景预览',src:url}).css('object-fit',imageMode ? 'contain' : 'cover')); else preview.append($('<span>').text(imageMode ? '使用页面默认图片' : '未设置背景素材'));
+    var actual=asset && asset.width && asset.height ? '当前素材：' + asset.width + '×' + asset.height + ' px<br>' : '';
+    var fitLabel=component.stretchMode==='cover' ? '等比裁切铺满' : (component.stretchMode==='contain' ? '按原比例完整显示' : '拉伸填充');
+    $('#skinComponentSpec').html(actual + '建议画布：' + component.width + '×' + component.height + ' rpx<br>适配方式：' + fitLabel + '<br>布局与尺寸由组件固定');
+}
+
+function renderSkinProductImageEditor() {
+    var list=$('#skinProductImageList').empty(), mappings=state.config.productImages || {}, options=state.assets.filter(function(item){return item.assetType==='COMPONENT_BACKGROUND';});
+    if (!state.skinProducts.length) { list.append('<div class="text-muted text-center" style="padding:18px 0">暂无可编辑商品</div>'); return; }
+    state.skinProducts.forEach(function(product) {
+        var productId=String(product.productId || product.id || ''), current=mappings[productId], asset=state.assets.find(function(item){return String(item.id)===String(current);});
+        var currentUrl=asset && asset.url ? asset.url : (typeof current==='string' && !/^\d+$/.test(current) ? current : '');
+        var originalUrl=product.imageUrl || product.productImage || '';
+        var row=$('<div class="skin-product-image-row"><img class="skin-product-image-thumb" alt=""><div class="skin-product-image-copy"><strong></strong><small></small><select class="form-control skin-product-image-select"></select><div class="skin-product-image-actions"><button type="button" class="btn btn-default btn-xs skin-product-image-upload"><i class="fa fa-upload"></i> 上传替换</button><button type="button" class="btn btn-default btn-xs skin-product-image-restore"><i class="fa fa-undo"></i> 恢复原图</button></div></div></div>');
+        row.attr('data-product-id',productId);
+        row.find('strong').text(product.productName || ('商品 ' + productId));
+        row.find('small').text(currentUrl ? '当前使用装修图片' : '当前使用商品原图');
+        row.find('img').attr('src',currentUrl || originalUrl).on('error',function(){this.style.visibility='hidden';});
+        var select=row.find('select').append('<option value="">使用商品原图</option>');
+        options.forEach(function(item){select.append($('<option>').val(String(item.id)).text(item.name));});
+        if (current && !state.assets.some(function(item){return String(item.id)===String(current);})) select.append($('<option>').val(String(current)).text('模板默认素材'));
+        select.val(current==null ? '' : String(current));
+        list.append(row);
+    });
+}
+
+function renderTypographyEditor(component) {
+    var bannerContent=state.config.content.homeBanner;
+    $('#skinContentFields').prop('hidden',component.key!=='homeBanner');
+    $('#skinBannerTextVisible').prop('checked',bannerContent.visible);
+    $('#skinBannerTitle').val(bannerContent.title);
+    $('#skinBannerSubtitle').val(bannerContent.subtitle);
+    var select=$('#skinTextRole').empty();
+    component.textRoles.forEach(function(role){select.append($('<option>').val(role).text(typographyLabels[role] || role));});
+    select.val(state.activeTextRole);
+    var token=state.config.typography[state.activeTextRole] || skinTypographyDefaults[state.activeTextRole];
+    var fields=$('#skinTypographyFields').empty();
+    fields.append(typographyColorField('文字颜色','color',token.color));
+    fields.append(typographyNumberField('字号','fontSize',token.fontSize,10,32,1));
+    var weight=$('<div class="field-row"><label>字重</label><select class="form-control skin-typography-input" data-field="fontWeight"><option>400</option><option>500</option><option>600</option><option>700</option><option>800</option></select></div>');
+    weight.find('select').val(String(token.fontWeight)); fields.append(weight);
+    fields.append(typographyNumberField('行高','lineHeight',token.lineHeight,1,2,0.1));
+    fields.append(typographyNumberField('字距','letterSpacing',token.letterSpacing || 0,0,4,0.5));
+    fields.append(typographyTextField('字体族','fontFamily',token.fontFamily || ''));
+    fields.append(typographyTextField('文字阴影','textShadow',token.textShadow || ''));
+}
+
+function typographyColorField(label,field,value) {
+    var row=$('<div class="field-row"><label></label><div class="color-control"><input type="color"><input class="form-control skin-typography-input" maxlength="9"></div></div>');
+    row.find('label').text(label); row.find('input').attr('data-field',field).val(value); return row;
+}
+function typographyNumberField(label,field,value,min,max,step) {
+    var row=$('<div class="field-row"><label></label><input type="number" class="form-control skin-typography-input"></div>');
+    row.find('label').text(label); row.find('input').attr({min:min,max:max,step:step,'data-field':field}).val(value); return row;
+}
+function typographyTextField(label,field,value) {
+    var row=$('<div class="field-row"><label></label><input type="text" class="form-control skin-typography-input" maxlength="120"></div>');
+    row.find('label').text(label); row.find('input').attr('data-field',field).val(value); return row;
+}
+
+function selectSkinEditorTarget(componentKey,textRole) {
+    var component=skinComponents.find(function(item){return item.key===componentKey;});
+    if (!component && textRole) component=skinComponents.find(function(item){return item.textRoles.indexOf(textRole)>=0;});
+    if (!component) return;
+    state.activeSkinPage=component.page; state.activeSkinComponent=component.key;
+    if (textRole && component.textRoles.indexOf(textRole)>=0) { state.activeTextRole=textRole; state.skinEditorTab='typography'; }
+    renderSkinNavigation();
+}
+
+function bindEvents() {
+    $('#merchantSelect').on('change', function() {
+        var value = this.value, previous = state.merchantId;
+        if (!value) return;
+        confirmDirtyLeave(function(){ selectMerchant(value); }, function(){ if (previous) $('#merchantSelect').val(previous); });
+    });
+    $('#themeSelect').on('change', function() {
+        var theme = state.themes.find(function(item) { return String(item.id) === String($('#themeSelect').val()); });
+        if (theme) confirmDirtyLeave(function(){ openTheme(theme); }, function(){ if (state.theme) $('#themeSelect').val(String(state.theme.id)); });
+    });
+    $('#newThemeBtn').on('click', createThemeDialog);
+    $('#storeSelect').on('change', function() {
+        var selectedValue = this.value, previousValue = state.theme && state.theme.scopeType === 'STORE' ? String(state.theme.ownerStoreId) : 'master';
+        var continueChange = function() {
+        updateScopeActions();
+        if (this.value === 'master') return loadScopeThemes('MERCHANT', state.merchantId);
+        var store = state.stores.find(function(item) { return String(item.storeId) === String($('#storeSelect').val()); });
+        if (!store) return showEmpty('所选门店不存在或无权访问');
+        if (store.bindingMode === 'INDEPENDENT' && store.themeId) {
+            return loadScopeThemes('STORE', store.storeId, store.themeId);
+        }
+        loadScopeThemes('MERCHANT', state.merchantId);
+        }.bind(this);
+        confirmDirtyLeave(continueChange, function(){ $('#storeSelect').val(previousValue); });
+    });
+    $(document).on('input change', '.theme-input,.skin-input', function() {
+        if (!state.config) return;
+        var value = this.type === 'number' ? Number(this.value) : this.value;
+        var path=$(this).data('path'); setPath(state.config, path, value);
+        if (path==='page.backgroundColor') {
+            setPath(state.config,'colors.pageBackground',value);
+            if (!state.config.page.background || state.config.page.background.type==='solid') state.config.page.background={type:'solid',color:value};
+        }
+        if (path==='page.background.gradient.colors.0.color' || path==='page.background.gradient.colors.1.color') {
+            state.config.page.background={type:'gradient',gradient:{type:'linear',direction:Number(getPath(state.config,'page.background.gradient.direction') || 180),colors:[
+                {color:String(getPath(state.config,'page.background.gradient.colors.0.color') || '#FFF3E8').toUpperCase(),position:0},
+                {color:String(getPath(state.config,'page.background.gradient.colors.1.color') || '#8A5A44').toUpperCase(),position:100}
+            ]}};
+        }
+        if (path==='page.background.gradient.direction') {
+            if (state.config.page.background && state.config.page.background.type==='gradient') state.config.page.background.gradient.direction=Number(value);
+        }
+        markDirty(); renderPreview();
+        scheduleAutoSave();
+        var swatch = $('[data-color-target="' + this.id + '"]'); if (swatch.length && /^#[0-9a-fA-F]{6}$/.test(this.value)) swatch.val(this.value);
+    });
+    $('#skinPageBackgroundType').on('change', function() {
+        if (!state.config || !hasPermission('THEME_EDIT')) return;
+        if (this.value==='gradient') {
+            state.config.page.background={type:'gradient',gradient:{type:'linear',direction:180,colors:[{color:'#FFF3E8',position:0},{color:'#8A5A44',position:100}]}};
+        } else {
+            var color=skinPageColor();
+            state.config.page.background={type:'solid',color:color};
+        }
+        markDirty(); renderPageBackgroundEditor(); renderPreview(); scheduleAutoSave();
+    });
+    $(document).on('input', 'input[type=color][data-color-target]', function() { $('#' + $(this).data('color-target')).val(this.value.toUpperCase()).trigger('input'); });
+    $('#bannerVisible').on('change', function() {
+        if (!state.config || !state.config.content || !state.config.content.homeBanner) return;
+        state.config.content.homeBanner.visible = this.checked; markDirty(); renderPreview(); scheduleAutoSave();
+    });
+    $(document).on('change', '.asset-binding', function() {
+        if (!state.config || !hasPermission('THEME_EDIT')) return;
+        var value=this.value, path=$(this).data('path');
+        if (value) setPath(state.config,path,String(value)); else deletePath(state.config,path);
+        markDirty(); renderPreview();
+    });
+    $(document).on('change', '.background-binding', function() {
+        if (!state.config || !hasPermission('THEME_EDIT')) return;
+        var component=$(this).data('component');
+        if (!backgroundSlots[component]) return;
+        showEditorError('该旧版背景入口已停用，请在左侧组件导航中编辑背景素材');
+    });
+    $('#homeBannerAsset').on('change', function() {
+        if (!state.config || !hasPermission('THEME_EDIT')) return;
+        var value = this.value;
+        if (value) {
+            setPath(state.config, 'slots.heroBanner.assetId', String(value));
+            setPath(state.config, 'slots.heroBanner.backgroundType', 'image');
+            setPath(state.config, 'slots.heroBanner.backgroundImage', null);
+            setPath(state.config, 'slots.heroBanner.fit', 'cover');
+        } else {
+            deletePath(state.config, 'slots.heroBanner.assetId');
+            setPath(state.config, 'slots.heroBanner.backgroundType', 'color');
+        }
+        markDirty(); renderHomeBannerAsset(); renderPreview(); scheduleAutoSave();
+    });
+    $('#clearHomeBannerBtn').on('click', function() {
+        if (!state.config || !hasPermission('THEME_EDIT')) return;
+        deletePath(state.config, 'slots.heroBanner.assetId');
+        setPath(state.config, 'slots.heroBanner.backgroundType', 'color');
+        markDirty(); renderHomeBannerAsset(); renderPreview(); scheduleAutoSave();
+    });
+    $('#homeBannerUploadBtn').on('click', function() { if (hasPermission('ASSET_MANAGE')) $('#homeBannerFileInput').val('').trigger('click'); });
+    $('#homeBannerFileInput').on('change', function() { if (this.files && this.files[0]) uploadHomeBanner(this.files[0]); });
+    $('#chooseAssetBtn').on('click', function() { if (hasPermission('ASSET_MANAGE')) $('#assetFileInput').val('').trigger('click'); });
+    $('#assetFileInput').on('change', function() { if (this.files && this.files[0]) uploadAsset(this.files[0]); });
+    $('#restorePublishedBtn').on('click', restorePublishedStyle); $('#validateBtn').on('click', validateDraft); $('#previewBtn').on('click', createDevicePreview); $('#saveBtn').on('click', saveDraft); $('#publishBtn').on('click', publishDraft);
+    $('#independentBtn').on('click', createIndependent); $('#followBtn').on('click', followMaster);
+    $('#scopeNoticeIndependentBtn').on('click', createIndependent);
+    $('#versionsBtn').on('click', function(){ loadVersions(true); });
+    $('#refreshVersionsBtn').on('click', function(){ loadVersions(false); });
+    $(document).on('click','.skin-page-tab',function(){
+        state.activeSkinPage=$(this).data('page'); renderSkinNavigation(); postH5Navigation(state.activeSkinPage);
+    });
+    $(document).on('click','.skin-component-option',function(){
+        state.activeSkinComponent=$(this).data('component'); state.activeTextRole=activeSkinComponent().textRoles[0]; renderSkinNavigation();
+    });
+    $(document).on('click','.skin-editor-tab',function(){ state.skinEditorTab=$(this).data('skin-tab'); renderSkinComponentEditor(); });
+    $('#skinComponentAsset').on('change',function(){
+        if (!state.config || !hasPermission('THEME_EDIT')) return;
+        state.config.assets[state.activeSkinComponent]=this.value ? String(this.value) : null;
+        markDirty(); renderSkinAssetEditor(activeSkinComponent()); renderPreview(); scheduleAutoSave();
+    });
+    $('#skinAssetRestoreBtn').on('click',function(){
+        if (!state.config || !hasPermission('THEME_EDIT')) return;
+        state.config.assets[state.activeSkinComponent]=DEFAULT_SKIN_CONFIG.assets[state.activeSkinComponent];
+        markDirty(); renderSkinAssetEditor(activeSkinComponent()); renderPreview(); scheduleAutoSave();
+    });
+    $('#skinAssetUploadBtn').on('click',function(){
+        if (!hasPermission('ASSET_MANAGE')) return;
+        state.activeBannerReplaceIndex=null;
+        $('#skinAssetFileInput').prop('multiple',false);
+        $('#skinAssetFileInput').val('').trigger('click');
+    });
+    $('#skinBannerAddBtn').on('click',function(){
+        if (!hasPermission('ASSET_MANAGE') || !hasPermission('THEME_EDIT')) return;
+        state.activeBannerReplaceIndex=null;
+        $('#skinAssetFileInput').prop('multiple',true);
+        $('#skinAssetFileInput').val('').trigger('click');
+    });
+    $('#skinAssetFileInput').on('change',function(){
+        if (!this.files || !this.files[0]) return;
+        if (state.activeSkinComponent==='homeBanner') uploadSkinBannerFiles(this.files,state.activeBannerReplaceIndex);
+        else uploadSkinAsset(this.files[0]);
+    });
+    $('#skinBannerLibraryAdd').on('change',function(){
+        if (!this.value || !state.config || !hasPermission('THEME_EDIT')) return;
+        var values=skinBannerValues(), value=String(this.value);
+        if (values.some(function(item){return String(item)===value;})) {
+            showEditorError('这张素材已在轮播列表中');
+            return renderSkinBannerEditor();
+        }
+        if (values.length>=10) return showEditorError('轮播图最多支持 10 张');
+        values.push(value); commitSkinBannerChange('已从素材库添加轮播图');
+    });
+    $(document).on('change','.skin-banner-select',function(){
+        if (!this.value || !state.config || !hasPermission('THEME_EDIT')) return renderSkinBannerEditor();
+        var index=Number($(this).closest('.skin-banner-row').data('banner-index')), value=String(this.value), values=skinBannerValues();
+        if (values.some(function(item,itemIndex){return itemIndex!==index && String(item)===value;})) {
+            showEditorError('这张素材已在轮播列表中');
+            return renderSkinBannerEditor();
+        }
+        values.splice(index,1,value); commitSkinBannerChange('轮播图已替换');
+    });
+    $(document).on('click','.skin-banner-move',function(){
+        if (!state.config || !hasPermission('THEME_EDIT')) return;
+        var index=Number($(this).closest('.skin-banner-row').data('banner-index'));
+        var target=$(this).data('direction')==='up' ? index-1 : index+1, values=skinBannerValues();
+        if (target<0 || target>=values.length) return;
+        var item=values[index]; values.splice(index,1); values.splice(target,0,item); commitSkinBannerChange('轮播顺序已调整');
+    });
+    $(document).on('click','.skin-banner-upload-replace',function(){
+        if (!hasPermission('ASSET_MANAGE') || !hasPermission('THEME_EDIT')) return;
+        state.activeBannerReplaceIndex=Number($(this).closest('.skin-banner-row').data('banner-index'));
+        $('#skinAssetFileInput').prop('multiple',false);
+        $('#skinAssetFileInput').val('').trigger('click');
+    });
+    $(document).on('click','.skin-banner-delete',function(){
+        if (!state.config || !hasPermission('THEME_EDIT')) return;
+        var index=Number($(this).closest('.skin-banner-row').data('banner-index')), values=skinBannerValues();
+        values.splice(index,1); commitSkinBannerChange('轮播图已删除');
+    });
+    $('#skinBannerClearBtn').on('click',function(){
+        if (!state.config || !hasPermission('THEME_EDIT') || !skinBannerValues().length) return;
+        layer.confirm('确定删除全部轮播图吗？素材仍会保留在素材库。',{icon:3,title:'清空轮播图'},function(index){
+            layer.close(index); state.config.assets.homeBanner=[]; commitSkinBannerChange('轮播图已清空');
+        });
+    });
+    $(document).on('change','.skin-product-image-select',function(){
+        if (!state.config || !hasPermission('THEME_EDIT')) return;
+        var productId=$(this).closest('.skin-product-image-row').data('product-id');
+        if (this.value) state.config.productImages[String(productId)]=String(this.value); else delete state.config.productImages[String(productId)];
+        markDirty(); renderSkinProductImageEditor(); renderPreview(); scheduleAutoSave();
+    });
+    $(document).on('click','.skin-product-image-upload',function(){
+        if (!hasPermission('ASSET_MANAGE')) return;
+        state.activeProductUploadId=String($(this).closest('.skin-product-image-row').data('product-id'));
+        $('#skinProductImageFileInput').val('').trigger('click');
+    });
+    $(document).on('click','.skin-product-image-restore',function(){
+        if (!state.config || !hasPermission('THEME_EDIT')) return;
+        var productId=String($(this).closest('.skin-product-image-row').data('product-id'));
+        delete state.config.productImages[productId];
+        markDirty(); renderSkinProductImageEditor(); renderPreview(); scheduleAutoSave();
+    });
+    $('#skinProductImageFileInput').on('change',function(){ if (this.files && this.files[0] && state.activeProductUploadId) uploadProductSkinAsset(state.activeProductUploadId,this.files[0]); });
+    $('#skinTextRole').on('change',function(){ state.activeTextRole=this.value; renderTypographyEditor(activeSkinComponent()); });
+    $('#skinBannerTextVisible').on('change',function(){
+        if (!state.config || !hasPermission('THEME_EDIT')) return;
+        state.config.content.homeBanner.visible=this.checked;
+        markDirty(); renderPreview(); scheduleAutoSave();
+    });
+    $('#skinBannerTitle,#skinBannerSubtitle').on('input',function(){
+        if (!state.config || !hasPermission('THEME_EDIT')) return;
+        var field=this.id==='skinBannerTitle' ? 'title' : 'subtitle';
+        state.config.content.homeBanner[field]=this.value;
+        markDirty(); renderPreview(); scheduleAutoSave();
+    });
+    $(document).on('input change','.skin-typography-input',function(){
+        if (!state.config || !hasPermission('THEME_EDIT')) return;
+        var field=$(this).data('field'), value=this.type==='number' ? Number(this.value) : this.value;
+        if (this.type==='color') $(this).siblings('.skin-typography-input').val(value.toUpperCase());
+        else if (field==='color' && /^#[0-9a-fA-F]{6}$/.test(value)) $(this).siblings('input[type=color]').val(value);
+        if (field==='fontFamily' || field==='textShadow') { if (value) state.config.typography[state.activeTextRole][field]=value; else delete state.config.typography[state.activeTextRole][field]; }
+        else state.config.typography[state.activeTextRole][field]=field==='fontWeight' ? Number(value) : value;
+        markDirty(); renderPreview(); scheduleAutoSave();
+    });
+}
+
+function renderTemplates() {
+    var list = $('#templateList').empty();
+    state.templates.forEach(function(item) {
+        var option = $('<div class="template-option" tabindex="0"><div><div class="template-name"></div><div class="template-meta"></div></div><i class="fa fa-angle-right"></i></div>');
+        option.find('.template-name').text(item.name); option.find('.template-meta').text('V' + item.schemaVersion + ' · 修订 ' + item.revision);
+        option.on('click keydown', function(event) { if (event.type === 'click' || event.key === 'Enter') applyTemplate(item); }); list.append(option);
+    });
+}
+
+function applyTemplate(template) {
+    if (!state.config) return;
+    if (!hasPermission('THEME_EDIT')) return showEditorError('当前角色只能查看主题');
+    try { state.config = toSkinConfig(JSON.parse(template.configJson)); state.draftConfig = state.config; fillEditor(); renderPreview(); markDirty(); scheduleAutoSave(); }
+    catch (error) { showEditorError('模板配置无法解析'); }
+}
+
+function renderStores() {
+    var select = $('#storeSelect').empty().append('<option value="master">商家统一装修</option>');
+    state.stores.forEach(function(item) { select.append($('<option>').val(item.storeId).text(item.storeName + ' · ' + (item.bindingMode === 'INDEPENDENT' ? '独立' : '跟随'))); });
+}
+
+function renderAssets() {
+    $('.asset-binding').each(function() {
+        var selected=state.config ? getPath(state.config,$(this).data('path')) : '';
+        var type=$(this).data('asset-type'), select=$(this).empty().append('<option value="">不使用</option>');
+        state.assets.filter(function(item){ return item.assetType===type; }).forEach(function(item){ select.append($('<option>').val(item.id).text(item.name)); });
+        select.val(selected || '');
+    });
+    $('.background-binding').each(function() {
+        var component=$(this).data('component'), selected=state.config && state.config.components && state.config.components[component] && state.config.components[component].background ? state.config.components[component].background.assetId : '';
+        var select=$(this).empty().append('<option value="">不使用</option>');
+        state.assets.filter(function(item){ return item.assetType==='COMPONENT_BACKGROUND'; }).forEach(function(item){ select.append($('<option>').val(item.id).text(item.name)); });
+        select.val(selected || '');
+    });
+    renderHomeBannerAsset();
+    var library=$('#assetLibrary').empty();
+    if (!state.assets.length) library.append('<div class="text-muted text-center" style="padding:18px 0">暂无素材</div>');
+    state.assets.forEach(function(item) {
+        var row=$('<div class="asset-item"><img class="asset-thumb" alt=""><div class="asset-copy"><strong></strong><span></span></div><button type="button" class="btn btn-default btn-xs" title="停用素材"><i class="fa fa-archive"></i></button></div>');
+        row.find('img').attr('src',item.url); row.find('strong').text(item.name); row.find('span').text(item.assetType + ' · ' + item.width + '×' + item.height);
+        row.find('button').prop('disabled',!hasPermission('ASSET_MANAGE')).on('click',function(){ archiveAsset(item); }); library.append(row);
+    });
+    if (state.config) renderSkinComponentEditor();
+}
+
+function renderHomeBannerAsset() {
+    var slot = state.config && state.config.slots && state.config.slots.heroBanner || {};
+    var selected = slot.assetId ? String(slot.assetId) : '';
+    var select = $('#homeBannerAsset').empty().append('<option value="">不使用（默认背景）</option>');
+    state.assets.filter(function(item) { return item.assetType === 'COMPONENT_BACKGROUND'; }).forEach(function(item) {
+        select.append($('<option>').val(item.id).text(item.name));
+    });
+    select.val(selected);
+    var asset = state.assets.find(function(item) { return String(item.id) === selected; });
+    var preview = $('#homeBannerAssetPreview');
+    if (asset && asset.url) preview.show().find('img').attr('src', asset.url);
+    else preview.hide().find('img').attr('src', '');
+}
+
+function uploadAsset(file) {
+    if (file.size > 10 * 1024 * 1024) return showEditorError('图片不能超过 10MB');
+    var form=new FormData(); form.append('file',file); form.append('assetType',$('#uploadAssetType').val()); form.append('name',$('#uploadAssetName').val() || file.name);
+    var storeId=$('#storeSelect').val(); if (storeId && storeId!=='master') form.append('storeId',storeId);
+    setButtons(true);
+    uploadApi('/assets',form).done(function(asset){ state.assets.unshift(asset); $('#uploadAssetName').val(''); renderAssets(); showEditorSuccess('素材已上传'); })
+        .fail(showFailure).always(function(){ setButtons(false); });
+}
+
+function uploadHomeBanner(file) {
+    if (!hasPermission('ASSET_MANAGE')) return;
+    if (file.size > 10 * 1024 * 1024) return showEditorError('图片不能超过 10MB');
+    var form = new FormData(); form.append('file', file); form.append('assetType', 'COMPONENT_BACKGROUND');
+    form.append('name', $('#homeBannerAssetName').val() || file.name);
+    var storeId = $('#storeSelect').val(); if (storeId && storeId !== 'master') form.append('storeId', storeId);
+    setButtons(true);
+    uploadApi('/assets', form).done(function(asset) {
+        state.assets.unshift(asset);
+        if (!state.config.slots) state.config.slots = {};
+        if (!state.config.slots.heroBanner) state.config.slots.heroBanner = {};
+        setPath(state.config, 'slots.heroBanner.assetId', String(asset.id));
+        setPath(state.config, 'slots.heroBanner.backgroundType', 'image');
+        setPath(state.config, 'slots.heroBanner.backgroundImage', null);
+        setPath(state.config, 'slots.heroBanner.fit', 'cover');
+        $('#homeBannerAssetName').val('');
+        markDirty(); renderAssets(); renderPreview(); scheduleAutoSave();
+        showEditorSuccess('Banner 背景已上传');
+    }).fail(showFailure).always(function() { setButtons(false); });
+}
+
+function uploadSkinAsset(file) {
+    if (!hasPermission('ASSET_MANAGE')) return;
+    if (file.size > 10 * 1024 * 1024) return showEditorError('图片不能超过 10MB');
+    var component=activeSkinComponent(), form=new FormData();
+    form.append('file',file); form.append('assetType','COMPONENT_BACKGROUND');
+    form.append('name',$('#skinAssetName').val() || component.name + ' - ' + file.name);
+    var storeId=$('#storeSelect').val(); if (storeId && storeId!=='master') form.append('storeId',storeId);
+    setButtons(true);
+    uploadApi('/assets',form).done(function(asset){
+        state.assets.unshift(asset); state.config.assets[component.key]=String(asset.id); $('#skinAssetName').val('');
+        markDirty(); renderAssets(); renderPreview(); scheduleAutoSave(); showEditorSuccess(component.name + '素材已上传');
+    }).fail(showFailure).always(function(){setButtons(false);});
+}
+
+function uploadSkinBannerFiles(fileList, replaceIndex) {
+    if (!hasPermission('ASSET_MANAGE') || !hasPermission('THEME_EDIT')) return;
+    var files=Array.prototype.slice.call(fileList || []), values=skinBannerValues();
+    var replacing=replaceIndex!==null && replaceIndex!==undefined && !isNaN(Number(replaceIndex));
+    if (replacing) files=files.slice(0,1);
+    var available=replacing ? 1 : 10-values.length;
+    if (!files.length) return;
+    if (available<=0 || files.length>available) return showEditorError('轮播图最多支持 10 张，本次最多还能上传 ' + Math.max(available,0) + ' 张');
+    if (files.some(function(file){return file.size>10*1024*1024;})) return showEditorError('每张图片不能超过 10MB');
+    var uploaded=[], sequence=$.Deferred().resolve().promise();
+    setButtons(true);
+    files.forEach(function(file,index){
+        sequence=sequence.then(function(){
+            var form=new FormData();
+            form.append('file',file);
+            form.append('assetType','COMPONENT_BACKGROUND');
+            form.append('name',(files.length>1 ? '头部轮播 ' + (index+1) + ' - ' : '头部轮播 - ') + file.name);
+            var storeId=$('#storeSelect').val();
+            if (storeId && storeId!=='master') form.append('storeId',storeId);
+            return uploadApi('/assets',form).then(function(asset){
+                state.assets.unshift(asset); uploaded.push(String(asset.id));
+            });
+        });
+    });
+    sequence.done(function(){
+        if (replacing && Number(replaceIndex)>=0 && Number(replaceIndex)<values.length) values.splice(Number(replaceIndex),1,uploaded[0]);
+        else Array.prototype.push.apply(values,uploaded);
+        commitSkinBannerChange(replacing ? '轮播图已替换' : '已上传 ' + uploaded.length + ' 张轮播图');
+    }).fail(showFailure).always(function(){
+        state.activeBannerReplaceIndex=null;
+        renderAssets();
+        setButtons(false);
+    });
+}
+
+function uploadProductSkinAsset(productId, file) {
+    if (!hasPermission('ASSET_MANAGE')) return;
+    if (file.size > 10 * 1024 * 1024) return showEditorError('图片不能超过 10MB');
+    var product = state.skinProducts.find(function(item) { return String(item.productId || item.id) === String(productId); });
+    var form = new FormData();
+    form.append('file', file);
+    form.append('assetType', 'COMPONENT_BACKGROUND');
+    form.append('name', (product && product.productName ? product.productName + '主图 - ' : '商品主图 - ') + file.name);
+    var storeId = $('#storeSelect').val();
+    if (storeId && storeId !== 'master') form.append('storeId', storeId);
+    setButtons(true);
+    uploadApi('/assets', form).done(function(asset) {
+        state.assets.unshift(asset);
+        state.config.productImages[String(productId)] = String(asset.id);
+        state.activeProductUploadId = null;
+        markDirty();
+        renderAssets();
+        renderPreview();
+        scheduleAutoSave();
+        showEditorSuccess((product && product.productName || '商品') + '主图已替换');
+    }).fail(showFailure).always(function() { setButtons(false); });
+}
+
+function archiveAsset(asset) {
+    layer.confirm('停用后不能再用于新的草稿。已发布版本正在使用的素材不可停用。',{icon:3,title:'停用素材'},function(index){
+        layer.close(index); api('DELETE','/assets/' + asset.id).done(function(){
+            state.assets=state.assets.filter(function(item){return String(item.id)!==String(asset.id);});
+            var removed=removeAssetReferences(asset.id); renderAssets(); renderPreview();
+            if (removed) markDirty();
+            showEditorSuccess(removed ? '素材已停用，当前配置中的引用已清除，请保存草稿' : '素材已停用');
+        }).fail(showFailure);
+    });
+}
+
+function removeAssetReferences(assetId) {
+    if (!state.config) return false;
+    var removed=false, brand=state.config.brand || {}, components=state.config.components || {};
+    ['logoAssetId','headerAssetId'].forEach(function(key){
+        if (String(brand[key])===String(assetId)) { delete brand[key]; removed=true; }
+    });
+    Object.keys(components).forEach(function(key){
+        var background=components[key] && components[key].background;
+        if (background && String(background.assetId)===String(assetId)) { delete components[key].background; removed=true; }
+    });
+    var hero = state.config.slots && state.config.slots.heroBanner;
+    if (hero && String(hero.assetId) === String(assetId)) { delete hero.assetId; hero.backgroundType = 'color'; removed = true; }
+    Object.keys(state.config.assets || {}).forEach(function(key){ if (String(state.config.assets[key])===String(assetId)) { state.config.assets[key]=null; removed=true; } });
+    Object.keys(state.config.productImages || {}).forEach(function(productId){
+        if (String(state.config.productImages[productId]) === String(assetId)) {
+            delete state.config.productImages[productId];
+            removed = true;
+        }
+    });
+    return removed;
+}
+
+function updateScopeActions() {
+    var storeId = $('#storeSelect').val(), store = state.stores.find(function(item) { return String(item.storeId) === String(storeId); });
+    state.scopeReadOnly = !!store && store.bindingMode !== 'INDEPENDENT';
+    var allowed = hasPermission('THEME_SCOPE_CHANGE');
+    $('#independentBtn').toggle(allowed && !!store && store.bindingMode !== 'INDEPENDENT');
+    $('#followBtn').toggle(allowed && !!store && store.bindingMode === 'INDEPENDENT');
+    $('#scopeNotice').toggle(state.scopeReadOnly);
+    if (state.scopeReadOnly) {
+        $('#scopeNoticeTitle').text((store.storeName || '当前门店') + '正在跟随商家统一装修');
+        $('#scopeNoticeText').text('当前页面只读。如需单独修改，将复制当前统一线上样式并生成该门店的 Draft。');
+        $('#scopeNoticeIndependentBtn').prop('disabled', !allowed);
+    }
+}
+
+function createIndependent() {
+    var storeId = $('#storeSelect').val(); if (!storeId || storeId === 'master') return;
+    layer.confirm('将当前线上主题复制为该门店的独立草稿。线上版本在首次发布前保持不变。', { icon:3, title:'创建独立装修' }, function(index) {
+        layer.close(index); api('POST','/stores/' + storeId + '/independent-theme',{}).done(function(theme) {
+            var store = state.stores.find(function(item){ return String(item.storeId) === String(storeId); }); if (store) { store.themeId=theme.id; store.bindingMode='INDEPENDENT'; }
+            renderStores(); $('#storeSelect').val(String(storeId)); updateScopeActions(); loadScopeThemes('STORE', storeId, theme.id);
+        }).fail(showFailure);
+    });
+}
+
+function followMaster() {
+    var storeId = $('#storeSelect').val(); if (!storeId || storeId === 'master') return;
+    layer.confirm('该门店将立即重新使用商家统一主题的当前发布版本。独立装修历史会保留。', { icon:3, title:'重新跟随统一装修' }, function(index) {
+        layer.close(index); api('POST','/stores/' + storeId + '/follow-master',{}).done(function(store) {
+            var old = state.stores.find(function(item){ return String(item.storeId) === String(storeId); }); if (old) Object.assign(old,store);
+            renderStores(); $('#storeSelect').val(String(storeId)); updateScopeActions(); loadScopeThemes('MERCHANT', state.merchantId); showEditorSuccess('门店已重新跟随统一装修');
+        }).fail(showFailure);
+    });
+}
+
+function fillEditor() {
+    $('.theme-input').each(function() { var value = getPath(state.config, $(this).data('path')); $(this).val(value); });
+    $('input[type=color][data-color-target]').each(function() { var value = $('#' + $(this).data('color-target')).val(); if (/^#[0-9a-fA-F]{6}$/.test(value)) $(this).val(value); });
+    $('#bannerVisible').prop('checked', !state.config.components || !state.config.components.activityBanner || state.config.components.activityBanner.visible !== false);
+    $('#skinPageBackground').val(skinPageColor());
+    $('#skinPageBackground-swatch').val(/^#[0-9a-fA-F]{6}$/.test(skinPageColor()) ? skinPageColor() : '#FFFFFF');
+    renderAssets();
+    renderSkinNavigation();
+    var editable = hasPermission('THEME_EDIT');
+    $('.theme-input,.skin-input,#skinPageBackgroundType,#bannerVisible,.asset-binding,.background-binding,#homeBannerAsset,#clearHomeBannerBtn').prop('disabled', !editable);
+    $('#chooseAssetBtn,#uploadAssetType,#uploadAssetName').prop('disabled', !hasPermission('ASSET_MANAGE'));
+    $('#homeBannerUploadBtn,#homeBannerAssetName,#skinAssetUploadBtn,#skinAssetName').prop('disabled', !hasPermission('ASSET_MANAGE'));
+    $('#homeBannerFileInput').prop('disabled', !hasPermission('ASSET_MANAGE'));
+    applySkinEditorPermissions();
+    $('#validateBtn,#saveBtn').prop('disabled', !editable);
+    $('#previewBtn').prop('disabled', !hasPermission('THEME_PREVIEW'));
+    $('#publishBtn').prop('disabled', !hasPermission('THEME_PUBLISH'));
+    updateRestorePublishedButton();
+    updateScopeActions();
+}
+
+function renderPreview() {
+    if (!state.config) return;
+    $('#skinPageBackground').val(skinPageColor());
+    renderPageBackgroundEditor();
+    $('#previewSchema').text('SkinConfig V' + state.config.schemaVersion + ' · ' + activeSkinComponent().name);
+    postH5Preview();
+}
+
+function postH5Preview() {
+    if (!state.h5Ready || !state.config || !h5PreviewOrigin) return;
+    var frame=document.getElementById('miniProgramPreview'); if (!frame || !frame.contentWindow) return;
+    frame.contentWindow.postMessage({ type:'SKIN_CONFIG_UPDATE', payload:state.config, assetUrls:assetUrlMap() },h5PreviewOrigin);
+}
+
+function postH5Navigation(page) {
+    if (!state.h5Ready || !h5PreviewOrigin || page==='global') return;
+    var frame=document.getElementById('miniProgramPreview'); if (!frame || !frame.contentWindow) return;
+    frame.contentWindow.postMessage({type:'SKIN_PREVIEW_NAVIGATE',page:page},h5PreviewOrigin);
+}
+
+function assetUrlMap() {
+    return state.assets.reduce(function(result,asset){ if (asset.id!=null && asset.url) result[String(asset.id)]=asset.url; return result; },{});
+}
+
+function assetUrl(assetId) { var item=state.assets.find(function(asset){return String(asset.id)===String(assetId);}); return item ? item.url : ''; }
+
+function validateDraft() {
+    if (!state.theme || !state.draft || !state.config) return showEditorError('当前没有可校验的装修方案');
+    api('POST','/themes/' + state.theme.id + '/validate',{ revision:state.draft.revision, config:state.config }).done(function() { showEditorSuccess('配置校验通过'); }).fail(showFailure);
+}
+
+function saveDraft() {
+    if (state.saving && state.savePromise) return state.savePromise;
+    if (!state.draft || !state.config) return $.Deferred().reject({ msg:'当前没有可保存的草稿' }).promise();
+    var savedSnapshot = clone(state.config);
+    state.saving = true; updateState(); setButtons(true);
+    state.savePromise = api('PUT','/themes/' + state.theme.id + '/draft',{ revision:state.draft.revision, config:savedSnapshot }).done(function(draft) {
+        state.draft = draft; state.draftRevision = draft.revision; state.savedConfig = savedSnapshot; state.draftConfig = state.config;
+        state.dirty = JSON.stringify(state.config) !== JSON.stringify(savedSnapshot); state.saveFailed = false; updateState(); showEditorSuccess('草稿已保存');
+    }).fail(function(error) { state.saveFailed = true; showFailure(error); }).always(function() {
+        state.saving = false; state.savePromise = null; updateState(); setButtons(false); if (state.dirty && !state.saveFailed) scheduleAutoSave();
+    });
+    return state.savePromise;
+}
+
+function scheduleAutoSave() {
+    if (state.autoSaveTimer) window.clearTimeout(state.autoSaveTimer);
+    state.autoSaveTimer = window.setTimeout(function() { state.autoSaveTimer = null; if (state.dirty && !state.saving) saveDraft(); }, 800);
+}
+
+function createDevicePreview() {
+    if (!state.theme || !state.draft) return showEditorError('当前没有可预览的装修方案');
+    if (state.dirty) return showEditorError('请先保存草稿再创建真机预览');
+    var storeId = $('#storeSelect').val();
+    if (!storeId || storeId === 'master') return showEditorError('真机预览需要选择一个具体门店');
+    setButtons(true);
+    api('POST','/themes/' + state.theme.id + '/preview-sessions',{ storeId:String(storeId), revision:state.draft.revision }).done(function(result) {
+        var path = result.previewPath || '';
+        var content = $('<div style="padding:18px 22px"><div id="devicePreviewQr" class="text-center" style="display:none;margin-bottom:16px"><img alt="真机预览小程序码" style="width:220px;height:220px;object-fit:contain"><p class="text-muted m-t-sm">微信扫码查看已保存草稿</p></div><div id="devicePreviewQrFallback" class="alert alert-warning" style="display:none"></div><p><strong>小程序预览路径</strong></p><div class="input-group"><input id="devicePreviewPath" class="form-control" readonly><span class="input-group-btn"><button id="copyPreviewPathBtn" type="button" class="btn btn-default"><i class="fa fa-copy"></i> 复制</button></span></div><p class="text-muted m-t-sm">草稿 revision ' + result.draftRevision + '，有效期 15 分钟</p><button id="revokeDevicePreviewBtn" type="button" class="btn btn-default btn-sm"><i class="fa fa-ban"></i> 立即失效</button></div>');
+        content.find('#devicePreviewPath').val(path).attr('value',path);
+        if (result.qrCodeUrl) content.find('#devicePreviewQr').show().find('img').attr('src',result.qrCodeUrl);
+        else content.find('#devicePreviewQrFallback').text('小程序码暂不可用：' + (result.qrUnavailableReason || '微信配置不可用，请复制预览路径到开发者工具')).show();
+        layer.open({ type:1, title:'真机预览', area:['560px','auto'], content:content.prop('outerHTML'), success:function() {
+            $('#copyPreviewPathBtn').on('click', function() {
+                var input = document.getElementById('devicePreviewPath'); input.select(); document.execCommand('copy');
+                layer.msg('预览路径已复制');
+            });
+            $('#revokeDevicePreviewBtn').on('click', function() {
+                api('DELETE','/preview-sessions/' + result.sessionId).done(function(){ $('#revokeDevicePreviewBtn').prop('disabled',true).text('已失效'); layer.msg('预览会话已失效'); }).fail(showFailure);
+            });
+        }});
+    }).fail(showFailure).always(function() { setButtons(false); });
+}
+
+function publishDraft() {
+    if (!state.theme || !state.draft || !state.config) return showEditorError('当前没有可发布的装修方案');
+    if (state.saving && state.savePromise) return state.savePromise.then(publishDraft, showFailure);
+    if (state.dirty) return saveDraft().then(publishDraft, showFailure);
+    return api('POST','/themes/' + state.theme.id + '/validate',{ revision:state.draft.revision, config:state.config }).done(function() { publishDraftConfirmed(); }).fail(showFailure);
+}
+
+function publishDraftConfirmed() {
+    if (state.dirty) return showEditorError('请先保存草稿再发布');
+    layer.confirm('发布后将更新当前装修范围的顾客端主题。', { icon:3, title:'确认发布' }, function(index) {
+        layer.close(index); state.publishing = true; updateState(); setButtons(true);
+        api('POST','/themes/' + state.theme.id + '/publish',{ revision:state.draft.revision, idempotencyKey:createIdempotencyKey(), publishNote:$('#publishNote').val() }).done(function(result) {
+            state.publishedVersion = result.versionNo; state.publishedConfig = clone(state.config); state.savedConfig = clone(state.config);
+            state.themes.forEach(function(item){ item.active = String(item.id) === String(state.theme.id); if (item.active) { item.latestVersionNo = result.versionNo; item.hasUnpublishedChanges = false; } });
+            renderThemes(); showEditorSuccess('已发布 V' + result.versionNo + '，影响 ' + result.affectedStores + ' 家门店'); loadVersions();
+        }).fail(showFailure).always(function() { state.publishing = false; updateState(); setButtons(false); });
+    });
+}
+
+function loadVersions(openDialog) {
+    if (!state.theme) return;
+    var themeId = state.theme.id;
+    api('GET','/themes/' + themeId + '/versions').done(function(items) {
+        if (!state.theme || String(state.theme.id) !== String(themeId)) return;
+        items = asArray(items);
+        state.versionItems = items;
+        state.publishedVersion = items && items.length ? items[0].versionNo : null;
+        state.publishedConfig = null;
+        if (items && items.length) { try { state.publishedConfig = toSkinConfig(JSON.parse(items[0].configJson)); } catch (error) { state.publishedConfig = null; } }
+        updateState();
+        updateThemeStatus();
+        updateRestorePublishedButton();
+        renderVersionRows($('#versionRows'), items);
+        if ($('#versionDialogRows').length) renderVersionRows($('#versionDialogRows'), items);
+        if (openDialog) openVersionsDialog(items);
+    }).fail(showFailure);
+}
+
+function renderVersionRows(rows, items) {
+    if (!rows || !rows.length) return;
+    rows.empty();
+    if (!items || !items.length) {
+        rows.append('<tr><td colspan="5" class="text-center text-muted">暂无发布记录</td></tr>');
+        return;
+    }
+    (items || []).forEach(function(item) {
+        var row = $('<tr><td></td><td></td><td></td><td></td><td><button type="button" class="btn btn-default btn-xs"><i class="fa fa-history"></i> 恢复为草稿</button></td></tr>');
+        row.children().eq(0).text('V' + item.versionNo); row.children().eq(1).text(item.sourceDraftRevision); row.children().eq(2).text(item.publishedAt || '-'); row.children().eq(3).text(item.publishNote || '-');
+        row.find('button').prop('disabled', !hasPermission('THEME_EDIT')).attr('title', hasPermission('THEME_EDIT') ? '覆盖当前草稿，不影响线上版本' : '当前角色无权恢复草稿');
+        if (hasPermission('THEME_EDIT')) row.find('button').on('click', function() { restoreVersion(item.id); });
+        rows.append(row);
+    });
+}
+
+function openVersionsDialog(items) {
+    if (state.versionDialog) layer.close(state.versionDialog);
+    var content = $('<div style="padding:14px 18px"><div class="versions-head"><strong>发布记录</strong><button id="versionDialogRefresh" type="button" class="btn btn-default btn-xs"><i class="fa fa-refresh"></i> 刷新</button></div><div class="table-responsive"><table class="table table-striped table-condensed"><thead><tr><th>版本</th><th>草稿修订</th><th>发布时间</th><th>说明</th><th>操作</th></tr></thead><tbody id="versionDialogRows"></tbody></table></div></div>');
+    state.versionDialog = layer.open({ type:1, title:'版本记录 · ' + (state.theme && state.theme.name || ''), area:['900px','auto'], content:content.prop('outerHTML'), success:function(){
+        renderVersionRows($('#versionDialogRows'), items);
+        $('#versionDialogRefresh').on('click', function(){ loadVersions(false); });
+    }, end:function(){ state.versionDialog = null; } });
+}
+
+function restorePublishedStyle() {
+    if (!hasPermission('THEME_EDIT')) return showEditorError('当前角色只能查看主题');
+    var hasPublishedVersion = !!state.publishedConfig;
+    var sourceConfig = hasPublishedVersion ? state.publishedConfig : DEFAULT_SKIN_CONFIG;
+    var message = hasPublishedVersion
+            ? '将使用当前线上版本覆盖草稿中的所有未发布修改，顾客正在使用的线上版本不会改变。'
+            : '当前装修范围还没有已发布版本，将恢复为小程序当前使用的默认样式。';
+    layer.confirm(message, { icon:3, title:'恢复线上样式' }, function(index) {
+        layer.close(index);
+        state.config = toSkinConfig(clone(sourceConfig));
+        state.draftConfig = state.config;
+        fillEditor();
+        renderPreview();
+        markDirty();
+        scheduleAutoSave();
+        showEditorSuccess(hasPublishedVersion ? '已恢复为当前线上样式' : '已恢复为小程序默认样式');
+    });
+}
+
+function restoreVersion(versionId) {
+    if (!state.theme || !state.draft) return showEditorError('当前没有可恢复的装修方案');
+    if (!hasPermission('THEME_EDIT')) return showEditorError('当前角色只能查看主题');
+    layer.confirm('恢复只会覆盖当前草稿，不影响线上版本。', { icon:3, title:'恢复历史版本' }, function(index) {
+        layer.close(index);
+        api('POST','/themes/' + state.theme.id + '/versions/' + versionId + '/restore',{ revision:state.draft.revision }).done(function(draft) {
+            state.draft = draft; state.config = toSkinConfig(JSON.parse(draft.configJson)); state.draftConfig = state.config; state.dirty = true; fillEditor(); renderPreview(); updateState(); showEditorSuccess('历史版本已恢复为草稿');
+        }).fail(showFailure);
+    });
+}
+
+function getPath(object, path) { return path.split('.').reduce(function(value,key) { return value == null ? undefined : value[key]; }, object); }
+function setPath(object, path, value) { var keys=path.split('.'), target=object; keys.slice(0,-1).forEach(function(key){ if (!target[key]) target[key]={}; target=target[key]; }); target[keys[keys.length-1]]=value; }
+function deletePath(object,path) { var keys=path.split('.'), target=object; keys.slice(0,-1).forEach(function(key){ target=target && target[key]; }); if(target) delete target[keys[keys.length-1]]; }
+function markDirty() { state.dirty=true; state.saveFailed=false; updateState(); }
+function updateState() {
+    var synced = state.publishedConfig && state.savedConfig && JSON.stringify(state.publishedConfig) === JSON.stringify(state.savedConfig);
+    var text = state.saving ? '正在保存...' : state.publishing ? '正在发布...' : state.saveFailed ? '保存失败' : state.dirty ? '有未保存修改' : synced ? '当前装修已与线上同步' : '草稿已保存 · 尚未发布';
+    $('#saveState').toggleClass('is-dirty',state.dirty||state.saveFailed).toggleClass('is-saving',state.saving||state.publishing).text(text);
+}
+function showWorkbench() { $('#loadingState,#emptyState,#versionsBand').hide(); $('#workbenchMain').show(); }
+function showLoading(text) { $('#workbenchMain,#versionsBand,#emptyState').hide(); setButtons(true); $('#versionsBtn').prop('disabled', true); $('#loadingState').text(text).show(); }
+function showEmpty(text, action) { $('#loadingState,#workbenchMain,#versionsBand').hide(); setButtons(true); $('#versionsBtn').prop('disabled', true); $('#emptyState').html($('<div>').text(text)).append(action ? $('<div class="m-t">').html(action) : '').show(); }
+function requestErrorMessage(error) {
+    var response=error && error.responseJSON, message=error && (error.msg || error.message) || response && (response.msg || response.message);
+    if (!message && error && error.status===401) message='登录状态已失效，请重新登录';
+    return message || '操作失败，请稍后重试';
+}
+function showFailure(error) { showEditorError(requestErrorMessage(error)); $('#loadingState').hide(); }
+function showEditorError(message) { $('#editorError').removeClass('text-success').text(message).show(); }
+function showEditorSuccess(message) { $('#editorError').addClass('text-success').text(message).show(); setTimeout(function(){ $('#editorError').fadeOut(150); },2600); }
+function updateRestorePublishedButton() { $('#restorePublishedBtn').prop('disabled',!hasPermission('THEME_EDIT') || !state.config || state.saving || state.publishing).attr('title',state.publishedConfig ? '恢复当前已发布的线上样式' : '当前无发布版本，恢复小程序默认样式'); }
+function setButtons(disabled) { $('#validateBtn,#saveBtn').prop('disabled',disabled || !hasPermission('THEME_EDIT')); $('#previewBtn').prop('disabled',disabled || !hasPermission('THEME_PREVIEW')); $('#publishBtn').prop('disabled',disabled || !hasPermission('THEME_PUBLISH')); updateRestorePublishedButton(); }
+function createIdempotencyKey() { return 'publish-' + state.theme.id + '-' + state.draft.revision + '-' + Date.now(); }
+function hasPermission(permission) {
+    if (state.scopeReadOnly && (permission === 'THEME_EDIT' || permission === 'THEME_PUBLISH' || permission === 'THEME_PREVIEW' || permission === 'ASSET_MANAGE')) return false;
+    return state.permissions.indexOf(permission) >= 0;
+}
+</script>
+</body>
+</html>
