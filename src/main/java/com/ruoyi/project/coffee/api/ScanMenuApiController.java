@@ -29,8 +29,6 @@ import com.ruoyi.project.coffee.profile.service.ProductRecommendationService;
 @RequestMapping("/api/scanMenu")
 public class ScanMenuApiController extends BaseController
 {
-    private static final long DEFAULT_SHOP_ID = 1L;
-
     @Autowired
     private IScanCategoryService scanCategoryService;
 
@@ -61,7 +59,6 @@ public class ScanMenuApiController extends BaseController
     @GetMapping("/products")
     public AjaxResult getProductList(
         @RequestParam(value = "categoryId", required = false) Long categoryId,
-        @RequestParam(value = "shopId", required = false) Long shopId,
         HttpServletRequest request)
     {
         ScanProduct query = new ScanProduct();
@@ -70,7 +67,6 @@ public class ScanMenuApiController extends BaseController
             query.setCategoryId(categoryId);
         }
         query.setStatus(1);
-        // shopId 当前商品表无字段;参数保留用于后续扩展,默认门店为 1
         List<ScanProduct> list = scanProductService.selectScanProductList(query);
         list = productRecommendationService.recommendScan(wxUserTokenService.resolveUserId(request), list);
         return AjaxResult.success(list);
@@ -99,16 +95,13 @@ public class ScanMenuApiController extends BaseController
     }
 
     @GetMapping("/table/parse")
-    public AjaxResult parseTable(
-        @RequestParam(value = "shopId", required = false) Long shopId,
-        @RequestParam("tableNo") String tableNo)
+    public AjaxResult parseTable(@RequestParam("tableNo") String tableNo)
     {
         if (tableNo == null || tableNo.trim().isEmpty())
         {
             return AjaxResult.error("桌号不能为空");
         }
-        Long resolvedShopId = shopId == null ? DEFAULT_SHOP_ID : shopId;
-        ScanTableQrcode table = scanTableQrcodeService.selectByShopAndTable(resolvedShopId, tableNo);
+        ScanTableQrcode table = scanTableQrcodeService.selectByTableNo(tableNo);
         if (table == null)
         {
             return AjaxResult.error("桌台不存在或已停用");
@@ -120,8 +113,6 @@ public class ScanMenuApiController extends BaseController
 
         Map<String, Object> data = new HashMap<String, Object>();
         data.put("tableId", table.getTableId());
-        data.put("shopId", table.getShopId());
-        data.put("shopName", table.getShopName());
         data.put("tableNo", table.getTableNo());
         data.put("scene", table.getScene());
         return AjaxResult.success(data);

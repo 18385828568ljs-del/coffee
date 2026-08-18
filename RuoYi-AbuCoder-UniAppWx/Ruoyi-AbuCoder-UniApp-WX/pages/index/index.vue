@@ -114,8 +114,6 @@ import { requestPromise, isSuccessResponse } from '@/utils/request-helper.js'
 import { loginByWxAuth } from '@/utils/wx-login.js'
 import { getLocalUserInfo } from '@/utils/session.js'
 
-const DEFAULT_SHOP_ID = 1
-const DEFAULT_SHOP_NAME = 'XX 咖啡'
 const SCAN_MENU_CONTEXT_KEY = 'scanMenuEntryContext'
 const WX_LOGIN_DISMISSED_KEY = 'wxLoginDismissed'
 
@@ -147,8 +145,6 @@ function parseScene(scene) {
 export default {
 	data() {
 		return {
-			shopId: DEFAULT_SHOP_ID,
-			shopName: DEFAULT_SHOP_NAME,
 			tableNo: '',
 			bannerList: [],
 			activityList: [],
@@ -187,13 +183,9 @@ export default {
 	methods: {
 		resolveEntryContext(options = {}) {
 			const sceneData = parseScene(options.scene)
-			const shopId = options.shopId || sceneData.shopId
 			const tableNo = options.tableNo || sceneData.tableNo
-			const shopName = options.shopName || sceneData.shopName
 
-			this.shopId = Number(shopId || DEFAULT_SHOP_ID) || DEFAULT_SHOP_ID
 			this.tableNo = tableNo ? String(tableNo).trim() : ''
-			this.shopName = shopName ? decodeValue(shopName) : DEFAULT_SHOP_NAME
 		},
 
 		async loadBanners() {
@@ -281,12 +273,7 @@ export default {
 		},
 
 		buildScanMenuContext(category) {
-			const context = {
-				shopId: this.shopId
-			}
-			if (this.shopName) {
-				context.shopName = this.shopName
-			}
+			const context = {}
 			if (this.tableNo) {
 				context.tableNo = this.tableNo
 			}

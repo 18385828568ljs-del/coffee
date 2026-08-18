@@ -31,7 +31,7 @@ import com.ruoyi.framework.config.RuoYiConfig;
  * 失败: 返回 application/json,如 {"errcode":41030,"errmsg":"invalid page"}
  *
  * 图片保存策略:
- *   本地文件,路径为 ${ruoyi.profile}/scanQrcode/{shopId}_{tableNo}_{ts}.jpg
+ *   本地文件,路径为 ${ruoyi.profile}/scanQrcode/{tableNo}_{ts}.jpg
  *   对外访问走若依 ResourceHandler 的 /profile/** 映射,
  *   最终 URL 形如 http(s)://<server>/profile/scanQrcode/xxx.jpg
  *
@@ -55,7 +55,7 @@ public class WxaCodeService
      * 生成小程序码并落到本地磁盘。
      *
      * @param page     小程序页面,例如 pages/scan/menu
-     * @param scene    scene 参数,最长 32 字节,例如 shopId=1&tableNo=A01
+     * @param scene    scene 参数,最长 32 字节,例如 tableNo=A01
      * @param fileName 保存文件名(不含扩展名),调用方负责保证唯一
      * @return 可直接存库 / 回前端的访问 URL(以 /profile 开头的相对路径)
      */

@@ -13,6 +13,9 @@ import com.ruoyi.framework.web.domain.BaseEntity;
 public class ScanProduct extends BaseEntity
 {
     private static final long serialVersionUID = 1L;
+    public static final String PRODUCT_TYPE_COFFEE = "COFFEE";
+    public static final String PRODUCT_TYPE_DRINK = "DRINK";
+    public static final String PRODUCT_TYPE_FOOD = "FOOD";
 
     /** 商品ID */
     private Long productId;
@@ -27,6 +30,13 @@ public class ScanProduct extends BaseEntity
 
     /** 商品副标题/描述 */
     private String subTitle;
+
+    /** 点单商品类型(COFFEE/DRINK/FOOD) */
+    @Excel(name = "商品类型")
+    private String productType;
+
+    /** 商品详细描述 */
+    private String description;
 
     /** 商品主图 */
     private String imageUrl;
@@ -66,6 +76,12 @@ public class ScanProduct extends BaseEntity
     public String getSubTitle() { return subTitle; }
     public void setSubTitle(String subTitle) { this.subTitle = subTitle; }
 
+    public String getProductType() { return productType; }
+    public void setProductType(String productType) { this.productType = productType; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
@@ -96,6 +112,7 @@ public class ScanProduct extends BaseEntity
             .append("productId", getProductId())
             .append("categoryId", getCategoryId())
             .append("productName", getProductName())
+            .append("productType", getProductType())
             .append("price", getPrice())
             .append("status", getStatus())
             .toString();

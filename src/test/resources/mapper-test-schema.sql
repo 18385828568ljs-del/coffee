@@ -128,8 +128,10 @@ CREATE TABLE t_scan_category (
 CREATE TABLE t_scan_product (
     product_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     category_id BIGINT,
+    product_type VARCHAR(20) NOT NULL DEFAULT 'DRINK',
     product_name VARCHAR(255),
     sub_title VARCHAR(255),
+    description VARCHAR(1000),
     image_url VARCHAR(500),
     video_url VARCHAR(500),
     price DECIMAL(10, 2),
@@ -170,7 +172,6 @@ CREATE TABLE t_scan_cart (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT,
     openid VARCHAR(128),
-    shop_id BIGINT,
     table_no VARCHAR(64),
     product_id BIGINT,
     product_name VARCHAR(255),
@@ -188,8 +189,6 @@ CREATE TABLE t_scan_cart (
 
 CREATE TABLE t_scan_table_qrcode (
     table_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    shop_id BIGINT,
-    shop_name VARCHAR(255),
     table_no VARCHAR(64),
     scene VARCHAR(32),
     qr_url VARCHAR(500),
@@ -206,8 +205,6 @@ CREATE TABLE t_scan_order (
     order_no VARCHAR(64),
     user_id BIGINT,
     openid VARCHAR(128),
-    shop_id BIGINT,
-    shop_name VARCHAR(255),
     table_no VARCHAR(64),
     scene VARCHAR(32),
     total_amount DECIMAL(10, 2),

@@ -136,8 +136,6 @@ class ScanOrderMapperIntegrationTest
         order.setOrderNo(orderNo);
         order.setUserId(66L);
         order.setOpenid("openid-test");
-        order.setShopId(1L);
-        order.setShopName("阿布咖啡");
         order.setTableNo("A08");
         order.setScene("dine_in");
         order.setTotalAmount(new BigDecimal("40.00"));

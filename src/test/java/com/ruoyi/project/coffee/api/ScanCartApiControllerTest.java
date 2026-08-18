@@ -74,13 +74,13 @@ class ScanCartApiControllerTest
         product.setStatus(1);
         ScanProductSpecOption option = new ScanProductSpecOption();
         option.setOptionId(2L);
+        option.setProductId(5L);
         option.setExtraPrice(new BigDecimal("1.50"));
         ScanCart input = new ScanCart();
         input.setProductId(5L);
         input.setQuantity(2);
-        input.setShopId(null);
         input.setTableNo(" A01 ");
-        input.setSpecJson("[2]");
+        input.setSpecJson("[{\"specId\":11,\"optionIds\":[2]}]");
         ScanCart saved = new ScanCart();
         saved.setId(9L);
         when(scanProductService.selectScanProductById(5L)).thenReturn(product);
@@ -93,7 +93,6 @@ class ScanCartApiControllerTest
         verify(scanCartService).addOrIncrease(captor.capture());
         ScanCart cart = captor.getValue();
         assertEquals(18L, cart.getUserId());
-        assertEquals(1L, cart.getShopId());
         assertEquals("A01", cart.getTableNo());
         assertEquals("拿铁", cart.getProductName());
         assertEquals("latte.jpg", cart.getProductImage());
@@ -105,13 +104,63 @@ class ScanCartApiControllerTest
     }
 
     @Test
+    void addToCartChargesConfiguredLargeCupExtraPrice()
+    {
+        ScanProduct product = new ScanProduct();
+        product.setProductId(101L);
+        product.setProductName("美式咖啡");
+        product.setCategoryId(1L);
+        product.setPrice(new BigDecimal("12.00"));
+        product.setStatus(1);
+        ScanProductSpecOption largeCup = new ScanProductSpecOption();
+        largeCup.setOptionId(4L);
+        largeCup.setProductId(101L);
+        largeCup.setExtraPrice(new BigDecimal("3.00"));
+        ScanCart input = new ScanCart();
+        input.setProductId(101L);
+        input.setQuantity(1);
+        input.setSpecJson("[{\"specId\":2,\"optionIds\":[4]}]");
+        when(scanProductService.selectScanProductById(101L)).thenReturn(product);
+        when(scanProductSpecOptionService.selectOptionListByIds(Arrays.asList(4L)))
+            .thenReturn(Arrays.asList(largeCup));
+        when(scanCartService.addOrIncrease(any(ScanCart.class))).thenReturn(new ScanCart());
+
+        controller.addToCart(input);
+
+        ArgumentCaptor<ScanCart> captor = ArgumentCaptor.forClass(ScanCart.class);
+        verify(scanCartService).addOrIncrease(captor.capture());
+        assertEquals(new BigDecimal("15.00"), captor.getValue().getPrice());
+    }
+
+    @Test
+    void addToCartRejectsLegacyFlatOptionIdArray()
+    {
+        ScanProduct product = new ScanProduct();
+        product.setProductId(5L);
+        product.setProductName("拿铁");
+        product.setCategoryId(4L);
+        product.setPrice(new BigDecimal("12.00"));
+        product.setStatus(1);
+        ScanCart input = new ScanCart();
+        input.setProductId(5L);
+        input.setSpecJson("[2]");
+        when(scanProductService.selectScanProductById(5L)).thenReturn(product);
+
+        AjaxResult result = controller.addToCart(input);
+
+        assertEquals(500, result.get(AjaxResult.CODE_TAG));
+        assertEquals("规格参数无效", result.get(AjaxResult.MSG_TAG));
+        verify(scanCartService, never()).addOrIncrease(any(ScanCart.class));
+    }
+
+    @Test
     void getCartListBuildsQuantityAndAmountSummary()
     {
         ScanCart first = cart(2, "9.50");
         ScanCart second = cart(1, "12.00");
         when(scanCartService.selectScanCartList(any(ScanCart.class))).thenReturn(Arrays.asList(first, second));
 
-        AjaxResult result = controller.getCartList(null, null, "A01");
+        AjaxResult result = controller.getCartList(null, "A01");
 
         Map<?, ?> data = (Map<?, ?>) result.get(AjaxResult.DATA_TAG);
         assertEquals(3, data.get("totalQuantity"));
@@ -184,7 +233,7 @@ class ScanCartApiControllerTest
         when(scanCartService.logicDeleteById(8L)).thenReturn(1);
         when(scanProductService.selectScanProductById(5L)).thenReturn(product(5L, 4L));
 
-        AjaxResult result = controller.clearCart(null, 1L, "A01");
+        AjaxResult result = controller.clearCart(null, "A01");
 
         assertEquals(0, result.get(AjaxResult.CODE_TAG));
         verify(scanCartService).logicDeleteById(8L);
@@ -199,7 +248,7 @@ class ScanCartApiControllerTest
             .thenThrow(new IllegalStateException("snapshot unavailable"));
         when(scanCartService.logicDeleteByOwnerAndTable(any(ScanCart.class))).thenReturn(1);
 
-        AjaxResult result = controller.clearCart(null, 1L, "A01");
+        AjaxResult result = controller.clearCart(null, "A01");
 
         assertEquals(0, result.get(AjaxResult.CODE_TAG));
         verify(scanCartService).logicDeleteByOwnerAndTable(any(ScanCart.class));

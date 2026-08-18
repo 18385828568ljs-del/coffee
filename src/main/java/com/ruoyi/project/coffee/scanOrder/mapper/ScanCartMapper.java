@@ -12,7 +12,7 @@ public interface ScanCartMapper
 
     List<ScanCart> selectScanCartList(ScanCart scanCart);
 
-    /** 查询同用户/openid + 同门店桌号 + 同商品 + 同规格的活跃记录 */
+    /** 查询同用户/openid + 同桌号 + 同商品 + 同规格的活跃记录 */
     List<ScanCart> selectMatchingCart(ScanCart scanCart);
 
     int insertScanCart(ScanCart scanCart);

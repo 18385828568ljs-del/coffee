@@ -36,7 +36,6 @@ class ScanCartMapperIntegrationTest
 
         ScanCart query = new ScanCart();
         query.setUserId(7L);
-        query.setShopId(1L);
         query.setTableNo("A01");
         query.setProductId(3001L);
         query.setSpecJson("{\"temp\":\"hot\"}");
@@ -55,13 +54,11 @@ class ScanCartMapperIntegrationTest
 
         ScanCart query = new ScanCart();
         query.setUserId(9L);
-        query.setShopId(1L);
         query.setTableNo("A01");
         assertEquals(1, scanCartMapper.logicDeleteByOwnerAndTable(query));
 
         ScanCart remainQuery = new ScanCart();
         remainQuery.setUserId(9L);
-        remainQuery.setShopId(1L);
 
         List<ScanCart> remains = scanCartMapper.selectScanCartList(remainQuery);
         assertEquals(1, remains.size());
@@ -73,7 +70,6 @@ class ScanCartMapperIntegrationTest
         ScanCart cart = new ScanCart();
         cart.setUserId(userId);
         cart.setOpenid(openid);
-        cart.setShopId(1L);
         cart.setTableNo(tableNo);
         cart.setProductId(productId);
         cart.setProductName("燕麦拿铁");

@@ -19,9 +19,6 @@ public class ScanCart
     /** 微信openid */
     private String openid;
 
-    /** 门店ID */
-    private Long shopId;
-
     /** 桌号 */
     private String tableNo;
 
@@ -70,9 +67,6 @@ public class ScanCart
     public String getOpenid() { return openid; }
     public void setOpenid(String openid) { this.openid = openid; }
 
-    public Long getShopId() { return shopId; }
-    public void setShopId(Long shopId) { this.shopId = shopId; }
-
     public String getTableNo() { return tableNo; }
     public void setTableNo(String tableNo) { this.tableNo = tableNo; }
 
@@ -118,7 +112,6 @@ public class ScanCart
             .append("id", id)
             .append("userId", userId)
             .append("openid", openid)
-            .append("shopId", shopId)
             .append("tableNo", tableNo)
             .append("productId", productId)
             .append("quantity", quantity)

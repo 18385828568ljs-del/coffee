@@ -11,10 +11,6 @@
                 <div class="select-list">
                     <ul>
                         <li>
-                            <label>门店ID：</label>
-                            <input type="text" name="shopId"/>
-                        </li>
-                        <li>
                             <label>桌号：</label>
                             <input type="text" name="tableNo"/>
                         </li>
@@ -83,17 +79,6 @@
                 field: 'tableId',
                 title: '桌台ID',
                 visible: false
-            },
-            {
-                field: 'shopId',
-                title: '门店ID'
-            },
-            {
-                field: 'shopName',
-                title: '门店名称',
-                formatter: function(value) {
-                    return value || '-';
-                }
             },
             {
                 field: 'tableNo',
@@ -168,8 +153,6 @@
 
     function buildBatchGenerateForm() {
         return '<form id="batchGenerateQrcodeForm" class="form-horizontal" style="padding: 20px 30px 0 10px;">'
-            + '<div class="form-group"><label class="col-sm-3 control-label">门店ID：</label><div class="col-sm-8"><input name="shopId" class="form-control" type="number" placeholder="默认 1"></div></div>'
-            + '<div class="form-group"><label class="col-sm-3 control-label">门店名称：</label><div class="col-sm-8"><input name="shopName" class="form-control" type="text" placeholder="选填"></div></div>'
             + '<div class="form-group"><label class="col-sm-3 control-label">桌号列表：</label><div class="col-sm-8"><textarea name="tableNos" class="form-control" rows="4" placeholder="可选。多个桌号用逗号、空格或换行分隔，例如 A01,A02,A03"></textarea></div></div>'
             + '<div class="form-group"><label class="col-sm-3 control-label">桌号前缀：</label><div class="col-sm-8"><input name="prefix" class="form-control" type="text" placeholder="列表为空时使用，例如 A"></div></div>'
             + '<div class="form-group"><label class="col-sm-3 control-label">起止编号：</label><div class="col-sm-4"><input name="start" class="form-control" type="number" placeholder="起始，例如 1"></div><div class="col-sm-4"><input name="end" class="form-control" type="number" placeholder="结束，例如 10"></div></div>'
@@ -212,8 +195,6 @@
         }
         $.modal.confirm('确认重新生成桌号 ' + row.tableNo + ' 的二维码吗？', function() {
             postQrcode(qrcodeApiPrefix + '/generate', {
-                shopId: row.shopId,
-                shopName: row.shopName,
                 tableNo: row.tableNo,
                 scene: row.scene
             });

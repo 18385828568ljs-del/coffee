@@ -42,9 +42,9 @@ public class ScanOrderServiceImpl implements IScanOrderService
     private static final long URGE_INTERVAL_MILLIS = 60L * 1000L;
 
     /**
-     * 取餐号内存序列: key 为 "shopId:yyyyMMdd", value 为当天已分配到的最大号。
+     * 取餐号内存序列: key 为日期, value 为当天已分配到的最大号。
      * 单机部署下用 AtomicInteger 原子自增, 解决并发支付回调"查最大值+1"两步非原子导致的取餐号重复。
-     * 首次访问某门店当天的 key 时, 从 DB 当天最大值初始化(兼容白天重启)。
+     * 首次访问当天的 key 时, 从 DB 当天最大值初始化(兼容白天重启)。
      * 实例字段: @Service 单例下全局唯一, 生产行为与 static 一致, 但保证单测隔离。
      */
     private final java.util.concurrent.ConcurrentHashMap<String, java.util.concurrent.atomic.AtomicInteger> PICKUP_NO_SEQ =
@@ -77,7 +77,7 @@ public class ScanOrderServiceImpl implements IScanOrderService
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public ScanOrder createOrderFromCart(Long userId, String openid, Long shopId,
+    public ScanOrder createOrderFromCart(Long userId, String openid,
                                          String tableNo, String remark, String payType)
     {
         if (userId == null)
@@ -86,9 +86,9 @@ public class ScanOrderServiceImpl implements IScanOrderService
         }
 
         // 校验桌台号有效性(如果传入了tableNo)
-        if (StringUtils.isNotEmpty(tableNo) && shopId != null)
+        if (StringUtils.isNotEmpty(tableNo))
         {
-            ScanTableQrcode table = scanTableQrcodeService.selectByShopAndTable(shopId, tableNo);
+            ScanTableQrcode table = scanTableQrcodeService.selectByTableNo(tableNo);
             if (table == null)
             {
                 throw new ServiceException("桌台不存在,请重新扫码");
@@ -105,7 +105,6 @@ public class ScanOrderServiceImpl implements IScanOrderService
         {
             query.setOpenid(emptyToNull(openid));
         }
-        query.setShopId(shopId);
         query.setTableNo(emptyToNull(tableNo));
         query.setStatus(1);
         List<ScanCart> cartList = scanCartMapper.selectScanCartList(query);
@@ -133,7 +132,6 @@ public class ScanOrderServiceImpl implements IScanOrderService
         order.setOrderNo(generateOrderNo());
         order.setUserId(userId);
         order.setOpenid(emptyToNull(openid));
-        order.setShopId(shopId);
         order.setTableNo(emptyToNull(tableNo));
         order.setScene(DEFAULT_SCENE);
         order.setStatus(0);
@@ -190,7 +188,7 @@ public class ScanOrderServiceImpl implements IScanOrderService
     }
 
     @Override
-    public MarketingPreviewResult previewOrderFromCart(Long userId, String openid, Long shopId, String tableNo)
+    public MarketingPreviewResult previewOrderFromCart(Long userId, String openid, String tableNo)
     {
         if (userId == null)
         {
@@ -202,7 +200,6 @@ public class ScanOrderServiceImpl implements IScanOrderService
         {
             query.setOpenid(emptyToNull(openid));
         }
-        query.setShopId(shopId);
         query.setTableNo(emptyToNull(tableNo));
         query.setStatus(1);
         List<ScanCart> cartList = scanCartMapper.selectScanCartList(query);
@@ -356,8 +353,8 @@ public class ScanOrderServiceImpl implements IScanOrderService
 
         // 先用乐观锁抢占订单状态,避免并发重复扣款
         Date now = DateUtils.getNowDate();
-        String pickupNo = generatePickupNo(order.getShopId());
-        int estimatedWaitMinutes = estimateWaitMinutes(order.getShopId());
+        String pickupNo = generatePickupNo();
+        int estimatedWaitMinutes = estimateWaitMinutes();
         int affected = scanOrderMapper.updateScanOrderStatus(
             orderId, ScanOrderStatus.PENDING_PAY, ScanOrderStatus.MAKING,
             now, now, now, null, null, null,
@@ -493,23 +490,21 @@ public class ScanOrderServiceImpl implements IScanOrderService
             null, null, null);
     }
 
-    private String generatePickupNo(Long shopId)
+    private String generatePickupNo()
     {
-        long sid = shopId == null ? 1L : shopId;
         String today = new SimpleDateFormat("yyyyMMdd").format(new Date());
-        String key = sid + ":" + today;
-        // computeIfAbsent 保证同一 key 只初始化一次, 从 DB 读取当天已有最大值
-        java.util.concurrent.atomic.AtomicInteger seq = PICKUP_NO_SEQ.computeIfAbsent(key, k -> {
-            Integer maxToday = scanOrderMapper.selectMaxPickupNoToday(sid);
+        // computeIfAbsent 保证当天只初始化一次, 从 DB 读取已有最大值
+        java.util.concurrent.atomic.AtomicInteger seq = PICKUP_NO_SEQ.computeIfAbsent(today, k -> {
+            Integer maxToday = scanOrderMapper.selectMaxPickupNoToday();
             return new java.util.concurrent.atomic.AtomicInteger(maxToday == null ? 0 : maxToday);
         });
         return String.format("%03d", seq.incrementAndGet());
     }
 
-    private int estimateWaitMinutes(Long shopId)
+    private int estimateWaitMinutes()
     {
         int waitingOrders = 0;
-        Integer count = scanOrderMapper.countUnfinishedPaidOrders(shopId);
+        Integer count = scanOrderMapper.countUnfinishedPaidOrders();
         if (count != null)
         {
             waitingOrders = count;

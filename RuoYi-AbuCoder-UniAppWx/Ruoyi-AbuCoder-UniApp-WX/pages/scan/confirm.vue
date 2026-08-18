@@ -109,9 +109,7 @@ function toNumber(value) {
 export default {
 	data() {
 		return {
-			shopId: 1,
 			tableNo: '',
-			shopName: '咖啡门店',
 			cartList: [],
 			totalQuantity: 0,
 			totalAmount: 0,
@@ -128,11 +126,7 @@ export default {
 	},
 
 	onLoad(options = {}) {
-		this.shopId = toNumber(options.shopId) || 1
 		this.tableNo = options.tableNo ? decodeURIComponent(String(options.tableNo)).trim() : ''
-		if (options.shopName) {
-			this.shopName = decodeURIComponent(String(options.shopName)) || this.shopName
-		}
 		this.loadCartList()
 		this.loadSubscribeConfig()
 	},
@@ -196,7 +190,6 @@ export default {
 					url: scanCartApi.list,
 					method: 'GET',
 					data: {
-						shopId: this.shopId,
 						tableNo: this.tableNo
 					},
 					header: this.authHeader()
@@ -230,7 +223,6 @@ export default {
 					url: scanOrderApi.preview,
 					method: 'GET',
 					data: {
-						shopId: this.shopId,
 						tableNo: this.tableNo
 					},
 					header: this.authHeader()
@@ -261,7 +253,6 @@ export default {
 					method: 'POST',
 					header: this.authHeader(),
 					data: {
-						shopId: this.shopId,
 						tableNo: this.tableNo,
 						openid: userInfo.openid || '',
 						remark: this.remark,

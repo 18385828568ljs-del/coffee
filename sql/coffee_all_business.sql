@@ -488,8 +488,10 @@ CREATE TABLE IF NOT EXISTS `t_scan_category` (
 CREATE TABLE IF NOT EXISTS `t_scan_product` (
   `product_id`   BIGINT         NOT NULL AUTO_INCREMENT COMMENT '商品ID',
   `category_id`  BIGINT         NOT NULL                COMMENT '所属分类ID',
+  `product_type` VARCHAR(20)    NOT NULL DEFAULT 'DRINK' COMMENT '商品类型(COFFEE-咖啡,DRINK-普通饮料,FOOD-小食)',
   `product_name` VARCHAR(200)   NOT NULL                COMMENT '商品名称',
   `sub_title`    VARCHAR(200)   DEFAULT NULL            COMMENT '商品副标题/描述',
+  `description`  TEXT           DEFAULT NULL            COMMENT '商品详细描述',
   `image_url`    VARCHAR(500)   DEFAULT NULL            COMMENT '商品主图',
   `video_url`    VARCHAR(500)   DEFAULT NULL            COMMENT '商品讲解视频地址',
   `price`        DECIMAL(10, 2) NOT NULL                COMMENT '基础价格',
@@ -541,12 +543,10 @@ CREATE TABLE IF NOT EXISTS `t_scan_product_spec_option` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='扫码点单-规格选项';
 
 -- -----------------------------------------------------------------------------
--- 5. 桌台/门店二维码
+-- 5. 桌台二维码
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `t_scan_table_qrcode` (
   `table_id`     BIGINT        NOT NULL AUTO_INCREMENT COMMENT '桌台ID',
-  `shop_id`      BIGINT        NOT NULL DEFAULT 1      COMMENT '门店ID',
-  `shop_name`    VARCHAR(200)  DEFAULT NULL            COMMENT '门店名称',
   `table_no`     VARCHAR(50)   NOT NULL                COMMENT '桌号',
   `scene`        VARCHAR(50)   DEFAULT 'dine_in'       COMMENT '场景(dine_in-堂食,take_out-外带)',
   `qr_url`       VARCHAR(500)  DEFAULT NULL            COMMENT '二维码直链',
@@ -557,7 +557,7 @@ CREATE TABLE IF NOT EXISTS `t_scan_table_qrcode` (
   `update_time`  DATETIME      DEFAULT NULL            COMMENT '更新时间',
   `remark`       VARCHAR(500)  DEFAULT NULL            COMMENT '备注',
   PRIMARY KEY (`table_id`),
-  UNIQUE KEY `uk_shop_table` (`shop_id`, `table_no`)
+  UNIQUE KEY `uk_table_no` (`table_no`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='扫码点单-桌台二维码';
 
 -- -----------------------------------------------------------------------------
@@ -568,8 +568,6 @@ CREATE TABLE IF NOT EXISTS `t_scan_order` (
   `order_no`         VARCHAR(64)    NOT NULL                COMMENT '订单号',
   `user_id`          BIGINT         NOT NULL                COMMENT '下单用户ID',
   `openid`           VARCHAR(100)   DEFAULT NULL            COMMENT '微信openid',
-  `shop_id`          BIGINT         DEFAULT 1               COMMENT '门店ID',
-  `shop_name`        VARCHAR(200)   DEFAULT NULL            COMMENT '门店名称',
   `table_no`         VARCHAR(50)    DEFAULT NULL            COMMENT '桌号',
   `scene`            VARCHAR(50)    DEFAULT 'dine_in'       COMMENT '场景',
   `total_amount`     DECIMAL(10, 2) NOT NULL                COMMENT '订单总金额(原价)',
@@ -602,9 +600,9 @@ CREATE TABLE IF NOT EXISTS `t_scan_order` (
   `update_time`      DATETIME       DEFAULT NULL            COMMENT '更新时间',
   PRIMARY KEY (`order_id`),
   UNIQUE KEY `uk_order_no` (`order_no`),
-  KEY `idx_pickup_day` (`shop_id`, `pay_time`, `pickup_no`),
+  KEY `idx_pickup_day` (`pay_time`, `pickup_no`),
   KEY `idx_user_id` (`user_id`),
-  KEY `idx_shop_table` (`shop_id`, `table_no`),
+  KEY `idx_table_no` (`table_no`),
   KEY `idx_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='扫码点单-订单';
 
@@ -636,7 +634,7 @@ SET FOREIGN_KEY_CHECKS = 1;
    请在扫码点单主建表脚本之后执行(依赖 t_scan_product 作为商品来源)。
  设计原则:
    1. 扫码点单购物车与商城购物车物理隔离,不改动原有 t_cart 表。
-   2. 扫码点单仅服务堂食/外带场景,带 shop_id 与 table_no,便于按桌台清理。
+   2. 扫码点单仅服务堂食/外带场景,保留 table_no 便于按桌台清理。
    3. product_id 指向 t_scan_product.product_id,但不设硬外键,保持与其它 coffee_* 表风格一致。
    4. 本脚本可重复执行:已有购物车表和数据不会被删除。
 */
@@ -648,7 +646,6 @@ CREATE TABLE IF NOT EXISTS `t_scan_cart` (
   `id`            BIGINT        NOT NULL AUTO_INCREMENT COMMENT '购物车ID',
   `user_id`       BIGINT        DEFAULT NULL            COMMENT '用户ID(登录后写入,匿名下单可为空)',
   `openid`        VARCHAR(100)  DEFAULT NULL            COMMENT '微信openid(未绑定userId时的用户标识)',
-  `shop_id`       BIGINT        DEFAULT 1               COMMENT '门店ID(对应 t_scan_table_qrcode.shop_id)',
   `table_no`      VARCHAR(50)   DEFAULT NULL            COMMENT '桌号(对应 t_scan_table_qrcode.table_no)',
   `product_id`    BIGINT        NOT NULL                COMMENT '扫码点单商品ID(对应 t_scan_product.product_id)',
   `product_name`  VARCHAR(200)  NOT NULL                COMMENT '商品名称(加购时快照,避免商品改名后错乱)',
@@ -665,7 +662,6 @@ CREATE TABLE IF NOT EXISTS `t_scan_cart` (
   PRIMARY KEY (`id`),
   KEY `idx_user_id`    (`user_id`),
   KEY `idx_openid`     (`openid`),
-  KEY `idx_shop_id`    (`shop_id`),
   KEY `idx_table_no`   (`table_no`),
   KEY `idx_product_id` (`product_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='扫码点单-购物车(与商城 t_cart 物理隔离)';

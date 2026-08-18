@@ -88,11 +88,11 @@ class ScanOrderServiceImplTest
         ScanCart unselected = buildCart(102L, 1002L, "美式咖啡", "冰", new BigDecimal("12.00"), 1, 0, 1, 0);
         ScanCart deleted = buildCart(103L, 1003L, "已删商品", "热", new BigDecimal("15.00"), 1, 1, 1, 1);
         ScanCart inactive = buildCart(104L, 1004L, "失效商品", "热", new BigDecimal("16.00"), 1, 1, 0, 0);
-        when(scanTableQrcodeService.selectByShopAndTable(1L, " A01 ")).thenReturn(table);
+        when(scanTableQrcodeService.selectByTableNo(" A01 ")).thenReturn(table);
         when(scanCartMapper.selectScanCartList(any(ScanCart.class)))
             .thenReturn(Arrays.asList(selected, unselected, deleted, inactive));
 
-        ScanOrder result = orderService.createOrderFromCart(7L, " openid-001 ", 1L,
+        ScanOrder result = orderService.createOrderFromCart(7L, " openid-001 ",
             " A01 ", "少放糖", " balance ");
 
         assertEquals(Long.valueOf(7L), result.getUserId());
@@ -114,7 +114,6 @@ class ScanOrderServiceImplTest
         ArgumentCaptor<ScanCart> queryCaptor = ArgumentCaptor.forClass(ScanCart.class);
         verify(scanCartMapper).selectScanCartList(queryCaptor.capture());
         assertEquals(Long.valueOf(7L), queryCaptor.getValue().getUserId());
-        assertEquals(Long.valueOf(1L), queryCaptor.getValue().getShopId());
         assertEquals("A01", queryCaptor.getValue().getTableNo());
         assertEquals(Integer.valueOf(1), queryCaptor.getValue().getStatus());
 
@@ -132,17 +131,17 @@ class ScanOrderServiceImplTest
     @Test
     void createOrderFromCartShouldRejectMissingOrDisabledTable()
     {
-        when(scanTableQrcodeService.selectByShopAndTable(1L, "A01")).thenReturn(null);
+        when(scanTableQrcodeService.selectByTableNo("A01")).thenReturn(null);
 
         ServiceException missing = assertThrows(ServiceException.class,
-            () -> orderService.createOrderFromCart(7L, "openid", 1L, "A01", null, "balance"));
+            () -> orderService.createOrderFromCart(7L, "openid", "A01", null, "balance"));
 
         assertEquals("桌台不存在,请重新扫码", missing.getMessage());
 
         ScanTableQrcode disabled = table(0);
-        when(scanTableQrcodeService.selectByShopAndTable(1L, "A01")).thenReturn(disabled);
+        when(scanTableQrcodeService.selectByTableNo("A01")).thenReturn(disabled);
         ServiceException stopped = assertThrows(ServiceException.class,
-            () -> orderService.createOrderFromCart(7L, "openid", 1L, "A01", null, "balance"));
+            () -> orderService.createOrderFromCart(7L, "openid", "A01", null, "balance"));
 
         assertEquals("桌台已停用,请联系工作人员", stopped.getMessage());
         verify(scanCartMapper, never()).selectScanCartList(any());
@@ -156,7 +155,7 @@ class ScanOrderServiceImplTest
         when(scanCartMapper.selectScanCartList(any(ScanCart.class))).thenReturn(Arrays.asList(unselected));
 
         ServiceException exception = assertThrows(ServiceException.class,
-            () -> orderService.createOrderFromCart(7L, "openid", 1L, null, null, "balance"));
+            () -> orderService.createOrderFromCart(7L, "openid", null, null, "balance"));
 
         assertEquals("购物车为空", exception.getMessage());
         verify(marketingActivityEngine, never()).applyScanOrderMarketing(any(), any());
@@ -172,7 +171,7 @@ class ScanOrderServiceImplTest
             .thenThrow(new IllegalArgumentException("点单商品不存在或已下架"));
 
         ServiceException exception = assertThrows(ServiceException.class,
-            () -> orderService.createOrderFromCart(7L, "openid", 1L, null, null, "balance"));
+            () -> orderService.createOrderFromCart(7L, "openid", null, null, "balance"));
 
         assertEquals("点单商品不存在或已下架", exception.getMessage());
         verify(scanOrderMapper, never()).insertScanOrder(any());
@@ -183,12 +182,12 @@ class ScanOrderServiceImplTest
     @Test
     void previewOrderFromCartShouldReturnEmptyPreviewForAnonymousEmptyOrInvalidCart()
     {
-        MarketingPreviewResult anonymous = orderService.previewOrderFromCart(null, "openid", 1L, "A01");
+        MarketingPreviewResult anonymous = orderService.previewOrderFromCart(null, "openid", "A01");
         assertEquals(BigDecimal.ZERO, anonymous.getPayAmount());
         verify(scanCartMapper, never()).selectScanCartList(any());
 
         when(scanCartMapper.selectScanCartList(any(ScanCart.class))).thenReturn(Arrays.asList());
-        MarketingPreviewResult empty = orderService.previewOrderFromCart(7L, "openid", 1L, "A01");
+        MarketingPreviewResult empty = orderService.previewOrderFromCart(7L, "openid", "A01");
         assertEquals(BigDecimal.ZERO, empty.getPayAmount());
         verify(marketingActivityEngine, never()).previewScanOrder(any(), any());
 
@@ -196,7 +195,7 @@ class ScanOrderServiceImplTest
         when(scanCartMapper.selectScanCartList(any(ScanCart.class))).thenReturn(Arrays.asList(selected));
         when(marketingActivityEngine.previewScanOrder(7L, Arrays.asList(selected)))
             .thenThrow(new IllegalArgumentException("点单商品不存在或已下架"));
-        MarketingPreviewResult invalid = orderService.previewOrderFromCart(7L, "openid", 1L, "A01");
+        MarketingPreviewResult invalid = orderService.previewOrderFromCart(7L, "openid", "A01");
 
         assertEquals(BigDecimal.ZERO, invalid.getPayAmount());
     }
@@ -215,7 +214,7 @@ class ScanOrderServiceImplTest
             .thenReturn(Arrays.asList(selected, defaultSelected, inactive));
         when(marketingActivityEngine.previewScanOrder(7L, Arrays.asList(selected, defaultSelected))).thenReturn(preview);
 
-        MarketingPreviewResult result = orderService.previewOrderFromCart(7L, " openid ", 1L, " A01 ");
+        MarketingPreviewResult result = orderService.previewOrderFromCart(7L, " openid ", " A01 ");
 
         assertEquals(new BigDecimal("48.00"), result.getTotalAmount());
         assertEquals(new BigDecimal("8.00"), result.getDiscountAmount());
@@ -233,8 +232,8 @@ class ScanOrderServiceImplTest
         ScanOrder order = pendingOrder();
         order.setPayType("balance");
         when(scanOrderMapper.selectScanOrderById(21L)).thenReturn(order);
-        when(scanOrderMapper.selectMaxPickupNoToday(1L)).thenReturn(8);
-        when(scanOrderMapper.countUnfinishedPaidOrders(1L)).thenReturn(2);
+        when(scanOrderMapper.selectMaxPickupNoToday()).thenReturn(8);
+        when(scanOrderMapper.countUnfinishedPaidOrders()).thenReturn(2);
         when(scanOrderMapper.updateScanOrderStatus(eq(21L), eq(ScanOrderStatus.PENDING_PAY),
             eq(ScanOrderStatus.MAKING), any(Date.class), any(Date.class), any(Date.class),
             eq(null), eq(null), eq(null), eq("009"), eq(15), eq("balance"))).thenReturn(1);
@@ -266,8 +265,8 @@ class ScanOrderServiceImplTest
         order.setPayType("balance");
         order.setPayAmount(BigDecimal.ZERO);
         when(scanOrderMapper.selectScanOrderById(21L)).thenReturn(order);
-        when(scanOrderMapper.selectMaxPickupNoToday(1L)).thenReturn(1);
-        when(scanOrderMapper.countUnfinishedPaidOrders(1L)).thenReturn(0);
+        when(scanOrderMapper.selectMaxPickupNoToday()).thenReturn(1);
+        when(scanOrderMapper.countUnfinishedPaidOrders()).thenReturn(0);
         when(scanOrderMapper.updateScanOrderStatus(eq(21L), eq(ScanOrderStatus.PENDING_PAY),
             eq(ScanOrderStatus.MAKING), any(Date.class), any(Date.class), any(Date.class),
             eq(null), eq(null), eq(null), eq("002"), eq(5), eq("balance"))).thenReturn(1);
@@ -284,8 +283,8 @@ class ScanOrderServiceImplTest
         ScanOrder order = pendingOrder();
         order.setPayType("balance");
         when(scanOrderMapper.selectScanOrderById(21L)).thenReturn(order);
-        when(scanOrderMapper.selectMaxPickupNoToday(1L)).thenReturn(null);
-        when(scanOrderMapper.countUnfinishedPaidOrders(1L)).thenReturn(0);
+        when(scanOrderMapper.selectMaxPickupNoToday()).thenReturn(null);
+        when(scanOrderMapper.countUnfinishedPaidOrders()).thenReturn(0);
         when(scanOrderMapper.updateScanOrderStatus(eq(21L), eq(ScanOrderStatus.PENDING_PAY),
             eq(ScanOrderStatus.MAKING), any(Date.class), any(Date.class), any(Date.class),
             eq(null), eq(null), eq(null), eq("001"), eq(5), eq("balance"))).thenReturn(0);
@@ -543,7 +542,6 @@ class ScanOrderServiceImplTest
         order.setOrderId(21L);
         order.setOrderNo("SO001");
         order.setUserId(7L);
-        order.setShopId(1L);
         order.setStatus(ScanOrderStatus.PENDING_PAY);
         order.setPayAmount(new BigDecimal("24.00"));
         return order;
@@ -556,7 +554,6 @@ class ScanOrderServiceImplTest
         cart.setId(id);
         cart.setUserId(7L);
         cart.setOpenid("openid-001");
-        cart.setShopId(1L);
         cart.setTableNo("A01");
         cart.setProductId(productId);
         cart.setProductName(productName);
@@ -574,7 +571,6 @@ class ScanOrderServiceImplTest
     {
         ScanTableQrcode table = new ScanTableQrcode();
         table.setTableId(88L);
-        table.setShopId(1L);
         table.setTableNo("A01");
         table.setStatus(status);
         return table;

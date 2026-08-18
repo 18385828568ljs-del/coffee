@@ -36,8 +36,6 @@ import com.ruoyi.project.coffee.scanOrder.service.IScanOrderService;
 @RequestMapping("/api/scanOrder")
 public class ScanOrderApiController extends BaseController
 {
-    private static final long DEFAULT_SHOP_ID = 1L;
-
     /** 下单幂等锁: 单机下按 userId 串行化, 防快速重复提交 */
     private static final java.util.concurrent.ConcurrentHashMap<Long, java.util.concurrent.locks.ReentrantLock> ORDER_LOCKS =
         new java.util.concurrent.ConcurrentHashMap<>();
@@ -77,11 +75,6 @@ public class ScanOrderApiController extends BaseController
         {
             openid = trimToNull(parseString(body.get("openid")));
         }
-        Long shopId = parseLong(body.get("shopId"));
-        if (shopId == null)
-        {
-            shopId = DEFAULT_SHOP_ID;
-        }
         String tableNo = trimToNull(parseString(body.get("tableNo")));
         String remark = parseString(body.get("remark"));
         String payType = trimToNull(parseString(body.get("payType")));
@@ -94,7 +87,7 @@ public class ScanOrderApiController extends BaseController
             try
             {
                 ScanOrder order = scanOrderService.createOrderFromCart(
-                    userId, openid, shopId, tableNo, remark, payType);
+                    userId, openid, tableNo, remark, payType);
                 return AjaxResult.success("下单成功", order);
             }
             finally
@@ -130,7 +123,6 @@ public class ScanOrderApiController extends BaseController
      */
     @GetMapping("/preview")
     public AjaxResult previewOrder(
-        @RequestParam(value = "shopId", required = false) Long shopId,
         @RequestParam(value = "tableNo", required = false) String tableNo,
         @RequestParam(value = "openid", required = false) String openid)
     {
@@ -139,14 +131,13 @@ public class ScanOrderApiController extends BaseController
         {
             return AjaxResult.error("请先登录");
         }
-        Long resolvedShopId = shopId == null ? DEFAULT_SHOP_ID : shopId;
         String resolvedOpenid = currentOpenid();
         if (resolvedOpenid == null)
         {
             resolvedOpenid = trimToNull(openid);
         }
         MarketingPreviewResult preview = scanOrderService.previewOrderFromCart(
-            userId, resolvedOpenid, resolvedShopId, trimToNull(tableNo));
+            userId, resolvedOpenid, trimToNull(tableNo));
 
         Map<String, Object> data = new HashMap<String, Object>();
         data.put("totalAmount", preview.getTotalAmount());
@@ -303,15 +294,6 @@ public class ScanOrderApiController extends BaseController
     private String parseString(Object v)
     {
         return v == null ? null : v.toString();
-    }
-
-    private Long parseLong(Object v)
-    {
-        if (v == null) return null;
-        if (v instanceof Number) return ((Number) v).longValue();
-        String s = v.toString().trim();
-        if (s.isEmpty()) return null;
-        try { return Long.valueOf(s); } catch (NumberFormatException e) { return null; }
     }
 
     private String trimToNull(String s)

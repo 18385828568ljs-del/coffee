@@ -27,7 +27,6 @@ public class ScanTableQrcodeServiceImpl implements IScanTableQrcodeService
 {
     private static final Logger log = LoggerFactory.getLogger(ScanTableQrcodeServiceImpl.class);
 
-    private static final long DEFAULT_SHOP_ID = 1L;
     private static final String DEFAULT_SCENE = "dine_in";
     private static final String SCAN_PAGE = "pages/scan/menu";
 
@@ -38,16 +37,13 @@ public class ScanTableQrcodeServiceImpl implements IScanTableQrcodeService
     private WxaCodeService wxaCodeService;
 
     @Override
-    public ScanTableQrcode selectByShopAndTable(Long shopId, String tableNo)
+    public ScanTableQrcode selectByTableNo(String tableNo)
     {
         if (StringUtils.isEmpty(tableNo))
         {
             return null;
         }
-        ScanTableQrcode query = new ScanTableQrcode();
-        query.setShopId(shopId);
-        query.setTableNo(tableNo.trim());
-        return scanTableQrcodeMapper.selectByShopAndTable(query);
+        return scanTableQrcodeMapper.selectByTableNo(tableNo.trim());
     }
 
     @Override
@@ -93,29 +89,26 @@ public class ScanTableQrcodeServiceImpl implements IScanTableQrcodeService
     }
 
     @Override
-    public ScanTableQrcode generateOne(Long shopId, String shopName, String tableNo, String scene)
+    public ScanTableQrcode generateOne(String tableNo, String scene)
     {
         if (StringUtils.isEmpty(tableNo))
         {
             throw new ServiceException("桌号不能为空");
         }
-        Long resolvedShopId = shopId == null ? DEFAULT_SHOP_ID : shopId;
         String trimTableNo = tableNo.trim();
         String resolvedScene = StringUtils.isEmpty(scene) ? DEFAULT_SCENE : scene.trim();
 
-        // scene 参数固定结构: shopId=X&tableNo=Y,微信侧上限 32 字节
-        String wxScene = "shopId=" + resolvedShopId + "&tableNo=" + trimTableNo;
-        String fileName = "shop" + resolvedShopId + "_" + trimTableNo + "_" + System.currentTimeMillis();
+        String wxScene = "tableNo=" + trimTableNo;
+        String fileName = "table_" + trimTableNo + "_" + System.currentTimeMillis();
 
         String qrUrl = wxaCodeService.generateWxaCode(SCAN_PAGE, wxScene, fileName);
 
         Date now = DateUtils.getNowDate();
-        ScanTableQrcode existing = selectByShopAndTable(resolvedShopId, trimTableNo);
+        ScanTableQrcode existing = selectByTableNo(trimTableNo);
         if (existing != null)
         {
             ScanTableQrcode patch = new ScanTableQrcode();
             patch.setTableId(existing.getTableId());
-            if (StringUtils.isNotEmpty(shopName)) patch.setShopName(shopName);
             patch.setScene(resolvedScene);
             patch.setQrUrl(qrUrl);
             patch.setStatus(1);
@@ -125,8 +118,6 @@ public class ScanTableQrcodeServiceImpl implements IScanTableQrcodeService
         }
 
         ScanTableQrcode record = new ScanTableQrcode();
-        record.setShopId(resolvedShopId);
-        record.setShopName(StringUtils.isEmpty(shopName) ? null : shopName);
         record.setTableNo(trimTableNo);
         record.setScene(resolvedScene);
         record.setQrUrl(qrUrl);
@@ -138,7 +129,7 @@ public class ScanTableQrcodeServiceImpl implements IScanTableQrcodeService
     }
 
     @Override
-    public List<ScanTableQrcode> batchGenerate(Long shopId, String shopName, List<String> tableNos, String scene)
+    public List<ScanTableQrcode> batchGenerate(List<String> tableNos, String scene)
     {
         if (tableNos == null || tableNos.isEmpty())
         {
@@ -158,13 +149,12 @@ public class ScanTableQrcodeServiceImpl implements IScanTableQrcodeService
         {
             try
             {
-                results.add(generateOne(shopId, shopName, tableNo, scene));
+                results.add(generateOne(tableNo, scene));
             }
             catch (Exception e)
             {
                 log.error("批量生成桌号 {} 二维码失败: {}", tableNo, e.getMessage());
                 ScanTableQrcode failed = new ScanTableQrcode();
-                failed.setShopId(shopId == null ? DEFAULT_SHOP_ID : shopId);
                 failed.setTableNo(tableNo);
                 failed.setRemark("生成失败: " + e.getMessage());
                 results.add(failed);
@@ -185,10 +175,6 @@ public class ScanTableQrcodeServiceImpl implements IScanTableQrcodeService
         if (scanTableQrcode == null)
         {
             throw new ServiceException("桌台信息不能为空");
-        }
-        if (scanTableQrcode.getShopId() == null)
-        {
-            scanTableQrcode.setShopId(DEFAULT_SHOP_ID);
         }
         String tableNo = StringUtils.trimToNull(scanTableQrcode.getTableNo());
         if (tableNo == null)

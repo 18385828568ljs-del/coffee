@@ -38,7 +38,6 @@
 					<product-card-back
 						v-if="backMounted"
 						:product="product"
-						:shop-id="shopId"
 						:table-no="tableNo"
 						:active="flipped"
 						@close="onBackClose"
@@ -67,7 +66,6 @@ export default {
 		flipped: { type: Boolean, default: false },
 		compact: { type: Boolean, default: false },
 		activeCard: { type: Boolean, default: false },
-		shopId: { type: [Number, String], default: 1 },
 		tableNo: { type: String, default: '' }
 	},
 	data: function () {

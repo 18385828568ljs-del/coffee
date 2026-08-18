@@ -149,10 +149,6 @@ function toNumber(value) {
 export default {
 	name: 'ScanProductOverlay',
 	props: {
-		shopId: {
-			type: [Number, String],
-			default: 1
-		},
 		tableNo: {
 			type: String,
 			default: ''
@@ -382,7 +378,6 @@ export default {
 
 		buildCartPayload() {
 			return {
-				shopId: Number(this.shopId) || 1,
 				tableNo: this.tableNo || '',
 				productId: this.detailProduct.productId,
 				productName: this.detailProduct.productName,

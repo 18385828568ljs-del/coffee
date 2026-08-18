@@ -10,5 +10,7 @@ public interface ScanProductSpecMapper
 {
     List<ScanProductSpec> selectSpecListByProductId(Long productId);
 
+    int insertSpec(ScanProductSpec spec);
+
     int deleteSpecByProductIds(String[] productIds);
 }

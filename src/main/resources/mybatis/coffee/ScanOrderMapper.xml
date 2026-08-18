@@ -9,8 +9,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="orderNo"         column="order_no"         />
         <result property="userId"          column="user_id"          />
         <result property="openid"          column="openid"           />
-        <result property="shopId"          column="shop_id"          />
-        <result property="shopName"        column="shop_name"        />
         <result property="tableNo"         column="table_no"         />
         <result property="scene"           column="scene"            />
         <result property="totalAmount"     column="total_amount"     />
@@ -44,7 +42,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectScanOrderVo">
-        select order_id, order_no, user_id, openid, shop_id, shop_name, table_no, scene,
+        select order_id, order_no, user_id, openid, table_no, scene,
                total_amount, pay_amount, discount_amount, member_discount, activity_summary,
                status, pickup_no, estimated_wait_minutes, pay_type, pay_time,
                accept_time, making_time, call_time, finish_time, cancel_time,
@@ -68,7 +66,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <include refid="selectScanOrderVo"/>
         <where>
             <if test="userId != null"> and user_id = #{userId}</if>
-            <if test="shopId != null"> and shop_id = #{shopId}</if>
             <if test="tableNo != null and tableNo != ''"> and table_no = #{tableNo}</if>
             <if test="status != null"> and status = #{status}</if>
             <if test="refundStatus != null"> and refund_status = #{refundStatus}</if>
@@ -85,14 +82,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where pickup_no is not null
           and pickup_no regexp '^[0-9]+$'
           and date(pay_time) = curdate()
-          <if test="shopId != null">and shop_id = #{shopId}</if>
     </select>
 
     <select id="countUnfinishedPaidOrders" resultType="Integer">
         select count(1)
         from t_scan_order
         where status in (2, 3)
-          <if test="shopId != null">and shop_id = #{shopId}</if>
     </select>
 
     <insert id="insertScanOrder" parameterType="ScanOrder" useGeneratedKeys="true" keyProperty="orderId">
@@ -100,8 +95,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <trim prefix="(" suffix=")" suffixOverrides=",">
             order_no, user_id,
             <if test="openid != null and openid != ''">openid,</if>
-            <if test="shopId != null">shop_id,</if>
-            <if test="shopName != null">shop_name,</if>
             <if test="tableNo != null and tableNo != ''">table_no,</if>
             <if test="scene != null and scene != ''">scene,</if>
             total_amount, pay_amount,
@@ -129,8 +122,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{orderNo}, #{userId},
             <if test="openid != null and openid != ''">#{openid},</if>
-            <if test="shopId != null">#{shopId},</if>
-            <if test="shopName != null">#{shopName},</if>
             <if test="tableNo != null and tableNo != ''">#{tableNo},</if>
             <if test="scene != null and scene != ''">#{scene},</if>
             #{totalAmount}, #{payAmount},

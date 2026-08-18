@@ -49,7 +49,6 @@
 							:product="prod"
 							:flipped="isFlipped(prod)"
 							:active-card="isFlipped(prod)"
-							:shop-id="shopId"
 							:table-no="tableNo"
 							@flip="onCardFlip"
 							@close="onCardBackClose"
@@ -78,7 +77,6 @@
 							:product="prod"
 							:flipped="false"
 							:active-card="isFlipped(prod)"
-							:shop-id="shopId"
 							:table-no="tableNo"
 							:compact="true"
 							@flip="onCardFlip"
@@ -111,7 +109,6 @@
 				:product="activeLayerProduct"
 				:flipped="flipLayerFlipped"
 				:active-card="true"
-				:shop-id="shopId"
 				:table-no="tableNo"
 				@close="onCardBackClose"
 				@play-video="onPlayVideo"
@@ -209,9 +206,7 @@ export default {
 	},
 	data() {
 		return {
-			shopId: 1,
 			tableNo: '',
-			shopName: '咖啡门店',
 			products: [],
 			loading: false,
 			loadError: '',
@@ -317,35 +312,21 @@ export default {
 		},
 
 		resolveScanContext(options = {}) {
-			const previousShopId = this.shopId
 			const previousTableNo = this.tableNo
-			const previousShopName = this.shopName
-			let shopId = options.shopId
 			let tableNo = options.tableNo
 			const scene = options.scene
-			const shopName = options.shopName
-			if (!shopId && !tableNo && scene) {
+			if (!tableNo && scene) {
 				try {
 					const decoded = decodeURIComponent(String(scene))
 					const parts = decoded.split('&')
 					parts.forEach((part) => {
 						const kv = part.split('=')
-						if (kv[0] === 'shopId') shopId = kv[1]
 						if (kv[0] === 'tableNo') tableNo = kv[1]
-						if (kv[0] === 'shopName') this.shopName = decodeURIComponent(kv[1] || '') || this.shopName
 					})
 				} catch (error) {}
 			}
-			this.shopId = toNumber(shopId) || 1
 			this.tableNo = tableNo ? String(tableNo).trim() : ''
-			if (shopName) {
-				this.shopName = decodeURIComponent(String(shopName))
-			}
-			return (
-				this.shopId !== previousShopId ||
-				this.tableNo !== previousTableNo ||
-				this.shopName !== previousShopName
-			)
+			return this.tableNo !== previousTableNo
 		},
 		authHeader() {
 			const token = getToken()
@@ -372,7 +353,7 @@ export default {
 			return []
 		},
 		async loadProductsByCategory(categoryId) {
-			const productParams = { categoryId, shopId: this.shopId }
+			const productParams = { categoryId }
 			try {
 				const res = await requestPromise({
 					url: scanMenuApi.products,
@@ -690,7 +671,6 @@ export default {
 					method: 'POST',
 					header: Object.assign({ 'Content-Type': 'application/json' }, this.authHeader()),
 					data: {
-						shopId: this.shopId,
 						tableNo: this.tableNo,
 						productId: product.productId,
 						productName: product.productName,
@@ -730,7 +710,7 @@ export default {
 				const res = await requestPromise({
 					url: scanCartApi.list,
 					method: 'GET',
-					data: { shopId: this.shopId, tableNo: this.tableNo },
+					data: { tableNo: this.tableNo },
 					header: this.authHeader()
 				})
 				if (!isSuccessResponse(res)) {
@@ -833,7 +813,7 @@ export default {
 			this.updateCartQuantity(item, toNumber(item && item.quantity) + 1)
 		},
 		goConfirmAfterAdd() {
-			const url = `/pages/scan/confirm?shopId=${this.shopId}&tableNo=${encodeURIComponent(this.tableNo || '')}&shopName=${encodeURIComponent(this.shopName || '')}`
+			const url = `/pages/scan/confirm?tableNo=${encodeURIComponent(this.tableNo || '')}`
 			uni.navigateTo({ url })
 		},
 		goConfirm() {
@@ -841,7 +821,7 @@ export default {
 				showError('请先选择商品')
 				return
 			}
-			const url = `/pages/scan/confirm?shopId=${this.shopId}&tableNo=${encodeURIComponent(this.tableNo || '')}&shopName=${encodeURIComponent(this.shopName || '')}`
+			const url = `/pages/scan/confirm?tableNo=${encodeURIComponent(this.tableNo || '')}`
 			uni.navigateTo({ url })
 		}
 	}

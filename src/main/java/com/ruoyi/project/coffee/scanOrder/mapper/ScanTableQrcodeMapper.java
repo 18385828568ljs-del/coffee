@@ -8,7 +8,7 @@ import com.ruoyi.project.coffee.scanOrder.domain.ScanTableQrcode;
  */
 public interface ScanTableQrcodeMapper
 {
-    ScanTableQrcode selectByShopAndTable(ScanTableQrcode query);
+    ScanTableQrcode selectByTableNo(String tableNo);
 
     ScanTableQrcode selectById(Long tableId);
 

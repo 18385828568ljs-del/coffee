@@ -73,11 +73,16 @@
             border-style: dashed;
             min-width: 146px;
         }
+        .product-form .form-group { margin-bottom: 12px; }
+        .product-form .form-header { margin-top: 14px; margin-bottom: 12px; }
+        .product-form .product-images-list { gap: 8px; margin-bottom: 8px; }
+        .product-form .product-image-item { width: 126px; }
+        .product-form .product-image-item img { height: 92px; }
     </style>
 </head>
 <body class="white-bg">
     <div class="wrapper wrapper-content animated fadeInRight ibox-content">
-        <form class="form-horizontal m" id="form-product-edit" th:object="${tProduct}">
+        <form class="form-horizontal m product-form" id="form-product-edit" th:object="${tProduct}">
             <input name="productId" th:field="*{productId}" type="hidden">
             <h4 class="form-header h4">基础信息</h4>
             <div class="row">

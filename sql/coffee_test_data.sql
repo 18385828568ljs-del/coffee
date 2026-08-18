@@ -34,8 +34,10 @@ DELETE FROM `t_product_image` WHERE `product_id` IN (1001, 1002, 1003, 1004, 100
 DELETE FROM `t_product` WHERE `product_id` IN (1001, 1002, 1003, 1004, 1005, 1006);
 DELETE FROM `t_category` WHERE `category_id` IN (11, 12);
 
-DELETE FROM `t_scan_product_spec_option` WHERE `spec_id` IN (1, 2, 3, 4, 5, 6);
-DELETE FROM `t_scan_product_spec` WHERE `spec_id` IN (1, 2, 3, 4, 5, 6);
+DELETE FROM `t_scan_product_spec_option` WHERE `product_id` IN
+    (101, 102, 103, 201, 202, 203, 301, 302, 401, 402);
+DELETE FROM `t_scan_product_spec` WHERE `product_id` IN
+    (101, 102, 103, 201, 202, 203, 301, 302, 401, 402);
 DELETE FROM `t_scan_product` WHERE `product_id` IN
     (101, 102, 103, 201, 202, 203, 301, 302, 401, 402);
 DELETE FROM `t_scan_category` WHERE `category_id` IN (1, 2, 3, 4);
@@ -113,19 +115,19 @@ VALUES
     (4, '小食甜品', 4, 1, 'test-data', NOW());
 
 INSERT INTO `t_scan_product`
-    (`product_id`, `category_id`, `product_name`, `sub_title`, `image_url`, `price`,
+    (`product_id`, `category_id`, `product_type`, `product_name`, `sub_title`, `description`, `image_url`, `price`,
      `month_sales`, `tag`, `status`, `sort_order`, `create_by`, `create_time`)
 VALUES
-    (101, 1, '美式咖啡', '精选阿拉比卡豆，风味干净', NULL, 12.00, 380, NULL, 1, 1, 'test-data', NOW()),
-    (102, 1, '手冲咖啡', '当日精选单品豆', NULL, 22.00, 220, '新品', 1, 2, 'test-data', NOW()),
-    (103, 1, '冷萃咖啡', '低温慢萃，口感顺滑', NULL, 20.00, 260, '招牌', 1, 3, 'test-data', NOW()),
-    (201, 2, '拿铁咖啡', '丝滑奶泡与浓郁咖啡融合', NULL, 18.00, 610, '热销', 1, 1, 'test-data', NOW()),
-    (202, 2, '燕麦拿铁', '植物奶低脂选择', NULL, 22.00, 300, '新品', 1, 2, 'test-data', NOW()),
-    (203, 2, '摩卡咖啡', '咖啡、巧克力与奶泡', NULL, 24.00, 190, NULL, 1, 3, 'test-data', NOW()),
-    (301, 3, '热可可', '浓郁可可风味', NULL, 16.00, 170, NULL, 1, 1, 'test-data', NOW()),
-    (302, 3, '柠檬气泡水', '清爽无咖啡因饮品', NULL, 15.00, 140, NULL, 1, 2, 'test-data', NOW()),
-    (401, 4, '肉桂卷', '现烤肉桂风味点心', NULL, 14.00, 150, NULL, 1, 1, 'test-data', NOW()),
-    (402, 4, '提拉米苏', '意式经典甜品', NULL, 25.00, 95, NULL, 1, 2, 'test-data', NOW());
+    (101, 1, 'COFFEE', '美式咖啡', '精选阿拉比卡豆，风味干净', '双份浓缩加水，清爽且保留咖啡香气', NULL, 12.00, 380, NULL, 1, 1, 'test-data', NOW()),
+    (102, 1, 'COFFEE', '手冲咖啡', '当日精选单品豆', '按当日豆单制作，突出产区风味', NULL, 22.00, 220, '新品', 1, 2, 'test-data', NOW()),
+    (103, 1, 'COFFEE', '冷萃咖啡', '低温慢萃，口感顺滑', '长时间低温萃取，苦感柔和', NULL, 20.00, 260, '招牌', 1, 3, 'test-data', NOW()),
+    (201, 2, 'COFFEE', '拿铁咖啡', '丝滑奶泡与浓郁咖啡融合', '浓缩咖啡搭配蒸汽牛奶', NULL, 18.00, 610, '热销', 1, 1, 'test-data', NOW()),
+    (202, 2, 'COFFEE', '燕麦拿铁', '植物奶低脂选择', '浓缩咖啡搭配燕麦奶', NULL, 22.00, 300, '新品', 1, 2, 'test-data', NOW()),
+    (203, 2, 'COFFEE', '摩卡咖啡', '咖啡、巧克力与奶泡', '浓缩咖啡加入巧克力和牛奶', NULL, 24.00, 190, NULL, 1, 3, 'test-data', NOW()),
+    (301, 3, 'DRINK', '热可可', '浓郁可可风味', '可可与热牛奶调制的无咖啡饮品', NULL, 16.00, 170, NULL, 1, 1, 'test-data', NOW()),
+    (302, 3, 'DRINK', '柠檬气泡水', '清爽无咖啡因饮品', '柠檬果汁搭配气泡水', NULL, 15.00, 140, NULL, 1, 2, 'test-data', NOW()),
+    (401, 4, 'FOOD', '肉桂卷', '现烤肉桂风味点心', '适合搭配咖啡的现烤甜点', NULL, 14.00, 150, NULL, 1, 1, 'test-data', NOW()),
+    (402, 4, 'FOOD', '提拉米苏', '意式经典甜品', '马斯卡彭与咖啡风味甜品', NULL, 25.00, 95, NULL, 1, 2, 'test-data', NOW());
 
 INSERT INTO `t_scan_product_spec`
     (`spec_id`, `product_id`, `spec_name`, `spec_type`, `required`, `sort_order`, `create_time`)
@@ -134,8 +136,38 @@ VALUES
     (2, 101, '杯型', 'single', 1, 2, NOW()),
     (3, 201, '温度', 'single', 1, 1, NOW()),
     (4, 201, '杯型', 'single', 1, 2, NOW()),
-    (5, 201, '加料', 'multiple', 0, 3, NOW()),
-    (6, 202, '温度', 'single', 1, 1, NOW());
+    (5, 201, '糖度', 'single', 1, 3, NOW()),
+    (6, 202, '温度', 'single', 1, 1, NOW()),
+    (7, 101, '糖度', 'single', 1, 3, NOW()),
+    (8, 101, '咖啡豆', 'single', 1, 4, NOW()),
+    (9, 101, '咖啡浓度', 'single', 1, 5, NOW()),
+    (11, 201, '咖啡豆', 'single', 1, 5, NOW()),
+    (12, 201, '咖啡浓度', 'single', 1, 6, NOW()),
+    (13, 202, '杯型', 'single', 1, 2, NOW()),
+    (14, 202, '糖度', 'single', 1, 3, NOW()),
+    (15, 202, '咖啡豆', 'single', 1, 4, NOW()),
+    (16, 202, '咖啡浓度', 'single', 1, 5, NOW()),
+    (17, 301, '温度', 'single', 1, 1, NOW()),
+    (18, 301, '杯型', 'single', 1, 2, NOW()),
+    (19, 301, '糖度', 'single', 1, 3, NOW()),
+    (20, 102, '温度', 'single', 1, 1, NOW()),
+    (21, 102, '杯型', 'single', 1, 2, NOW()),
+    (22, 102, '糖度', 'single', 1, 3, NOW()),
+    (23, 102, '咖啡豆', 'single', 1, 4, NOW()),
+    (24, 102, '咖啡浓度', 'single', 1, 5, NOW()),
+    (25, 103, '温度', 'single', 1, 1, NOW()),
+    (26, 103, '杯型', 'single', 1, 2, NOW()),
+    (27, 103, '糖度', 'single', 1, 3, NOW()),
+    (28, 103, '咖啡豆', 'single', 1, 4, NOW()),
+    (29, 103, '咖啡浓度', 'single', 1, 5, NOW()),
+    (30, 203, '温度', 'single', 1, 1, NOW()),
+    (31, 203, '杯型', 'single', 1, 2, NOW()),
+    (32, 203, '糖度', 'single', 1, 3, NOW()),
+    (33, 203, '咖啡豆', 'single', 1, 4, NOW()),
+    (34, 203, '咖啡浓度', 'single', 1, 5, NOW()),
+    (35, 302, '温度', 'single', 1, 1, NOW()),
+    (36, 302, '杯型', 'single', 1, 2, NOW()),
+    (37, 302, '糖度', 'single', 1, 3, NOW());
 
 INSERT INTO `t_scan_product_spec_option`
     (`option_id`, `spec_id`, `product_id`, `option_name`, `extra_price`, `is_default`, `sort_order`, `create_time`)
@@ -148,30 +180,110 @@ VALUES
     (6, 3, 201, '冰', 0.00, 0, 2, NOW()),
     (7, 4, 201, '中杯', 0.00, 1, 1, NOW()),
     (8, 4, 201, '大杯', 4.00, 0, 2, NOW()),
-    (9, 5, 201, '加浓缩', 5.00, 0, 1, NOW()),
-    (10, 5, 201, '加奶盖', 4.00, 0, 2, NOW()),
+    (9, 5, 201, '无糖', 0.00, 0, 1, NOW()),
+    (10, 5, 201, '少糖', 0.00, 0, 2, NOW()),
+    (49, 5, 201, '正常糖', 0.00, 1, 3, NOW()),
     (11, 6, 202, '热', 0.00, 1, 1, NOW()),
-    (12, 6, 202, '冰', 0.00, 0, 2, NOW());
+    (12, 6, 202, '冰', 0.00, 0, 2, NOW()),
+    (13, 7, 101, '无糖', 0.00, 0, 1, NOW()),
+    (14, 7, 101, '少糖', 0.00, 0, 2, NOW()),
+    (15, 7, 101, '正常糖', 0.00, 1, 3, NOW()),
+    (16, 8, 101, '门店拼配豆', 0.00, 1, 1, NOW()),
+    (17, 8, 101, '埃塞俄比亚', 0.00, 0, 2, NOW()),
+    (18, 8, 101, '哥伦比亚', 0.00, 0, 3, NOW()),
+    (19, 9, 101, '标准', 0.00, 1, 1, NOW()),
+    (20, 9, 101, '加一份浓缩', 5.00, 0, 2, NOW()),
+    (21, 9, 101, '加两份浓缩', 10.00, 0, 3, NOW()),
+    (22, 11, 201, '门店拼配豆', 0.00, 1, 1, NOW()),
+    (23, 11, 201, '埃塞俄比亚', 0.00, 0, 2, NOW()),
+    (24, 11, 201, '哥伦比亚', 0.00, 0, 3, NOW()),
+    (25, 12, 201, '标准', 0.00, 1, 1, NOW()),
+    (26, 12, 201, '加一份浓缩', 5.00, 0, 2, NOW()),
+    (27, 12, 201, '加两份浓缩', 10.00, 0, 3, NOW()),
+    (28, 13, 202, '中杯', 0.00, 1, 1, NOW()),
+    (29, 13, 202, '大杯', 3.00, 0, 2, NOW()),
+    (30, 14, 202, '无糖', 0.00, 0, 1, NOW()),
+    (31, 14, 202, '少糖', 0.00, 0, 2, NOW()),
+    (32, 14, 202, '正常糖', 0.00, 1, 3, NOW()),
+    (33, 15, 202, '门店拼配豆', 0.00, 1, 1, NOW()),
+    (34, 15, 202, '埃塞俄比亚', 0.00, 0, 2, NOW()),
+    (35, 15, 202, '哥伦比亚', 0.00, 0, 3, NOW()),
+    (36, 16, 202, '标准', 0.00, 1, 1, NOW()),
+    (37, 16, 202, '加一份浓缩', 5.00, 0, 2, NOW()),
+    (38, 16, 202, '加两份浓缩', 10.00, 0, 3, NOW()),
+    (39, 17, 301, '热', 0.00, 1, 1, NOW()),
+    (40, 17, 301, '冰', 0.00, 0, 2, NOW()),
+    (41, 18, 301, '中杯', 0.00, 1, 1, NOW()),
+    (42, 18, 301, '大杯', 3.00, 0, 2, NOW()),
+    (43, 19, 301, '无糖', 0.00, 0, 1, NOW()),
+    (44, 19, 301, '少糖', 0.00, 0, 2, NOW()),
+    (45, 19, 301, '正常糖', 0.00, 1, 3, NOW()),
+    (50, 20, 102, '热', 0.00, 1, 1, NOW()),
+    (51, 20, 102, '冰', 0.00, 0, 2, NOW()),
+    (52, 21, 102, '中杯', 0.00, 1, 1, NOW()),
+    (53, 21, 102, '大杯', 3.00, 0, 2, NOW()),
+    (54, 22, 102, '无糖', 0.00, 0, 1, NOW()),
+    (55, 22, 102, '少糖', 0.00, 0, 2, NOW()),
+    (56, 22, 102, '正常糖', 0.00, 1, 3, NOW()),
+    (57, 23, 102, '门店拼配豆', 0.00, 1, 1, NOW()),
+    (58, 23, 102, '埃塞俄比亚', 0.00, 0, 2, NOW()),
+    (59, 23, 102, '哥伦比亚', 0.00, 0, 3, NOW()),
+    (60, 24, 102, '标准', 0.00, 1, 1, NOW()),
+    (61, 24, 102, '加一份浓缩', 5.00, 0, 2, NOW()),
+    (62, 24, 102, '加两份浓缩', 10.00, 0, 3, NOW()),
+    (63, 25, 103, '热', 0.00, 1, 1, NOW()),
+    (64, 25, 103, '冰', 0.00, 0, 2, NOW()),
+    (65, 26, 103, '中杯', 0.00, 1, 1, NOW()),
+    (66, 26, 103, '大杯', 3.00, 0, 2, NOW()),
+    (67, 27, 103, '无糖', 0.00, 0, 1, NOW()),
+    (68, 27, 103, '少糖', 0.00, 0, 2, NOW()),
+    (69, 27, 103, '正常糖', 0.00, 1, 3, NOW()),
+    (70, 28, 103, '门店拼配豆', 0.00, 1, 1, NOW()),
+    (71, 28, 103, '埃塞俄比亚', 0.00, 0, 2, NOW()),
+    (72, 28, 103, '哥伦比亚', 0.00, 0, 3, NOW()),
+    (73, 29, 103, '标准', 0.00, 1, 1, NOW()),
+    (74, 29, 103, '加一份浓缩', 5.00, 0, 2, NOW()),
+    (75, 29, 103, '加两份浓缩', 10.00, 0, 3, NOW()),
+    (76, 30, 203, '热', 0.00, 1, 1, NOW()),
+    (77, 30, 203, '冰', 0.00, 0, 2, NOW()),
+    (78, 31, 203, '中杯', 0.00, 1, 1, NOW()),
+    (79, 31, 203, '大杯', 3.00, 0, 2, NOW()),
+    (80, 32, 203, '无糖', 0.00, 0, 1, NOW()),
+    (81, 32, 203, '少糖', 0.00, 0, 2, NOW()),
+    (82, 32, 203, '正常糖', 0.00, 1, 3, NOW()),
+    (83, 33, 203, '门店拼配豆', 0.00, 1, 1, NOW()),
+    (84, 33, 203, '埃塞俄比亚', 0.00, 0, 2, NOW()),
+    (85, 33, 203, '哥伦比亚', 0.00, 0, 3, NOW()),
+    (86, 34, 203, '标准', 0.00, 1, 1, NOW()),
+    (87, 34, 203, '加一份浓缩', 5.00, 0, 2, NOW()),
+    (88, 34, 203, '加两份浓缩', 10.00, 0, 3, NOW()),
+    (89, 35, 302, '热', 0.00, 1, 1, NOW()),
+    (90, 35, 302, '冰', 0.00, 0, 2, NOW()),
+    (91, 36, 302, '中杯', 0.00, 1, 1, NOW()),
+    (92, 36, 302, '大杯', 3.00, 0, 2, NOW()),
+    (93, 37, 302, '无糖', 0.00, 0, 1, NOW()),
+    (94, 37, 302, '少糖', 0.00, 0, 2, NOW()),
+    (95, 37, 302, '正常糖', 0.00, 1, 3, NOW());
 
 INSERT INTO `t_scan_table_qrcode`
-    (`table_id`, `shop_id`, `shop_name`, `table_no`, `scene`, `status`, `create_by`, `create_time`)
+    (`table_id`, `table_no`, `scene`, `status`, `create_by`, `create_time`)
 VALUES
-    (1, 1, '咖啡旗舰店', 'A01', 'dine_in', 1, 'test-data', NOW()),
-    (2, 1, '咖啡旗舰店', 'A02', 'dine_in', 1, 'test-data', NOW()),
-    (3, 1, '咖啡旗舰店', 'B01', 'dine_in', 1, 'test-data', NOW());
+    (1, 'A01', 'dine_in', 1, 'test-data', NOW()),
+    (2, 'A02', 'dine_in', 1, 'test-data', NOW()),
+    (3, 'B01', 'dine_in', 1, 'test-data', NOW());
 
 -- -----------------------------------------------------------------------------
 -- 5. 扫码点单订单、订单明细和购物车
 -- -----------------------------------------------------------------------------
 INSERT INTO `t_scan_order`
-    (`order_id`, `order_no`, `user_id`, `openid`, `shop_id`, `shop_name`, `table_no`, `scene`,
+    (`order_id`, `order_no`, `user_id`, `openid`, `table_no`, `scene`,
      `total_amount`, `pay_amount`, `discount_amount`, `member_discount`, `status`, `pickup_no`,
      `pay_type`, `pay_time`, `finish_time`, `refund_status`, `create_by`, `create_time`, `update_time`)
 VALUES
-    (4001, 'COFFEE-SCAN-4001', 9003, 'coffee-test-9003', 1, '咖啡旗舰店', 'A01', 'dine_in',
+    (4001, 'COFFEE-SCAN-4001', 9003, 'coffee-test-9003', 'A01', 'dine_in',
      36.00, 36.00, 0.00, 0.00, 4, 'A0101', 'wechat',
      NOW() - INTERVAL 2 DAY, NOW() - INTERVAL 2 DAY, 0, 'test-data', NOW() - INTERVAL 2 DAY, NOW() - INTERVAL 2 DAY),
-    (4002, 'COFFEE-SCAN-4002', 9004, 'coffee-test-9004', 1, '咖啡旗舰店', 'A02', 'dine_in',
+    (4002, 'COFFEE-SCAN-4002', 9004, 'coffee-test-9004', 'A02', 'dine_in',
      18.00, 0.00, 0.00, 0.00, 5, NULL, 'wechat',
      NULL, NULL, 0, 'test-data', NOW() - INTERVAL 1 DAY, NOW() - INTERVAL 1 DAY);
 
@@ -182,13 +294,13 @@ VALUES
     (4102, 4002, 201, '拿铁咖啡', NULL, '冰/中杯', 18.00, 1, 18.00, NOW() - INTERVAL 1 DAY);
 
 INSERT INTO `t_scan_cart`
-    (`id`, `user_id`, `openid`, `shop_id`, `table_no`, `product_id`, `product_name`, `product_image`,
+    (`id`, `user_id`, `openid`, `table_no`, `product_id`, `product_name`, `product_image`,
      `price`, `quantity`, `spec_text`, `spec_json`, `selected`, `status`, `create_time`, `update_time`, `del_flag`)
 VALUES
-    (7001, 9003, 'coffee-test-9003', 1, 'A01', 201, '拿铁咖啡', NULL,
+    (7001, 9003, 'coffee-test-9003', 'A01', 201, '拿铁咖啡', NULL,
      18.00, 1, '热/中杯', '{"specId":3,"optionId":5}', 1, 1,
      NOW() - INTERVAL 3 HOUR, NOW() - INTERVAL 3 HOUR, 0),
-    (7002, 9004, 'coffee-test-9004', 1, 'A02', 202, '燕麦拿铁', NULL,
+    (7002, 9004, 'coffee-test-9004', 'A02', 202, '燕麦拿铁', NULL,
      22.00, 1, '冰', '{"specId":6,"optionId":12}', 1, 1,
      NOW() - INTERVAL 2 HOUR, NOW() - INTERVAL 2 HOUR, 0);
 

@@ -35,10 +35,12 @@ class ScanProductMapperIntegrationTest
     void insertAndSelectByIdShouldPersistProductSnapshotFields()
     {
         ScanProduct product = product(1L, "招牌奶茶", "经典红茶 + 鲜奶", "15.00", 1, 2);
+        product.setProductType(ScanProduct.PRODUCT_TYPE_DRINK);
         product.setImageUrl("https://example.com/milk-tea.png");
         product.setVideoUrl("https://example.com/milk-tea.mp4");
         product.setMonthSales(520);
         product.setTag("招牌");
+        product.setDescription("浓缩咖啡与鲜奶融合");
         product.setCreateBy("admin");
         product.setCreateTime(new Date());
         product.setRemark("适合热饮");
@@ -48,8 +50,10 @@ class ScanProductMapperIntegrationTest
 
         ScanProduct saved = scanProductMapper.selectScanProductById(product.getProductId());
         assertEquals(Long.valueOf(1L), saved.getCategoryId());
+        assertEquals(ScanProduct.PRODUCT_TYPE_DRINK, saved.getProductType());
         assertEquals("招牌奶茶", saved.getProductName());
         assertEquals("经典红茶 + 鲜奶", saved.getSubTitle());
+        assertEquals("浓缩咖啡与鲜奶融合", saved.getDescription());
         assertEquals("https://example.com/milk-tea.png", saved.getImageUrl());
         assertEquals("https://example.com/milk-tea.mp4", saved.getVideoUrl());
         assertEquals(new BigDecimal("15.00"), saved.getPrice());
@@ -150,6 +154,7 @@ class ScanProductMapperIntegrationTest
         product.setPrice(new BigDecimal(price));
         product.setStatus(status);
         product.setSortOrder(sortOrder);
+        product.setProductType(ScanProduct.PRODUCT_TYPE_DRINK);
         return product;
     }
 }

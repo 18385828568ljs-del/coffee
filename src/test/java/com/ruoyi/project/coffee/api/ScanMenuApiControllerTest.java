@@ -1,7 +1,6 @@
 package com.ruoyi.project.coffee.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -113,20 +112,17 @@ class ScanMenuApiControllerTest
     {
         ScanTableQrcode table = new ScanTableQrcode();
         table.setTableId(3L);
-        table.setShopId(1L);
-        table.setShopName("测试门店");
         table.setTableNo("A01");
-        table.setScene("shopId=1&tableNo=A01");
+        table.setScene("dine_in");
         table.setStatus(1);
-        when(scanTableQrcodeService.selectByShopAndTable(1L, "A01")).thenReturn(table);
+        when(scanTableQrcodeService.selectByTableNo("A01")).thenReturn(table);
 
-        AjaxResult result = controller.parseTable(null, "A01");
+        AjaxResult result = controller.parseTable("A01");
 
         assertEquals(0, result.get(AjaxResult.CODE_TAG));
         java.util.Map<?, ?> data = (java.util.Map<?, ?>) result.get(AjaxResult.DATA_TAG);
-        assertEquals("测试门店", data.get("shopName"));
         assertEquals("A01", data.get("tableNo"));
-        assertSame(table.getScene(), data.get("scene"));
+        assertEquals("dine_in", data.get("scene"));
     }
 }
 
