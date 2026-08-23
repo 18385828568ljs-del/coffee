@@ -6,25 +6,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <resultMap id="UserProfileResult" type="com.ruoyi.project.coffee.profile.domain.UserProfile">
         <id property="userId" column="user_id" />
-        <result property="orderCount" column="order_count" />
-        <result property="totalAmount" column="total_amount" />
-        <result property="avgOrderAmount" column="avg_order_amount" />
-        <result property="preferredPriceMin" column="preferred_price_min" />
-        <result property="preferredPriceMax" column="preferred_price_max" />
-        <result property="lastOrderTime" column="last_order_time" />
-        <result property="lastActiveTime" column="last_active_time" />
-        <result property="evidenceCount" column="evidence_count" />
         <result property="profileStatus" column="profile_status" />
         <result property="profileData" column="profile_data" />
         <result property="calculateTime" column="calculate_time" />
         <result property="createTime" column="create_time" />
         <result property="updateTime" column="update_time" />
-    </resultMap>
-
-    <resultMap id="OrderSummaryResult" type="com.ruoyi.project.coffee.profile.domain.ProfileOrderSummary">
-        <result property="orderCount" column="order_count" />
-        <result property="totalAmount" column="total_amount" />
-        <result property="lastOrderTime" column="last_order_time" />
     </resultMap>
 
     <resultMap id="EvidenceResult" type="com.ruoyi.project.coffee.profile.domain.ProfileEvidence">
@@ -34,53 +20,21 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="productName" column="product_name" />
         <result property="categoryId" column="category_id" />
         <result property="categoryName" column="category_name" />
+        <result property="productType" column="product_type" />
+        <result property="origin" column="origin" />
+        <result property="processingMethod" column="processing_method" />
+        <result property="roastLevel" column="roast_level" />
+        <result property="flavorNotes" column="flavor_notes" />
+        <result property="specJson" column="spec_json" />
         <result property="price" column="price" />
         <result property="evidenceTime" column="evidence_time" />
     </resultMap>
 
-    <resultMap id="ProductPopularityResult" type="com.ruoyi.project.coffee.profile.domain.ProductPopularity">
-        <result property="productId" column="product_id" />
-        <result property="popularity" column="popularity" />
-    </resultMap>
-
     <select id="selectUserProfileByUserId" resultMap="UserProfileResult">
-        select user_id, order_count, total_amount, avg_order_amount,
-               preferred_price_min, preferred_price_max, last_order_time,
-               last_active_time, evidence_count, profile_status, profile_data,
+        select user_id, profile_status, profile_data,
                calculate_time, create_time, update_time
         from t_user_profile
         where user_id = #{userId}
-    </select>
-
-    <select id="selectRecentProductPopularity"
-        resultMap="ProductPopularityResult">
-        select product_id, sum(quantity) as popularity
-        from (
-            <choose>
-                <when test="scene == 'MALL'">
-                    select i.product_id, coalesce(i.quantity, 1) as quantity
-                    from t_order o
-                    inner join t_order_item i on i.order_id = o.order_id
-                    where o.status in (1, 2, 3)
-                      and coalesce(o.refund_status, 0) &lt;&gt; 2
-                      and coalesce(o.pay_time, o.finish_time, o.create_time) &gt;= #{cutoffTime}
-                      and (i.spec is null or i.spec not like '赠品%')
-                </when>
-                <when test="scene == 'SCAN'">
-                    select i.product_id, coalesce(i.quantity, 1) as quantity
-                    from t_scan_order o
-                    inner join t_scan_order_item i on i.order_id = o.order_id
-                    where o.status in (2, 3, 4)
-                      and coalesce(o.refund_status, 0) &lt;&gt; 2
-                      and coalesce(o.pay_time, o.finish_time, o.create_time) &gt;= #{cutoffTime}
-                </when>
-                <otherwise>
-                    select null as product_id, 0 as quantity where 1 = 0
-                </otherwise>
-            </choose>
-        ) recent_orders
-        group by product_id
-        order by popularity desc, product_id asc
     </select>
 
     <select id="selectAllUserIds" resultType="java.lang.Long">
@@ -135,40 +89,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         order by changed.user_id
     </select>
 
-    <select id="selectOrderSummary" resultMap="OrderSummaryResult">
-        select count(*) as order_count,
-               coalesce(sum(valid_order.amount), 0) as total_amount,
-               max(valid_order.order_time) as last_order_time
-        from (
-            select coalesce(o.pay_amount, o.total_amount, 0) as amount,
-                   coalesce(o.pay_time, o.finish_time, o.create_time) as order_time
-            from t_order o
-            where o.user_id = #{userId}
-              and o.status in (1, 2, 3)
-              and coalesce(o.refund_status, 0) &lt;&gt; 2
-
-            union all
-
-            select coalesce(o.pay_amount, o.total_amount, 0) as amount,
-                   coalesce(o.pay_time, o.finish_time, o.create_time) as order_time
-            from t_scan_order o
-            where o.user_id = #{userId}
-              and o.status in (2, 3, 4)
-              and coalesce(o.refund_status, 0) &lt;&gt; 2
-        ) valid_order
-    </select>
-
-    <select id="selectLastBehaviorTime" resultType="java.util.Date">
-        select max(event_time) from t_user_behavior_event where user_id = #{userId}
-    </select>
-
-    <select id="countRecentBehaviorEvents" resultType="int">
-        select count(*)
-        from t_user_behavior_event
-        where user_id = #{userId}
-          and event_time &gt;= #{cutoffTime}
-    </select>
-
     <select id="selectBehaviorEvidence" resultMap="EvidenceResult">
         select e.scene,
                e.event_type as evidence_type,
@@ -178,6 +98,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                     else coalesce(e.category_id, sp.category_id) end as category_id,
                case when e.scene = 'MALL' then mc.category_name else sc.category_name end as category_name,
                case when e.scene = 'MALL' then mp.price else sp.price end as price,
+               sp.product_type,
+               mp.origin,
+               mp.processing_method,
+               mp.roast_level,
+               mp.flavor_notes,
+               e.spec_json,
                e.event_time as evidence_time
         from t_user_behavior_event e
         left join t_product mp on e.scene = 'MALL' and mp.product_id = e.product_id
@@ -193,7 +119,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectPurchaseEvidence" resultMap="EvidenceResult">
         select purchase.scene, purchase.evidence_type, purchase.product_id,
                purchase.product_name, purchase.category_id, purchase.category_name,
-               purchase.price, purchase.evidence_time
+               purchase.price, purchase.product_type, purchase.origin,
+               purchase.processing_method, purchase.roast_level, purchase.flavor_notes,
+               purchase.spec_json, purchase.evidence_time
         from (
             select 'MALL' as scene,
                    'PURCHASE' as evidence_type,
@@ -202,6 +130,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                    p.category_id,
                    c.category_name,
                    i.price,
+                   null as product_type,
+                   p.origin,
+                   p.processing_method,
+                   p.roast_level,
+                   p.flavor_notes,
+                   null as spec_json,
                    coalesce(o.pay_time, o.finish_time, o.create_time) as evidence_time
             from t_order o
             inner join t_order_item i on i.order_id = o.order_id
@@ -222,6 +156,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                    p.category_id,
                    c.category_name,
                    i.price,
+                   p.product_type,
+                   null as origin,
+                   null as processing_method,
+                   null as roast_level,
+                   null as flavor_notes,
+                   i.spec_json,
                    coalesce(o.pay_time, o.finish_time, o.create_time) as evidence_time
             from t_scan_order o
             inner join t_scan_order_item i on i.order_id = o.order_id
@@ -237,27 +177,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <insert id="upsertUserProfile" parameterType="com.ruoyi.project.coffee.profile.domain.UserProfile">
         insert into t_user_profile (
-            user_id, order_count, total_amount, avg_order_amount,
-            preferred_price_min, preferred_price_max, last_order_time,
-            last_active_time, evidence_count, profile_status, profile_data,
+            user_id, profile_status, profile_data,
             calculate_time, create_time, update_time
         )
         select
-            #{userId}, #{orderCount}, #{totalAmount}, #{avgOrderAmount},
-            #{preferredPriceMin}, #{preferredPriceMax}, #{lastOrderTime},
-            #{lastActiveTime}, #{evidenceCount}, #{profileStatus}, #{profileData},
+            #{userId}, #{profileStatus}, #{profileData},
             #{calculateTime}, #{createTime}, #{updateTime}
         from t_wxuser
         where id = #{userId}
         on duplicate key update
-            order_count = values(order_count),
-            total_amount = values(total_amount),
-            avg_order_amount = values(avg_order_amount),
-            preferred_price_min = values(preferred_price_min),
-            preferred_price_max = values(preferred_price_max),
-            last_order_time = values(last_order_time),
-            last_active_time = values(last_active_time),
-            evidence_count = values(evidence_count),
             profile_status = values(profile_status),
             profile_data = values(profile_data),
             calculate_time = values(calculate_time),

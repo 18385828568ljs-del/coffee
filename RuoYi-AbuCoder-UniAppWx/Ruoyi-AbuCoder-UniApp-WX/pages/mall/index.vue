@@ -953,8 +953,8 @@ export default {
 			return `/pages/product/detail${query.length ? `?${query.join('&')}` : ''}`
 		},
 
-		getBehaviorSource(item) {
-			return item && item.recommendationApplied ? 'PERSONALIZED_LIST' : 'DEFAULT_LIST'
+		getBehaviorSource() {
+			return 'DEFAULT_LIST'
 		},
 
 		goDetail(item) {

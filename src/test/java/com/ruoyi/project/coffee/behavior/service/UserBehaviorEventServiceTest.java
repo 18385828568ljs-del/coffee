@@ -59,11 +59,14 @@ class UserBehaviorEventServiceTest
     {
         when(userBehaviorEventMapper.insertUserBehaviorEvent(any(UserBehaviorEvent.class))).thenReturn(1);
 
-        assertTrue(service.recordFirstCartAdd(7L, UserBehaviorEventService.SCENE_SCAN, 100L, 3L, 55L));
+        String specJson = "[{\"specName\":\"温度\",\"optionNames\":[\"冰\"]}]";
+        assertTrue(service.recordFirstCartAdd(7L, UserBehaviorEventService.SCENE_SCAN, 100L, 3L, 55L,
+            UserBehaviorEventService.SOURCE_CATEGORY, specJson));
 
         ArgumentCaptor<UserBehaviorEvent> captor = ArgumentCaptor.forClass(UserBehaviorEvent.class);
         verify(userBehaviorEventMapper).insertUserBehaviorEvent(captor.capture());
         assertTrue(captor.getValue().getDedupKey().contains(":55"));
+        assertEquals(specJson, captor.getValue().getSpecJson());
     }
 
     @Test

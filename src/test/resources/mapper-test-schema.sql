@@ -93,6 +93,7 @@ CREATE TABLE t_user_behavior_event (
     category_id BIGINT,
     source_id BIGINT,
     source VARCHAR(32),
+    spec_json TEXT,
     dedup_key VARCHAR(128),
     event_time TIMESTAMP NOT NULL,
     CONSTRAINT uk_behavior_dedup_key UNIQUE (dedup_key)
@@ -244,6 +245,7 @@ CREATE TABLE t_scan_order_item (
     product_name VARCHAR(255),
     product_image VARCHAR(500),
     spec VARCHAR(255),
+    spec_json TEXT,
     price DECIMAL(10, 2),
     quantity INT,
     total_price DECIMAL(10, 2),
@@ -405,14 +407,6 @@ CREATE TABLE t_wxuser (
 
 CREATE TABLE t_user_profile (
     user_id BIGINT PRIMARY KEY,
-    order_count INT NOT NULL DEFAULT 0,
-    total_amount DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
-    avg_order_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
-    preferred_price_min DECIMAL(10, 2),
-    preferred_price_max DECIMAL(10, 2),
-    last_order_time TIMESTAMP NULL,
-    last_active_time TIMESTAMP NULL,
-    evidence_count INT NOT NULL DEFAULT 0,
     profile_status VARCHAR(16) NOT NULL DEFAULT 'EMPTY',
     profile_data CLOB,
     calculate_time TIMESTAMP NULL,

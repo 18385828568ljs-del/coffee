@@ -167,6 +167,7 @@ public class ScanOrderServiceImpl implements IScanOrderService
             item.setProductName(c.getProductName());
             item.setProductImage(c.getProductImage());
             item.setSpec(c.getSpecText());
+            item.setSpecJson(c.getSpecJson());
             BigDecimal price = c.getPrice() == null ? BigDecimal.ZERO : c.getPrice();
             int qty = c.getQuantity() == null ? 0 : c.getQuantity();
             item.setPrice(price);

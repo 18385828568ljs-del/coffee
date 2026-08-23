@@ -161,7 +161,7 @@ public class ScanCartApiController extends BaseController
         {
             userBehaviorEventService.recordFirstCartAdd(cart.getUserId(),
                 UserBehaviorEventService.SCENE_SCAN, cart.getProductId(), product.getCategoryId(), saved.getId(),
-                UserBehaviorEventService.SOURCE_CATEGORY);
+                UserBehaviorEventService.SOURCE_CATEGORY, cart.getSpecJson());
         }
         return AjaxResult.success("已加入点单购物车", saved);
     }

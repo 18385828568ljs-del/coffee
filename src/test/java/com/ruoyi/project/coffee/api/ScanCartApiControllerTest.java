@@ -100,7 +100,7 @@ class ScanCartApiControllerTest
         assertEquals(0, result.get(AjaxResult.CODE_TAG));
         assertEquals(saved, result.get(AjaxResult.DATA_TAG));
         verify(userBehaviorEventService).recordFirstCartAdd(18L, UserBehaviorEventService.SCENE_SCAN,
-            5L, 4L, 9L, UserBehaviorEventService.SOURCE_CATEGORY);
+            5L, 4L, 9L, UserBehaviorEventService.SOURCE_CATEGORY, "[{\"specId\":11,\"optionIds\":[2]}]");
     }
 
     @Test

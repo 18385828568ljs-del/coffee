@@ -107,6 +107,8 @@ class ScanOrderServiceImplTest
         assertEquals(Long.valueOf(1001L), result.getItems().get(0).getProductId());
         assertEquals("招牌拿铁", result.getItems().get(0).getProductName());
         assertEquals("热 / 少糖", result.getItems().get(0).getSpec());
+        assertEquals("[{\"specName\":\"糖度\",\"optionNames\":[\"少糖\"]}]",
+            result.getItems().get(0).getSpecJson());
         assertEquals(new BigDecimal("18.00"), result.getItems().get(0).getPrice());
         assertEquals(Integer.valueOf(2), result.getItems().get(0).getQuantity());
         assertEquals(new BigDecimal("36.00"), result.getItems().get(0).getTotalPrice());
@@ -559,6 +561,7 @@ class ScanOrderServiceImplTest
         cart.setProductName(productName);
         cart.setProductImage(productId + ".png");
         cart.setSpecText(spec);
+        cart.setSpecJson("[{\"specName\":\"糖度\",\"optionNames\":[\"少糖\"]}]");
         cart.setPrice(price);
         cart.setQuantity(quantity);
         cart.setSelected(selected);

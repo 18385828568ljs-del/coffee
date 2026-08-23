@@ -59,7 +59,7 @@ public class ProductApiController extends BaseController
     {
         product.setStatus(1);
         Long userId = wxUserTokenService.resolveUserId(request);
-        List<TProduct> candidates = productService.selectTProductList(product);
+        List<TProduct> candidates = availableProducts(productService.selectTProductList(product));
         List<TProduct> ranked = productRecommendationService.recommendMall(userId, candidates);
         List<TProduct> page = paginate(ranked, request);
         marketingActivityEngine.enrichProducts(page, userId);
@@ -73,7 +73,7 @@ public class ProductApiController extends BaseController
         query.setCategoryId(categoryId);
         query.setStatus(1);
         Long userId = wxUserTokenService.resolveUserId(request);
-        List<TProduct> candidates = productService.selectTProductList(query);
+        List<TProduct> candidates = availableProducts(productService.selectTProductList(query));
         List<TProduct> ranked = productRecommendationService.recommendMall(userId, candidates);
         List<TProduct> page = paginate(ranked, request);
         marketingActivityEngine.enrichProducts(page, userId);
@@ -112,6 +112,23 @@ public class ProductApiController extends BaseController
         int from = (int) fromLong;
         int to = Math.min(values.size(), from + pageSize);
         return new ArrayList<>(values.subList(from, to));
+    }
+
+    private List<TProduct> availableProducts(List<TProduct> products)
+    {
+        List<TProduct> available = new ArrayList<>();
+        if (products == null)
+        {
+            return available;
+        }
+        for (TProduct product : products)
+        {
+            if (product != null && product.getStock() != null && product.getStock() > 0)
+            {
+                available.add(product);
+            }
+        }
+        return available;
     }
 
     private int positiveOrDefault(Integer value, int defaultValue)
