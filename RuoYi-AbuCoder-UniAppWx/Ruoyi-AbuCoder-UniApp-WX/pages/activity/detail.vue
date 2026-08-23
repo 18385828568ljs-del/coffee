@@ -1,5 +1,5 @@
 <template>
-	<view class="page">
+	<view class="page" :style="themePageStyle">
 		<app-nav title="活动详情" />
 
 		<scroll-view class="content" scroll-y>

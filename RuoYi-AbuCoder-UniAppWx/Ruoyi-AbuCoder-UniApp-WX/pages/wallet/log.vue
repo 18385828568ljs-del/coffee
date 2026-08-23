@@ -1,5 +1,5 @@
 <template>
-	<view class="page">
+	<view class="page" :style="themePageStyle">
 		<app-nav title="余额明细" fallback-url="/pages/me/me" />
 
 		<scroll-view

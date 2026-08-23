@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.coffee.decorator.mapper.ComponentAiProfileMapper">
+    <resultMap id="ProfileResult" type="com.ruoyi.project.coffee.decorator.ai.profile.ComponentAiProfile">
+        <id property="id" column="id" /><result property="slotKey" column="slot_key" />
+        <result property="profileVersion" column="profile_version" /><result property="enabled" column="enabled" />
+        <result property="generationModes" column="generation_modes" /><result property="allowedTextModes" column="allowed_text_modes" />
+        <result property="defaultTextMode" column="default_text_mode" /><result property="promptTemplateCode" column="prompt_template_code" />
+        <result property="safeAreaPreset" column="safe_area_preset" /><result property="visualDensity" column="visual_density" />
+        <result property="requiredFieldsJson" column="required_fields_json" /><result property="optionalFieldsJson" column="optional_fields_json" />
+        <result property="allowedElementsJson" column="allowed_elements_json" /><result property="forbiddenElementsJson" column="forbidden_elements_json" />
+        <result property="validationRulesJson" column="validation_rules_json" /><result property="status" column="status" />
+    </resultMap>
+    <select id="selectActive" resultMap="ProfileResult">select * from component_ai_profiles where slot_key=#{slotKey} and status='ACTIVE' order by profile_version desc limit 1</select>
+    <select id="selectActiveList" resultMap="ProfileResult">select p.* from component_ai_profiles p inner join (select slot_key,max(profile_version) profile_version from component_ai_profiles where status='ACTIVE' group by slot_key) latest on latest.slot_key=p.slot_key and latest.profile_version=p.profile_version where p.status='ACTIVE' order by p.slot_key</select>
+</mapper>

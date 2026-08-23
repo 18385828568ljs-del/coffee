@@ -6,6 +6,9 @@ import { buildBackgroundStyle, buildStructuredBackgroundStyle } from './backgrou
 import { themeRpx } from './units.js'
 import { SKIN_COMPONENT_MAP } from './skin-registry.js'
 import { buildTypographyVariables } from './typography-registry.js'
+import { loadFontResources } from './font-loader.js'
+import { layoutPresetStyle } from './layout-registry.js'
+import { decorationPresetStyle } from './decoration-registry.js'
 import { resolveImageUrl } from '@/utils/apiconfig.js'
 
 const STORAGE_KEY = 'coffeeThemeRuntimeV1'
@@ -13,6 +16,7 @@ const SKIN_CONFIG_KEY = 'skin_config'
 const SKIN_VERSION_KEY = 'skin_version'
 const SKIN_STORE_KEY = 'skin_store_code'
 const LOCAL_SKIN_KEY = 'coffeeLocalSkin'
+const PREVIEW_SKIN_KEY = 'coffeeDecoratorPreviewSkinV1'
 const DEFAULT_STORE_ID = '1'
 const state = Vue.observable({
 	templateKey: 'coffee',
@@ -20,13 +24,13 @@ const state = Vue.observable({
 	skinConfig: cloneDefaultSkin(),
 	rawSkinConfig: cloneDefaultSkin(),
 	assetUrls: {},
+	fontResources: {},
 	preview: false,
 	source: 'ACTIVE',
 	previewId: '',
 	storeCode: '',
 	versionId: '',
-	systemTheme: 'light',
-	forcedPreviewTheme: ''
+	systemTheme: 'light'
 })
 
 function readSystemTheme() {
@@ -40,6 +44,31 @@ function readSystemTheme() {
 
 state.systemTheme = readSystemTheme()
 
+function isDecoratorPreviewContext() {
+	if (typeof window === 'undefined') return false
+	return window.parent !== window || /(?:[?&#])decoratorPreview=1(?:&|#|$)/.test(window.location.href)
+}
+
+function applyGlobalThemeStyle() {
+	if (typeof document === 'undefined' || !document.documentElement) return
+	const style = { ...buildThemeTokenStyle(state.config), ...buildTypographyVariables(state.skinConfig.typography, state.fontResources) }
+	const page = state.skinConfig && state.skinConfig.page
+	if (page && /^#[0-9A-Fa-f]{3,8}$/.test(String(page.backgroundColor || ''))) {
+		Object.assign(style, buildStructuredBackgroundStyle(page.background, page.backgroundColor))
+	}
+	const root = document.documentElement
+	Object.keys(style).forEach((key) => {
+		const value = style[key]
+		if (value === undefined || value === null || value === '') return
+		const property = key.indexOf('--') === 0 ? key : key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)
+		root.style.setProperty(property, String(value))
+	})
+	if (document.body) {
+		document.body.style.background = style.background || ''
+		document.body.style.backgroundColor = style.backgroundColor || ''
+	}
+}
+
 function apply(config, options = {}) {
 	const templateKey = THEME_TEMPLATES[options.templateKey] ? options.templateKey : state.templateKey
 	const isSkinConfig = config && Number(config.schemaVersion) === 1
@@ -48,12 +77,25 @@ function apply(config, options = {}) {
 	state.rawSkinConfig = isSkinConfig ? config : cloneDefaultSkin()
 	state.skinConfig = isSkinConfig ? normalizeSkinConfigV1(config) : cloneDefaultSkin()
 	state.assetUrls = options.assetUrls && typeof options.assetUrls === 'object' ? { ...options.assetUrls } : {}
+	state.fontResources = options.fontResources && typeof options.fontResources === 'object' ? { ...options.fontResources } : {}
+	loadFontResources(state.fontResources)
 	state.preview = !!options.preview
 	if (options.source) state.source = options.source
 	if (options.previewId !== undefined) state.previewId = options.previewId ? String(options.previewId) : ''
 	if (options.versionId !== undefined) state.versionId = options.versionId ? String(options.versionId) : ''
+	applyGlobalThemeStyle()
+	if (state.preview && isSkinConfig && typeof uni !== 'undefined') {
+		uni.setStorageSync(PREVIEW_SKIN_KEY, {
+			config: state.skinConfig,
+			assetUrls: state.assetUrls,
+			fontResources: state.fontResources,
+			storeCode: state.storeCode,
+			previewId: state.previewId,
+			versionId: state.versionId
+		})
+	}
 	if (options.persist !== false && typeof uni !== 'undefined') {
-		uni.setStorageSync(STORAGE_KEY, { templateKey, config: state.config, assetUrls: state.assetUrls })
+		uni.setStorageSync(STORAGE_KEY, { templateKey, config: state.config, assetUrls: state.assetUrls, fontResources: state.fontResources })
 		if (isSkinConfig) {
 			uni.setStorageSync(SKIN_CONFIG_KEY, state.skinConfig)
 			if (options.version != null) uni.setStorageSync(SKIN_VERSION_KEY, String(options.version))
@@ -70,39 +112,28 @@ function setPreviewMode(preview) {
 	state.preview = !!preview
 	if (state.preview) {
 		if (state.source === 'ACTIVE') state.source = 'PREVIEW'
-		applySystemTheme(effectiveTheme())
+		applySystemTheme(state.systemTheme)
 	} else if (state.source === 'PREVIEW') {
+		if (typeof uni !== 'undefined') uni.removeStorageSync(PREVIEW_SKIN_KEY)
 		state.source = 'ACTIVE'
 		state.previewId = ''
-		state.forcedPreviewTheme = ''
 		applySystemTheme(state.systemTheme)
 	}
 }
 
-function setPreviewEnvironment(theme) {
-	if (state.source !== 'PREVIEW') return false
-	if (theme !== 'light' && theme !== 'dark') return false
-	state.forcedPreviewTheme = theme
-	applySystemTheme(theme)
-	return true
-}
-
 function effectiveTheme() {
-	return state.source === 'PREVIEW' && state.forcedPreviewTheme
-		? state.forcedPreviewTheme
-		: state.systemTheme
+	return state.systemTheme
 }
 
 function setSystemTheme(theme) {
 	state.systemTheme = theme === 'dark' ? 'dark' : 'light'
-	if (state.source !== 'PREVIEW' || !state.forcedPreviewTheme) applySystemTheme(state.systemTheme)
+	applySystemTheme(state.systemTheme)
 }
 
 function applySystemTheme(theme) {
 	const normalized = theme === 'dark' ? 'dark' : 'light'
 	if (typeof document !== 'undefined' && document.documentElement) {
 		document.documentElement.style.colorScheme = normalized
-		document.documentElement.dataset.previewTheme = normalized
 	}
 	if (typeof uni !== 'undefined' && uni.setNavigationBarColor) {
 		try {
@@ -124,7 +155,6 @@ function useLocalSkin(skinKey = 'vintage', persist = true) {
 	state.versionId = key
 	state.source = state.preview ? 'PREVIEW' : 'ACTIVE'
 	state.previewId = ''
-	state.forcedPreviewTheme = ''
 	if (persist && typeof uni !== 'undefined') uni.setStorageSync(LOCAL_SKIN_KEY, key)
 	return skin
 }
@@ -137,16 +167,38 @@ function restoreLocalSkin() {
 
 function restore() {
 	if (typeof uni === 'undefined') return state.config
+	if (isDecoratorPreviewContext()) {
+		const preview = uni.getStorageSync(PREVIEW_SKIN_KEY)
+		if (preview && preview.config && Number(preview.config.schemaVersion) === 1) {
+			apply(preview.config, {
+				assetUrls: preview.assetUrls,
+				fontResources: preview.fontResources,
+				persist: false,
+				preview: true,
+				source: 'PREVIEW',
+				previewId: preview.previewId,
+				versionId: preview.versionId
+			})
+			state.storeCode = preview.storeCode || ''
+			return state.config
+		}
+	}
 	if (restoreLocalSkin()) return state.config
 	const saved = uni.getStorageSync(STORAGE_KEY)
 	if (saved && saved.config && Number(saved.config.schemaVersion) !== 1) {
-		return apply(saved.config, { templateKey: saved.templateKey, assetUrls: saved.assetUrls, persist: false })
+		return apply(saved.config, { templateKey: saved.templateKey, assetUrls: saved.assetUrls, fontResources: saved.fontResources, persist: false })
 	}
 	return state.config
 }
 
 async function loadPublished(storeCode) {
 	const code = String(storeCode || DEFAULT_STORE_ID).trim()
+	// A local skin is only a decorator-preview convenience. It must never win
+	// over the merchant's published configuration in the customer app.
+	if (typeof uni !== 'undefined') uni.removeStorageSync(LOCAL_SKIN_KEY)
+	if (state.source !== 'PREVIEW' && LOCAL_SKINS[state.versionId]) {
+		apply(cloneDefaultSkin(), { templateKey: 'coffee', persist: false, source: 'ACTIVE', versionId: '' })
+	}
 	let cachedSkin = null
 	if (state.storeCode !== code) {
 		// 门店切换时先清掉上一家门店的已发布配置，避免请求失败时串用旧主题。
@@ -171,6 +223,7 @@ async function loadPublished(storeCode) {
 			if (unified && unified.config) {
 				apply(unified.config, {
 					assetUrls: unified.assetUrls,
+					fontResources: unified.fontResources,
 					persist: true,
 					version: cachedVersion,
 					source: 'ACTIVE',
@@ -187,14 +240,13 @@ async function loadPublished(storeCode) {
 		}
 		const result = unified || await fetchPublishedTheme(code)
 		if (!result || !result.config) return state.config
-		apply(result.config, { assetUrls: result.assetUrls, persist: true, version: result.versionId || result.version || result.versionNo,
+		apply(result.config, { assetUrls: result.assetUrls, fontResources: result.fontResources, persist: true, version: result.versionId || result.version || result.versionNo,
 			source: 'ACTIVE', preview: false, previewId: '', versionId: result.versionId || result.versionNo })
 		if (typeof uni !== 'undefined') uni.setStorageSync(SKIN_STORE_KEY, code)
 		state.storeCode = code
 		state.versionId = String(result.versionId || result.version || result.versionNo || '')
 		state.source = 'ACTIVE'
 		state.previewId = ''
-		state.forcedPreviewTheme = ''
 		return state.config
 	} catch (error) {
 		return state.config
@@ -211,6 +263,7 @@ async function loadPreview(storeCode, previewToken) {
 		if (!result || result.source !== 'PREVIEW' || !result.config) return null
 		apply(result.config, {
 			assetUrls: result.assetUrls,
+			fontResources: result.fontResources,
 			persist: false,
 			preview: true,
 			source: 'PREVIEW',
@@ -218,7 +271,6 @@ async function loadPreview(storeCode, previewToken) {
 			versionId: result.versionId || result.draftRevision
 		})
 		state.storeCode = code || String(result.storeCode || '').trim()
-		state.forcedPreviewTheme = ''
 		applySystemTheme(effectiveTheme())
 		return result
 	} catch (error) {
@@ -307,12 +359,45 @@ function skinAssetStyle(key) {
 	return style
 }
 
+function skinComponentStyle(key) {
+	const style = { ...skinAssetStyle(key) }
+	const slot = skinSlot(key)
+	// The configurable color/gradient is used when no image asset is selected.
+	if (!style.backgroundImage && slot && typeof slot === 'object') {
+		if (slot.background) Object.assign(style, buildStructuredBackgroundStyle(slot.background, slot.backgroundColor))
+		else if (/^#[0-9A-Fa-f]{3,8}$/.test(String(slot.backgroundColor || ''))) style.backgroundColor = slot.backgroundColor
+	}
+	return style
+}
+
 function typographyToken(role) {
 	return (state.skinConfig && state.skinConfig.typography && state.skinConfig.typography[role]) || {}
 }
 
 function skinContent(key) {
 	return (state.skinConfig && state.skinConfig.content && state.skinConfig.content[key]) || {}
+}
+
+function skinLayout(key) {
+	return (state.skinConfig && state.skinConfig.layout && state.skinConfig.layout[key]) || {}
+}
+
+function skinLayoutStyle(key) {
+	return layoutPresetStyle(skinLayout(key))
+}
+
+function skinDecoration(key) {
+	return (state.skinConfig && state.skinConfig.decorations && state.skinConfig.decorations[key]) || null
+}
+
+function skinDecorationUrl(key) {
+	const decoration = skinDecoration(key)
+	return decoration ? assetUrl(decoration.assetId) : ''
+}
+
+function skinDecorationStyle(key) {
+	const decoration = skinDecoration(key)
+	return decoration ? decorationPresetStyle(decoration) : {}
 }
 
 function serializeStyle(style) {
@@ -326,13 +411,13 @@ function serializeStyle(style) {
 	}).filter(Boolean).join(';')
 }
 
-export const themeRuntime = { state, apply, restore, loadPublished, loadPreview, useTemplate, useLocalSkin, setPreviewMode, setPreviewEnvironment, effectiveTheme, setSystemTheme, applySystemTheme, component, backgroundStyle, assetUrl, skinSlot, skinSlotStyle, skinAsset, skinAssets, skinProductImage, skinAssetStyle, typographyToken, skinContent }
+export const themeRuntime = { state, apply, restore, loadPublished, loadPreview, useTemplate, useLocalSkin, setPreviewMode, effectiveTheme, setSystemTheme, applySystemTheme, component, backgroundStyle, assetUrl, skinSlot, skinSlotStyle, skinAsset, skinAssets, skinProductImage, skinAssetStyle, skinComponentStyle, typographyToken, skinContent, skinLayout, skinLayoutStyle, skinDecoration, skinDecorationUrl, skinDecorationStyle }
 
 export const themeMixin = {
 	computed: {
 		themeConfig() { return state.config },
 			themePageStyle() {
-			const style = { ...buildThemeTokenStyle(state.config), ...buildTypographyVariables(state.skinConfig.typography) }
+			const style = { ...buildThemeTokenStyle(state.config), ...buildTypographyVariables(state.skinConfig.typography, state.fontResources) }
 			style.colorScheme = effectiveTheme()
 			const page = state.skinConfig && state.skinConfig.page
 			if (page && /^#[0-9A-Fa-f]{3,8}$/.test(String(page.backgroundColor || ''))) {
@@ -353,7 +438,13 @@ export const themeMixin = {
 		themeSkinAssets(key) { return skinAssets(key) },
 		themeSkinProductImage(productId) { return skinProductImage(productId) },
 		themeSkinAssetStyle(key) { return skinAssetStyle(key) },
+		themeSkinComponentStyle(key) { return skinComponentStyle(key) },
 		themeTypographyToken(role) { return typographyToken(role) },
-		themeSkinContent(key) { return skinContent(key) }
+		themeSkinContent(key) { return skinContent(key) },
+		themeSkinLayout(key) { return skinLayout(key) },
+		themeSkinLayoutStyle(key) { return skinLayoutStyle(key) },
+		themeSkinDecoration(key) { return skinDecoration(key) },
+		themeSkinDecorationUrl(key) { return skinDecorationUrl(key) },
+		themeSkinDecorationStyle(key) { return skinDecorationStyle(key) }
 	}
 }

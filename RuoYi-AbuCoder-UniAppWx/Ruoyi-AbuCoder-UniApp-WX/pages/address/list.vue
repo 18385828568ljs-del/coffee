@@ -1,5 +1,5 @@
 <template>
-	<view class="page">
+	<view class="page" :style="themePageStyle">
 		<app-nav title="地址管理" fallback-url="/pages/me/me" />
 
 		<scroll-view class="address-list" scroll-y>

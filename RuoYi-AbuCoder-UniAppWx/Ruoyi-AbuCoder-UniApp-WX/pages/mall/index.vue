@@ -1,5 +1,5 @@
 <template>
-	<view class="page">
+	<view class="page" :style="themePageStyle">
 		<app-nav title="商城" fallback-url="/pages/index/index" :force-fallback="true" />
 
 		<view class="content">
@@ -181,9 +181,11 @@ import { ensureLocalLogin, getLocalUserId } from '@/utils/session.js'
 import { requestPromise, isSuccessResponse } from '@/utils/request-helper.js'
 import { hideBusy, showBusy, showError } from '@/utils/ui-feedback.js'
 import { getProductImages } from '@/utils/product.js'
+import { themeRuntime } from '@/theme/runtime.js'
 
 const PRODUCT_PREVIEW_KEY = 'currentProductPreview'
 const FALLBACK_CATEGORY_ID = 'uncategorized'
+const DEFAULT_STORE_CODE = '1'
 
 function sortCategoryList(list = []) {
 	return [...list].sort((a, b) => {
@@ -297,12 +299,14 @@ export default {
 	},
 
 	onLoad() {
+		if (!this.themePreviewMode) themeRuntime.loadPublished(themeRuntime.state.storeCode || DEFAULT_STORE_CODE)
 		this.navOffsetTop = this.resolveNavOffsetTop()
 		this.categoryStickyTop = this.navOffsetTop
 		this.loadHomeData()
 	},
 
 	onShow() {
+		if (!this.themePreviewMode) themeRuntime.loadPublished(themeRuntime.state.storeCode || DEFAULT_STORE_CODE)
 		this.loadCartList({ silent: true, noLoading: true })
 		this.$nextTick(() => {
 			this.scheduleSectionMeasure()

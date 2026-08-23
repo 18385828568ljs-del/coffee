@@ -32,6 +32,15 @@ class ThemeConfigValidatorTest
     }
 
     @Test
+    void acceptsSpecPanelSkinSlot()
+    {
+        String config = validSkinConfig().replace(
+                "\"tabBar\":{\"backgroundColor\":\"#FFFFFF\",\"textColor\":\"#777777\",\"activeTextColor\":\"#44352C\",\"iconColor\":\"#999999\",\"activeIconColor\":\"#44352C\",\"activeBackgroundColor\":\"#F3E4D6\"}",
+                "\"tabBar\":{\"backgroundColor\":\"#FFFFFF\",\"textColor\":\"#777777\",\"activeTextColor\":\"#44352C\",\"iconColor\":\"#999999\",\"activeIconColor\":\"#44352C\",\"activeBackgroundColor\":\"#F3E4D6\"},\"specPanel\":{\"backgroundType\":\"color\",\"backgroundColor\":\"#F4EBDD\",\"fit\":\"fill\"}");
+        assertDoesNotThrow(() -> validator.validate(config));
+    }
+
+    @Test
     void rejectsUnknownSkinSlot()
     {
         assertThrows(ThemeConfigValidationException.class,
@@ -60,6 +69,16 @@ class ThemeConfigValidatorTest
         ObjectNode productImages = (ObjectNode) config.path("productImages");
         productImages.put("1", "202");
         productImages.putNull("2");
+        assertDoesNotThrow(() -> validator.validate(config.toString()));
+    }
+
+    @Test
+    void acceptsCanonicalSkinConfigPublishedBeforeShopHeaderWasAdded()
+    {
+        ObjectNode config = canonicalSkinConfig();
+        ((ObjectNode) config.path("slots")).remove("shopHeader");
+        ((ObjectNode) config.path("assets")).remove("shopHeader");
+        ((ObjectNode) config.path("content")).remove("shopHeader");
         assertDoesNotThrow(() -> validator.validate(config.toString()));
     }
 
@@ -158,6 +177,57 @@ class ThemeConfigValidatorTest
     }
 
     @Test
+    void validatesOptionalShopHeaderLogo()
+    {
+        ObjectNode config = canonicalSkinConfig();
+        ObjectNode shopHeader = (ObjectNode) config.path("content").path("shopHeader");
+        shopHeader.put("logoAssetId", 501);
+        assertDoesNotThrow(() -> validator.validate(config.toString()));
+
+        shopHeader.putNull("logoAssetId");
+        assertDoesNotThrow(() -> validator.validate(config.toString()));
+
+        shopHeader.put("logoAssetId", 0);
+        assertThrows(ThemeConfigValidationException.class,
+                () -> validator.validate(config.toString()));
+    }
+
+    @Test
+    void validatesTypographyV2FontFields()
+    {
+        ObjectNode config = canonicalSkinConfig();
+        ObjectNode title = (ObjectNode) config.path("typography").path("bannerTitle");
+        title.put("fontId", 12);
+        title.put("fontStyle", "italic");
+        assertDoesNotThrow(() -> validator.validate(config.toString()));
+
+        title.put("fontId", 0);
+        assertThrows(ThemeConfigValidationException.class,
+                () -> validator.validate(config.toString()));
+
+        title.put("fontId", 12);
+        title.put("fontStyle", "oblique");
+        assertThrows(ThemeConfigValidationException.class,
+                () -> validator.validate(config.toString()));
+    }
+
+    @Test
+    void validatesLayoutAndArtTextPresets()
+    {
+        ObjectNode config = canonicalSkinConfig();
+        ObjectNode decoration = ((ObjectNode) config.path("decorations")).putObject("homeBannerArtText");
+        decoration.put("assetId", 501L).put("placementPreset", "RIGHT_CENTER").put("sizePreset", "MEDIUM");
+        assertDoesNotThrow(() -> validator.validate(config.toString()));
+
+        ((ObjectNode) config.path("layout").path("homeBanner")).put("contentPreset", "FREE");
+        assertThrows(ThemeConfigValidationException.class, () -> validator.validate(config.toString()));
+
+        ((ObjectNode) config.path("layout").path("homeBanner")).put("contentPreset", "CENTER");
+        decoration.put("sizePreset", "CUSTOM");
+        assertThrows(ThemeConfigValidationException.class, () -> validator.validate(config.toString()));
+    }
+
+    @Test
     void rejectsUnknownCanonicalComponentAndTextRole()
     {
         ObjectNode unknownComponent = canonicalSkinConfig();
@@ -249,6 +319,7 @@ class ThemeConfigValidatorTest
         return "{\"schemaVersion\":1,\"themeVersion\":1,"
                 + "\"page\":{\"backgroundColor\":\"#F7F2EC\",\"textColor\":\"#332C28\",\"secondaryTextColor\":\"#8A7D74\"},"
                 + "\"slots\":{"
+                + "\"shopHeader\":{\"backgroundType\":\"color\",\"backgroundColor\":\"#FFFFFF\",\"fit\":\"fill\"},"
                 + "\"heroBanner\":{\"backgroundType\":\"color\",\"backgroundColor\":\"#6F4E37\",\"fit\":\"cover\"},"
                 + "\"orderCard\":{\"backgroundType\":\"color\",\"backgroundColor\":\"#FFFFFF\",\"iconColor\":\"#745848\",\"textColor\":\"#302720\",\"secondaryTextColor\":\"#C28B62\",\"radius\":20,\"shadow\":\"light\"},"
                 + "\"shopCard\":{\"backgroundType\":\"color\",\"backgroundColor\":\"#FFFFFF\",\"iconColor\":\"#332C28\",\"textColor\":\"#302720\",\"secondaryTextColor\":\"#8A7D74\",\"radius\":20,\"shadow\":\"light\"},"

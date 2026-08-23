@@ -2,7 +2,7 @@
 	<view v-if="visible" class="sheet-root" :class="{ 'sheet-visible': animating }">
 		<view class="sheet-mask" @tap="close"></view>
 
-		<view class="sheet-panel">
+		<view class="sheet-panel" data-skin-component="specPanel" :style="themeSkinComponentStyle('specPanel')">
 			<view class="sheet-head">
 				<view class="sheet-head-copy">
 					<text class="sheet-title">{{ headTitle }}</text>
@@ -427,7 +427,8 @@ export default {
 				tableNo: this.tableNo || '',
 				productId: source.productId,
 				productName: source.productName,
-				productImage: source.imageUrl || source.productImage || '',
+				productImage: this.themeSkinProductImage(source.productId || source.id)
+					|| source.imageUrl || source.productImage || '',
 				price: this.currentUnitPrice,
 				quantity: this.quantity,
 				specText: this.combinedSelectedText || source.remark || source.description || '',
@@ -511,7 +512,10 @@ export default {
 	max-height: 84vh;
 	display: flex;
 	flex-direction: column;
-	background: $bg-card;
+	background-color: $bg-card;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 100% 100%;
 	border-radius: 28rpx 28rpx 0 0;
 	box-shadow: 0 -14rpx 28rpx rgba(36, 24, 19, 0.16);
 	transform-origin: right center;

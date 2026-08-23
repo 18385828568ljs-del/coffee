@@ -43,7 +43,7 @@
 							'product-list-item-current': index === singleCurrentIndex,
 							'product-list-item-last': index === products.length - 1
 						}]"
-						:style="[singleCardStyle, themeBackgroundStyle('productCard')]"
+						:style="[singleCardStyle, themeBackgroundStyle('productCard'), themeSkinAssetStyle('productCard')]"
 					>
 						<immersive-product-card
 							:product="prod"
@@ -76,7 +76,7 @@
 						:key="index"
 						class="product-list-item"
 						:class="`theme-product-card-${themeComponent('productCard').variant || 'vertical'}`"
-						:style="themeBackgroundStyle('productCard')"
+						:style="[themeBackgroundStyle('productCard'), themeSkinAssetStyle('productCard')]"
 					>
 						<immersive-product-card
 							:product="prod"
@@ -104,7 +104,7 @@
 
 		</view>
 
-		<view v-if="cartExpanded" class="cart-mask" @tap="toggleCart"></view>
+		<view v-if="cartExpanded" class="cart-mask" :style="bottomNavStyle" @tap="toggleCart"></view>
 
 		<view v-if="activeLayerProduct" class="product-flip-mask" @tap="onCardBackClose"></view>
 		<view
@@ -128,7 +128,7 @@
 			/>
 		</view>
 
-		<view v-if="cartExpanded" class="cart-drawer">
+		<view v-if="cartExpanded" class="cart-drawer" :style="bottomNavStyle">
 			<view class="cart-drawer-head">
 				<view class="cart-drawer-title-wrap">
 					<text class="cart-drawer-title">已选商品</text>
@@ -174,7 +174,7 @@
 			<text>+</text>
 		</view>
 
-		<view class="cart-bar">
+		<view class="cart-bar" :style="bottomNavStyle">
 			<view class="cart-icon cart-bag-target" :class="{ 'cart-icon-empty': cartTotalQuantity <= 0 }" @tap="toggleCart">
 				<image class="cart-bag-image" src="/static/home/shop.svg" mode="aspectFit"></image>
 				<text v-if="cartTotalQuantity > 0" class="cart-badge">{{ cartBadgeText }}</text>
@@ -188,7 +188,9 @@
 			</view>
 		</view>
 
+		<!-- #ifdef H5 -->
 		<bottom-tab-bar current="scan" />
+		<!-- #endif -->
 
 		<product-video-player ref="videoPlayer" />
 	</view>
@@ -205,6 +207,11 @@ import ProductVideoPlayer from '@/components/product-video-player.vue'
 import { themeRuntime } from '@/theme/runtime.js'
 
 const SCAN_MENU_CONTEXT_KEY = 'scanMenuEntryContext'
+// The mini-program keeps only the native custom TabBar. H5 keeps the embedded
+// tab bar and measures its actual height below.
+const BOTTOM_NAV_SHELL_RPX = 88
+const BOTTOM_NAV_GAP_RPX = 0
+const DEFAULT_BOTTOM_NAV_OFFSET_RPX = 88
 
 function toNumber(value) {
 	const n = Number(value || 0)
@@ -243,10 +250,19 @@ export default {
 			singleScrollTimer: null,
 			singleScrollIntoView: '',
 			singleScrollTop: 0,
-			singleCardHeight: 0
+			singleCardHeight: 0,
+			bottomNavOffset: 0,
+			decoratorPreview: false
 		}
 	},
 	computed: {
+		bottomNavStyle() {
+			return {
+				'--bottom-nav-offset': this.bottomNavOffset > 0
+					? `${this.bottomNavOffset}px`
+					: `${DEFAULT_BOTTOM_NAV_OFFSET_RPX}rpx`
+			}
+		},
 		navTableText() {
 			return this.tableNo ? this.tableNo + '桌' : ''
 		},
@@ -272,19 +288,24 @@ export default {
 		}
 	},
 	async onLoad(options = {}) {
+		this.decoratorPreview = this.themePreviewMode || String(options.decoratorPreview || '') === '1'
 		if (Object.keys(options || {}).length) {
 			this.resolveScanContext(options)
 		} else {
 			this.applyStoredScanContext()
 		}
-		await themeRuntime.loadPublished(this.storeCode)
+		if (!this.decoratorPreview) await themeRuntime.loadPublished(this.storeCode)
 		this.loadAllProducts()
 		this.loadCartList()
 		this.initialized = true
 	},
+	onReady() {
+		this.measureBottomNav()
+	},
 	async onShow() {
+		this.measureBottomNav()
 		const contextChanged = this.applyStoredScanContext()
-		if (contextChanged) {
+		if (contextChanged && !this.decoratorPreview) {
 			await themeRuntime.loadPublished(this.storeCode)
 		}
 		if (this.initialized && (!this.products.length || contextChanged)) {
@@ -304,6 +325,47 @@ export default {
 		this.closeVideoIfOpen()
 	},
 	methods: {
+		getBottomNavMinimumOffset() {
+			const systemInfo = typeof uni.getWindowInfo === 'function'
+				? uni.getWindowInfo()
+				: (uni.getSystemInfoSync ? uni.getSystemInfoSync() : {})
+			const windowWidth = Number(systemInfo.windowWidth || 375)
+			const rpxRatio = windowWidth / 750
+			const safeAreaInsets = systemInfo.safeAreaInsets || {}
+			let safeBottom = Number(safeAreaInsets.bottom)
+			if (!Number.isFinite(safeBottom)) {
+				const screenHeight = Number(systemInfo.screenHeight || systemInfo.windowHeight || 0)
+				const safeAreaBottom = Number(systemInfo.safeArea && systemInfo.safeArea.bottom)
+				if (screenHeight > 0 && Number.isFinite(safeAreaBottom)) {
+					safeBottom = Math.max(0, screenHeight - safeAreaBottom)
+				}
+			}
+			let safeAreaOffset = Number.isFinite(safeBottom) ? safeBottom : 0
+			// WeChat's native custom TabBar already includes the device safe-area
+			// region, so adding it again would lift the checkout bar too far upward.
+			// #ifdef MP-WEIXIN
+			safeAreaOffset = 0
+			// #endif
+			return Math.ceil((BOTTOM_NAV_SHELL_RPX + BOTTOM_NAV_GAP_RPX) * rpxRatio + safeAreaOffset)
+		},
+		measureBottomNav() {
+			const minimumOffset = this.getBottomNavMinimumOffset()
+			if (this.bottomNavOffset < minimumOffset) {
+				this.bottomNavOffset = minimumOffset
+			}
+			this.$nextTick(() => {
+				const query = uni.createSelectorQuery().in(this)
+				query.select('.bottom-nav').boundingClientRect((rect) => {
+					if (!rect || !Number.isFinite(rect.top)) return
+					const systemInfo = uni.getSystemInfoSync ? uni.getSystemInfoSync() : {}
+					const viewportHeight = Number(systemInfo.windowHeight || systemInfo.screenHeight || 0)
+					if (viewportHeight <= 0) return
+					const measuredOffset = Math.max(0, Math.ceil(viewportHeight - rect.top) + 2)
+					const offset = Math.max(minimumOffset, measuredOffset)
+					if (offset > 0 && offset !== this.bottomNavOffset) this.bottomNavOffset = offset
+				}).exec()
+			})
+		},
 		applyStoredScanContext() {
 			const context = uni.getStorageSync(SCAN_MENU_CONTEXT_KEY)
 			if (!context) {
@@ -713,7 +775,8 @@ export default {
 						tableNo: this.tableNo,
 						productId: product.productId,
 						productName: product.productName,
-						productImage: product.imageUrl || product.productImage || '',
+						productImage: this.themeSkinProductImage(product.productId || product.id)
+							|| product.imageUrl || product.productImage || '',
 						price: product.price || 0,
 						quantity: 1,
 						specText: product.remark || product.description || '',
@@ -900,7 +963,7 @@ export default {
 }
 
 .product-list {
-	padding: 0 24rpx 280rpx;
+	padding: 0 24rpx calc(280rpx + env(safe-area-inset-bottom));
 	display: flex;
 	flex-direction: column;
 	gap: 28rpx;
@@ -908,13 +971,13 @@ export default {
 }
 
 .product-scroll-single {
-	height: calc(100% - #{$bottom-nav-shell-height} - 112rpx);
+	height: calc(100% - #{$bottom-nav-shell-height} - 112rpx - env(safe-area-inset-bottom));
 	-webkit-overflow-scrolling: touch;
 }
 
 .product-list-single {
 	/* 底部留出 28rpx 卡间距 + 48rpx 露出量，保证最后一张能滚动贴顶，避免吸附目标不可达导致的颤动 */
-	padding: 0 24rpx 76rpx;
+	padding: 0 24rpx calc(76rpx + env(safe-area-inset-bottom));
 	gap: 0;
 }
 
@@ -946,7 +1009,7 @@ export default {
 	display: grid;
 	grid-template-columns: repeat(2, 1fr);
 	gap: 14rpx;
-	padding: 20rpx 28rpx 280rpx;
+	padding: 20rpx 28rpx calc(280rpx + env(safe-area-inset-bottom));
 }
 
 .product-list-item {
@@ -965,7 +1028,7 @@ export default {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	padding: 32rpx $space-page calc(#{$bottom-nav-shell-height} + 160rpx);
+	padding: 32rpx $space-page calc(#{$bottom-nav-shell-height} + 160rpx + env(safe-area-inset-bottom));
 	box-sizing: border-box;
 }
 
@@ -1035,7 +1098,7 @@ export default {
 	position: fixed;
 	left: 0;
 	right: 0;
-	bottom: $bottom-nav-shell-height;
+	bottom: var(--bottom-nav-offset, 88rpx);
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -1053,7 +1116,7 @@ export default {
 	left: 0;
 	right: 0;
 	top: 0;
-	bottom: calc(#{$bottom-nav-shell-height} + 112rpx);
+	bottom: calc(var(--bottom-nav-offset, 88rpx) + 112rpx);
 	background: rgba(32, 26, 23, 0.32);
 	z-index: 23;
 }
@@ -1124,7 +1187,7 @@ export default {
 	position: fixed;
 	left: 0;
 	right: 0;
-	bottom: calc(#{$bottom-nav-shell-height} + 112rpx);
+	bottom: calc(var(--bottom-nav-offset, 88rpx) + 112rpx);
 	max-height: 560rpx;
 	padding: 22rpx $space-page 18rpx;
 	border-radius: $radius-md $radius-md 0 0;

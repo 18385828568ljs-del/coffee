@@ -30,9 +30,10 @@ public class ThemeConfigValidator
             "textPrimary", "textSecondary", "buttonBackground", "buttonText", "border");
     private static final Set<String> RADIUS_KEYS = setOf("card", "button", "image");
     private static final Set<String> BRAND_KEYS = setOf("logoAssetId", "headerAssetId");
-    public static final Set<String> SKIN_COMPONENT_KEYS = setOf("homeBanner", "actionCard",
+    public static final Set<String> SKIN_COMPONENT_KEYS = setOf("shopHeader", "homeBanner", "actionCard",
             "sectionBanner", "aboutImage", "productCard", "specPanel", "emptyCart", "cartPanel",
             "checkoutBar", "memberCard", "tabBar");
+    private static final Set<String> OPTIONAL_SKIN_COMPONENT_KEYS = setOf("meProfileHeader", "meOrderCenter", "meAddressCard");
     public static final Set<String> TYPOGRAPHY_ROLES = setOf("pageTitle", "sectionTitle",
             "bannerTitle", "bannerSubtitle", "actionTitle", "actionSubtitle", "productTitle",
             "price", "metaText", "bodyText", "panelTitle", "optionTitle", "optionText",
@@ -41,9 +42,17 @@ public class ThemeConfigValidator
     private static final Set<String> SKIN_COLOR_KEYS = setOf("primary", "pageBackground",
             "cardBackground", "textPrimary", "textSecondary");
     private static final Set<String> TYPOGRAPHY_FIELDS = setOf("color", "fontSize", "fontWeight",
-            "lineHeight", "letterSpacing", "fontFamily", "textShadow");
-    private static final Set<String> SKIN_CONTENT_KEYS = setOf("homeBanner");
+            "fontStyle", "fontId", "lineHeight", "letterSpacing", "fontFamily", "textShadow");
+    private static final Set<String> SKIN_CONTENT_KEYS = setOf("shopHeader", "homeBanner");
+    private static final Set<String> SHOP_HEADER_CONTENT_FIELDS = setOf("title", "subtitle", "logoAssetId");
     private static final Set<String> HOME_BANNER_CONTENT_FIELDS = setOf("visible", "title", "subtitle");
+    private static final Set<String> LAYOUT_KEYS = setOf("homeBanner");
+    private static final Set<String> LAYOUT_FIELDS = setOf("contentPreset", "safeAreaPreset");
+    private static final Set<String> CONTENT_PRESETS = setOf("LEFT_CENTER", "CENTER", "RIGHT_CENTER");
+    private static final Set<String> SAFE_AREA_PRESETS = setOf("LEFT_CENTER_LARGE", "CENTER_LARGE", "RIGHT_CENTER_LARGE");
+    private static final Set<String> DECORATION_KEYS = setOf("homeBannerArtText", "sectionBannerArtText");
+    private static final Set<String> DECORATION_FIELDS = setOf("assetId", "placementPreset", "sizePreset");
+    private static final Set<String> SIZE_PRESETS = setOf("SMALL", "MEDIUM", "LARGE");
     private static final Set<String> FORBIDDEN_LAYOUT_FIELDS = setOf("x", "y", "left", "right",
             "top", "bottom", "width", "height", "margin", "padding", "transform",
             "flex", "grid");
@@ -137,7 +146,8 @@ public class ThemeConfigValidator
         JsonNode slots = root.get("slots");
         if (slots == null || slots.isNull()) return;
         if (!slots.isObject()) { errors.add("slots 必须是对象"); return; }
-        Set<String> allowed = setOf("heroBanner", "orderCard", "shopCard", "welcomeBanner", "aboutSection", "tabBar");
+        Set<String> allowed = setOf("shopHeader", "heroBanner", "orderCard", "shopCard", "welcomeBanner", "aboutSection", "tabBar",
+                "specPanel", "meProfileHeader", "memberCard", "meOrderCenter", "meAddressCard");
         Iterator<String> fields = slots.fieldNames();
         while (fields.hasNext())
         {
@@ -145,13 +155,21 @@ public class ThemeConfigValidator
             if (!allowed.contains(key)) { errors.add("不支持的 Skin Slot: " + key); continue; }
             JsonNode slot = slots.get(key);
             if (!slot.isObject()) { errors.add("slots." + key + " 必须是对象"); continue; }
-            if ("heroBanner".equals(key) || "welcomeBanner".equals(key)) validateBannerSlot(key, slot, errors);
+            if ("meProfileHeader".equals(key) || "memberCard".equals(key) || "meOrderCenter".equals(key) || "meAddressCard".equals(key)) validateMeSlot(key, slot, errors);
+            else if ("shopHeader".equals(key) || "heroBanner".equals(key) || "welcomeBanner".equals(key)) validateBannerSlot(key, slot, errors);
             else if ("aboutSection".equals(key)) validateAboutSlot(slot, errors);
             else if ("tabBar".equals(key)) validateTabBarSlot(slot, errors);
+            else if ("specPanel".equals(key)) validateSpecPanelSlot(slot, errors);
             else validateCardSlot(key, slot, errors);
             if (slot.has("background")) validateBackgroundConfig(slot.get("background"), "slots." + key + ".background", false, errors);
         }
-        for (String required : allowed) if (!slots.has(required)) errors.add("缺少必填 Slot: " + required);
+        // shopHeader was added after the original V1 payloads were published.
+        // Keep those payloads readable while retaining the original required slots.
+        for (String required : setOf("heroBanner", "orderCard", "shopCard", "welcomeBanner", "aboutSection", "tabBar"))
+        {
+            if ("shopHeader".equals(required)) continue;
+            if (!slots.has(required)) errors.add("缺少必填 Slot: " + required);
+        }
     }
 
     private void validateCanonicalSkinConfig(JsonNode root, List<String> errors)
@@ -161,6 +179,53 @@ public class ThemeConfigValidator
         if (root.has("productImages")) validateProductImages(root.get("productImages"), errors);
         validateTypography(root.get("typography"), errors);
         if (root.has("content")) validateSkinContent(root.get("content"), errors);
+        if (root.has("layout")) validateLayout(root.get("layout"), errors);
+        if (root.has("decorations")) validateDecorations(root.get("decorations"), errors);
+    }
+
+    private void validateDecorations(JsonNode decorations, List<String> errors)
+    {
+        if (decorations == null || !decorations.isObject()) { errors.add("decorations 必须是对象"); return; }
+        validateExactKeys(decorations, DECORATION_KEYS, "装饰素材", errors);
+        java.util.Iterator<String> keys = decorations.fieldNames();
+        while (keys.hasNext())
+        {
+            String key = keys.next();
+            JsonNode value = decorations.get(key);
+            if (!value.isObject()) { errors.add("decorations." + key + " 必须是对象"); continue; }
+            validateExactKeys(value, DECORATION_FIELDS, "艺术字字段", errors);
+            if (!isPositiveId(value.get("assetId"))) errors.add("decorations." + key + ".assetId 必须为正整数");
+            if (!value.path("placementPreset").isTextual()
+                    || !CONTENT_PRESETS.contains(value.path("placementPreset").asText()))
+                errors.add("decorations." + key + ".placementPreset 非法");
+            if (!value.path("sizePreset").isTextual()
+                    || !SIZE_PRESETS.contains(value.path("sizePreset").asText()))
+                errors.add("decorations." + key + ".sizePreset 非法");
+        }
+    }
+
+    private boolean isPositiveId(JsonNode value)
+    {
+        return value != null && value.isIntegralNumber() && value.canConvertToLong() && value.asLong() > 0;
+    }
+
+    private void validateLayout(JsonNode layout, List<String> errors)
+    {
+        if (layout == null || !layout.isObject()) { errors.add("layout 必须是对象"); return; }
+        validateExactKeys(layout, LAYOUT_KEYS, "布局组件", errors);
+        JsonNode banner = layout.get("homeBanner");
+        if (banner == null || !banner.isObject()) { errors.add("layout.homeBanner 必须是对象"); return; }
+        validateExactKeys(banner, LAYOUT_FIELDS, "Banner 布局字段", errors);
+        if (!banner.path("contentPreset").isTextual()
+                || !CONTENT_PRESETS.contains(banner.path("contentPreset").asText()))
+        {
+            errors.add("layout.homeBanner.contentPreset 非法");
+        }
+        if (!banner.path("safeAreaPreset").isTextual()
+                || !SAFE_AREA_PRESETS.contains(banner.path("safeAreaPreset").asText()))
+        {
+            errors.add("layout.homeBanner.safeAreaPreset 非法");
+        }
     }
 
     private void validateSkinContent(JsonNode content, List<String> errors)
@@ -182,6 +247,19 @@ public class ThemeConfigValidator
         if (visible == null || !visible.isBoolean()) errors.add("content.homeBanner.visible 必须为布尔值");
         validateOptionalText(homeBanner, "title", 40, "content.homeBanner.title", errors);
         validateOptionalText(homeBanner, "subtitle", 60, "content.homeBanner.subtitle", errors);
+        if (content.has("shopHeader"))
+        {
+            JsonNode shopHeader = content.get("shopHeader");
+            if (shopHeader == null || !shopHeader.isObject()) errors.add("content.shopHeader 必须是对象");
+            else {
+                validateExactKeys(shopHeader, SHOP_HEADER_CONTENT_FIELDS, "店铺头部文字字段", errors);
+                validateOptionalText(shopHeader, "title", 40, "content.shopHeader.title", errors);
+                validateOptionalText(shopHeader, "subtitle", 60, "content.shopHeader.subtitle", errors);
+                if (shopHeader.has("logoAssetId") && !shopHeader.get("logoAssetId").isNull()
+                        && !isPositiveId(shopHeader.get("logoAssetId")))
+                    errors.add("content.shopHeader.logoAssetId 必须为空或正整数");
+            }
+        }
     }
 
     private void validateOptionalText(JsonNode parent, String key, int maxLength,
@@ -212,13 +290,15 @@ public class ThemeConfigValidator
             errors.add("assets 必须是对象");
             return;
         }
-        validateExactKeys(assets, SKIN_COMPONENT_KEYS, "皮肤组件", errors);
-        for (String key : SKIN_COMPONENT_KEYS)
+        Set<String> allowedKeys = new LinkedHashSet<String>(SKIN_COMPONENT_KEYS);
+        allowedKeys.addAll(OPTIONAL_SKIN_COMPONENT_KEYS);
+        validateExactKeys(assets, allowedKeys, "皮肤组件", errors);
+        for (String key : allowedKeys)
         {
             JsonNode value = assets.get(key);
             if (value == null)
             {
-                errors.add("缺少皮肤组件: " + key);
+                if (!"shopHeader".equals(key) && !OPTIONAL_SKIN_COMPONENT_KEYS.contains(key)) errors.add("缺少皮肤组件: " + key);
             }
             else if ("homeBanner".equals(key) && value.isArray())
             {
@@ -309,6 +389,19 @@ public class ThemeConfigValidator
             {
                 errors.add(path + ".fontWeight 必须为 400/500/600/700/800");
             }
+            if (token.has("fontId"))
+            {
+                JsonNode fontId = token.get("fontId");
+                if (!fontId.isIntegralNumber() || !fontId.canConvertToLong() || fontId.asLong() <= 0)
+                {
+                    errors.add(path + ".fontId 必须为正整数");
+                }
+            }
+            if (token.has("fontStyle") && (!token.get("fontStyle").isTextual()
+                    || !setOf("normal", "italic").contains(token.get("fontStyle").asText())))
+            {
+                errors.add(path + ".fontStyle 必须为 normal 或 italic");
+            }
             validateNumber(token.get("lineHeight"), 1, 2, path + ".lineHeight", errors);
             if (token.has("letterSpacing"))
             {
@@ -395,6 +488,38 @@ public class ThemeConfigValidator
         for (String field : new String[] { "iconColor", "textColor", "secondaryTextColor" }) validateColor(slot, field, path + "." + field, errors);
         if (slot.has("radius")) validateRadius(slot.get("radius"), path + ".radius", errors);
         if (slot.has("shadow") && (!slot.get("shadow").isTextual() || !setOf("none", "light", "medium").contains(slot.get("shadow").asText()))) errors.add(path + ".shadow 非法");
+    }
+
+    private void validateSpecPanelSlot(JsonNode slot, List<String> errors)
+    {
+        String path = "slots.specPanel";
+        JsonNode type = slot.get("backgroundType");
+        if (type == null || !type.isTextual() || !("image".equals(type.asText()) || "color".equals(type.asText())))
+            errors.add(path + ".backgroundType 非法");
+        if ("color".equals(type == null ? "" : type.asText()))
+            validateColor(slot, "backgroundColor", path + ".backgroundColor", errors);
+        if ("image".equals(type == null ? "" : type.asText()))
+        {
+            validateText(slot, "backgroundImage", path + ".backgroundImage", errors);
+            validateFit(slot, path, errors);
+        }
+        if (slot.has("radius")) validateRadius(slot.get("radius"), path + ".radius", errors);
+    }
+
+    private void validateMeSlot(String key, JsonNode slot, List<String> errors)
+    {
+        String path = "slots." + key;
+        JsonNode type = slot.get("backgroundType");
+        if (type == null || !type.isTextual() || !("image".equals(type.asText()) || "color".equals(type.asText())))
+            errors.add(path + ".backgroundType 非法");
+        if ("color".equals(type == null ? "" : type.asText()))
+            validateColor(slot, "backgroundColor", path + ".backgroundColor", errors);
+        if ("image".equals(type == null ? "" : type.asText()))
+        {
+            validateText(slot, "backgroundImage", path + ".backgroundImage", errors);
+            validateFit(slot, path, errors);
+        }
+        if (slot.has("radius")) validateRadius(slot.get("radius"), path + ".radius", errors);
     }
 
     private void validateAboutSlot(JsonNode slot, List<String> errors)
@@ -500,7 +625,7 @@ public class ThemeConfigValidator
 
     private void validateRadius(JsonNode value, String path, List<String> errors)
     {
-        if (value == null || !value.isIntegralNumber() || !Arrays.asList(0, 8, 12, 16, 20, 24).contains(value.asInt())) errors.add(path + " 必须为 0/8/12/16/20/24");
+        if (value == null || !value.isIntegralNumber() || !Arrays.asList(0, 8, 12, 16, 20, 24, 28).contains(value.asInt())) errors.add(path + " 必须为 0/8/12/16/20/24/28");
     }
 
     private void validateTokens(JsonNode tokens, List<String> errors)

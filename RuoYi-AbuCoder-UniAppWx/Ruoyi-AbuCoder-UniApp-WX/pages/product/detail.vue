@@ -1,5 +1,5 @@
 <template>
-	<view class="page">
+	<view class="page" :style="themePageStyle">
 		<app-nav title="商品详情" right-text="购物车" fallback-url="/pages/index/index" @right="goCart" />
 
 		<scroll-view class="content" scroll-y>

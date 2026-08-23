@@ -17,6 +17,8 @@ public interface DecoratorThemeMapper
     DecoratorTheme selectMasterTheme(@Param("merchantId") Long merchantId);
     List<DecoratorTheme> selectThemes(@Param("merchantId") Long merchantId,
             @Param("scopeType") String scopeType, @Param("scopeId") Long scopeId);
+    List<DecoratorTheme> selectDraftThemes(@Param("merchantId") Long merchantId,
+            @Param("storeIds") List<Long> storeIds);
     DecoratorTheme selectActiveTheme(@Param("merchantId") Long merchantId,
             @Param("scopeType") String scopeType, @Param("scopeId") Long scopeId);
     List<SystemThemeTemplate> selectTemplates();
@@ -30,6 +32,8 @@ public interface DecoratorThemeMapper
     int insertDraft(ThemeDraft draft);
     int insertDraftIfAbsent(ThemeDraft draft);
     int insertTheme(DecoratorTheme theme);
+    int softDeleteTheme(@Param("merchantId") Long merchantId, @Param("themeId") Long themeId,
+            @Param("userId") Long userId);
     ThemeVersion selectVersion(@Param("merchantId") Long merchantId, @Param("themeId") Long themeId,
             @Param("versionId") Long versionId);
     ThemeVersion selectVersionByIdempotencyKey(@Param("merchantId") Long merchantId,

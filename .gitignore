@@ -60,6 +60,9 @@ RuoYi-AbuCoder-UniAppWx/Ruoyi-AbuCoder-UniApp-WX/unpackage/dist/
 CONTEXT.md
 /docs/*
 !/docs/PROJECT_STRUCTURE_AND_PERSONALIZED_SKIN.md
+!/docs/features/
+!/docs/features/user-theme/
+!/docs/features/user-theme/Coffee商家店铺装修系统_字体_AI背景_艺术字_尺寸与位置开发方案_V2.1_项目适配版.md
 # 本地配置文件，不上传 GitHub
 src/main/resources/application.yml
 src/main/resources/application-druid.yml

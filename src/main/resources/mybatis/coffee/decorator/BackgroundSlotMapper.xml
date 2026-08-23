@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.coffee.decorator.mapper.BackgroundSlotMapper">
+    <resultMap id="BackgroundSlotResult" type="com.ruoyi.project.coffee.decorator.asset.domain.BackgroundSlotSpec">
+        <id property="id" column="id" />
+        <result property="slotKey" column="slot_key" />
+        <result property="componentKey" column="component_key" />
+        <result property="specVersion" column="spec_version" />
+        <result property="logicalWidth" column="logical_width" />
+        <result property="logicalHeight" column="logical_height" />
+        <result property="outputWidth" column="output_width" />
+        <result property="outputHeight" column="output_height" />
+        <result property="renderMode" column="render_mode" />
+        <result property="uploadMinWidth" column="upload_min_width" />
+        <result property="uploadMinHeight" column="upload_min_height" />
+        <result property="maxFileSize" column="max_file_size" />
+        <result property="aiEnabled" column="ai_enabled" />
+        <result property="safeAreaJson" column="safe_area_json" />
+    </resultMap>
+
+    <select id="selectActiveByComponentKey" resultMap="BackgroundSlotResult">
+        select id, slot_key, component_key, spec_version, logical_width, logical_height,
+               output_width, output_height, render_mode, upload_min_width, upload_min_height,
+               max_file_size, ai_enabled, safe_area_json
+        from component_background_slots
+        where component_key = #{componentKey} and slot_key like 'skin.%' and status = 'ACTIVE'
+        order by spec_version desc limit 1
+    </select>
+</mapper>

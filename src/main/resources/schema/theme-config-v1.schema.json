@@ -29,16 +29,24 @@
           "additionalProperties": { "$ref": "#/$defs/skinAsset" }
         },
         "content": { "$ref": "#/$defs/skinContent" },
+        "layout": { "$ref": "#/$defs/layout" },
+        "decorations": { "$ref": "#/$defs/decorations" },
         "typography": { "$ref": "#/$defs/typography" },
         "slots": {
           "type": "object",
           "required": ["heroBanner", "orderCard", "shopCard", "welcomeBanner", "aboutSection", "tabBar"],
           "properties": {
+            "shopHeader": { "type": "object" },
             "heroBanner": { "type": "object" },
             "orderCard": { "type": "object" },
             "shopCard": { "type": "object" },
+            "specPanel": { "type": "object" },
             "welcomeBanner": { "type": "object" },
             "aboutSection": { "type": "object" },
+            "meProfileHeader": { "type": "object" },
+            "memberCard": { "type": "object" },
+            "meOrderCenter": { "type": "object" },
+            "meAddressCard": { "type": "object" },
             "tabBar": { "type": "object" }
           },
           "additionalProperties": false
@@ -149,6 +157,7 @@
       "type": "object",
       "required": ["homeBanner", "actionCard", "sectionBanner", "aboutImage", "productCard", "specPanel", "emptyCart", "cartPanel", "checkoutBar", "memberCard", "tabBar"],
       "properties": {
+        "shopHeader": { "$ref": "#/$defs/skinAsset" },
         "homeBanner": {
           "oneOf": [
             { "type": "array", "maxItems": 10, "items": { "$ref": "#/$defs/skinAssetNoNull" } },
@@ -163,7 +172,10 @@
         "emptyCart": { "$ref": "#/$defs/skinAsset" },
         "cartPanel": { "$ref": "#/$defs/skinAsset" },
         "checkoutBar": { "$ref": "#/$defs/skinAsset" },
+        "meProfileHeader": { "$ref": "#/$defs/skinAsset" },
         "memberCard": { "$ref": "#/$defs/skinAsset" },
+        "meOrderCenter": { "$ref": "#/$defs/skinAsset" },
+        "meAddressCard": { "$ref": "#/$defs/skinAsset" },
         "tabBar": { "$ref": "#/$defs/skinAsset" }
       },
       "additionalProperties": false
@@ -181,6 +193,21 @@
             "subtitle": { "type": "string", "maxLength": 60 }
           },
           "additionalProperties": false
+        },
+        "shopHeader": {
+          "type": "object",
+          "required": ["title", "subtitle"],
+          "properties": {
+            "title": { "type": "string", "maxLength": 40 },
+            "subtitle": { "type": "string", "maxLength": 60 },
+            "logoAssetId": {
+              "oneOf": [
+                { "type": "null" },
+                { "type": "integer", "minimum": 1 }
+              ]
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false
@@ -192,12 +219,43 @@
         "color": { "$ref": "#/$defs/color" },
         "fontSize": { "type": "number", "minimum": 10, "maximum": 32 },
         "fontWeight": { "type": "integer", "enum": [400, 500, 600, 700, 800] },
+        "fontId": { "type": "integer", "minimum": 1 },
+        "fontStyle": { "type": "string", "enum": ["normal", "italic"] },
         "lineHeight": { "type": "number", "minimum": 1, "maximum": 2 },
         "letterSpacing": { "type": "number", "minimum": 0, "maximum": 4 },
         "fontFamily": { "type": "string", "maxLength": 120 },
         "textShadow": { "type": "string", "maxLength": 120 }
       },
       "additionalProperties": false
+    },
+    "layout": {
+      "type": "object",
+      "properties": {
+        "homeBanner": {
+          "type": "object",
+          "required": ["contentPreset", "safeAreaPreset"],
+          "properties": {
+            "contentPreset": { "enum": ["LEFT_CENTER", "CENTER", "RIGHT_CENTER"] },
+            "safeAreaPreset": { "enum": ["LEFT_CENTER_LARGE", "CENTER_LARGE", "RIGHT_CENTER_LARGE"] }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "decorations": {
+      "type": "object",
+      "propertyNames": { "enum": ["homeBannerArtText", "sectionBannerArtText"] },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["assetId", "placementPreset", "sizePreset"],
+          "properties": {
+            "assetId": { "type": "integer", "minimum": 1 },
+            "placementPreset": { "enum": ["LEFT_CENTER", "CENTER", "RIGHT_CENTER"] },
+            "sizePreset": { "enum": ["SMALL", "MEDIUM", "LARGE"] }
+        },
+        "additionalProperties": false
+      }
     },
     "typography": {
       "type": "object",

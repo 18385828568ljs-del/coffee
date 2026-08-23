@@ -1,5 +1,6 @@
 export const SKIN_COMPONENTS = Object.freeze([
-	{ key: 'homeBanner', name: '头部 Banner 背景', page: 'home', stretchMode: 'cover', logicalWidth: 750, logicalHeight: 360, textRoles: ['bannerTitle', 'bannerSubtitle'] },
+	{ key: 'shopHeader', name: '店铺头部背景', page: 'home', stretchMode: 'fill', logicalWidth: 750, logicalHeight: 128, textRoles: [] },
+	{ key: 'homeBanner', name: '头部 Banner 轮播图', page: 'home', stretchMode: 'cover', logicalWidth: 750, logicalHeight: 360, textRoles: ['bannerTitle', 'bannerSubtitle'] },
 	{ key: 'actionCard', name: '功能按钮卡片背景', page: 'home', stretchMode: 'fill', logicalWidth: 335, logicalHeight: 180, textRoles: ['actionTitle', 'actionSubtitle'] },
 	{ key: 'sectionBanner', name: '欢迎牌 / 分区横幅背景', page: 'home', stretchMode: 'fill', logicalWidth: 686, logicalHeight: 144, textRoles: ['sectionTitle'] },
 	{ key: 'aboutImage', name: '关于我们图片', page: 'home', stretchMode: 'contain', logicalWidth: 686, logicalHeight: 1000, textRoles: ['sectionTitle'] },
@@ -8,7 +9,10 @@ export const SKIN_COMPONENTS = Object.freeze([
 	{ key: 'emptyCart', name: '空购物车面板背景', page: 'cart', stretchMode: 'fill', logicalWidth: 686, logicalHeight: 560, textRoles: ['emptyTitle', 'emptyDescription', 'buttonPrimary'] },
 	{ key: 'cartPanel', name: '购物车结算面板背景', page: 'cart', stretchMode: 'fill', logicalWidth: 686, logicalHeight: 180, textRoles: ['panelTitle', 'price', 'metaText', 'buttonPrimary'] },
 	{ key: 'checkoutBar', name: '确认订单底部操作条背景', page: 'checkout', stretchMode: 'fill', logicalWidth: 750, logicalHeight: 124, textRoles: ['price', 'metaText', 'buttonPrimary'] },
+	{ key: 'meProfileHeader', name: '个人信息区域背景', page: 'me', stretchMode: 'fill', logicalWidth: 686, logicalHeight: 160, textRoles: [] },
 	{ key: 'memberCard', name: '会员卡片背景', page: 'me', stretchMode: 'fill', logicalWidth: 686, logicalHeight: 224, textRoles: ['memberTitle', 'memberValue', 'metaText', 'buttonSecondary'] },
+	{ key: 'meOrderCenter', name: '订单中心背景', page: 'me', stretchMode: 'fill', logicalWidth: 686, logicalHeight: 220, textRoles: [] },
+	{ key: 'meAddressCard', name: '地址菜单区域背景', page: 'me', stretchMode: 'fill', logicalWidth: 686, logicalHeight: 180, textRoles: [] },
 	{ key: 'tabBar', name: '底部 TabBar 背景', page: 'global', stretchMode: 'fill', logicalWidth: 750, logicalHeight: 112, textRoles: ['tabText', 'tabTextActive'] }
 ].map((item) => Object.freeze({
 	...item,

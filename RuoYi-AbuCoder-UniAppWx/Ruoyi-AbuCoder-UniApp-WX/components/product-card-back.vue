@@ -1,5 +1,5 @@
 <template>
-	<view class="card-back-shell" data-skin-component="specPanel" :style="themeSkinAssetStyle('specPanel')" @tap.stop>
+	<view class="card-back-shell" data-skin-component="specPanel" :style="themeSkinComponentStyle('specPanel')" @tap.stop>
 		<view class="back-head">
 			<view v-if="productImage" class="back-thumb-wrap">
 				<image class="back-thumb-image" :src="productImage" mode="widthFix" />
@@ -269,7 +269,8 @@ export default {
 		productImage: function () {
 			if (this.imageOverride) return this.imageOverride
 			const source = this.detailProduct || this.product || {}
-			return resolveImageUrl(source.imageUrl || source.productImage || '')
+			return this.themeSkinProductImage(source.productId || source.id)
+				|| resolveImageUrl(source.imageUrl || source.productImage || '')
 		},
 		currentUnitPrice: function () {
 			const base = this.detailProduct
@@ -446,7 +447,8 @@ export default {
 				tableNo: this.tableNo || '',
 				productId: source.productId,
 				productName: source.productName,
-				productImage: source.imageUrl || source.productImage || '',
+				productImage: this.themeSkinProductImage(source.productId || source.id)
+					|| source.imageUrl || source.productImage || '',
 				price: this.currentUnitPrice,
 				quantity: this.quantity,
 				specText: this.combinedSelectedText || source.remark || source.description || '',

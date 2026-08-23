@@ -18,6 +18,10 @@ public class DecoratorAsset
     private String checksumSha256;
     private String auditStatus;
     private String status;
+    private String sourceType;
+    private String slotKey;
+    private Integer slotSpecVersion;
+    private Long generationResultId;
     private Long createdBy;
     private Date createdAt;
     private Date updatedAt;
@@ -50,6 +54,14 @@ public class DecoratorAsset
     public void setAuditStatus(String auditStatus) { this.auditStatus = auditStatus; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getSourceType() { return sourceType; }
+    public void setSourceType(String sourceType) { this.sourceType = sourceType; }
+    public String getSlotKey() { return slotKey; }
+    public void setSlotKey(String slotKey) { this.slotKey = slotKey; }
+    public Integer getSlotSpecVersion() { return slotSpecVersion; }
+    public void setSlotSpecVersion(Integer slotSpecVersion) { this.slotSpecVersion = slotSpecVersion; }
+    public Long getGenerationResultId() { return generationResultId; }
+    public void setGenerationResultId(Long generationResultId) { this.generationResultId = generationResultId; }
     public Long getCreatedBy() { return createdBy; }
     public void setCreatedBy(Long createdBy) { this.createdBy = createdBy; }
     public Date getCreatedAt() { return createdAt; }

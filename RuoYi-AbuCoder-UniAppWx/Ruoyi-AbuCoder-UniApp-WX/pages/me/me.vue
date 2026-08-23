@@ -4,7 +4,7 @@
 
 		<scroll-view class="content" scroll-y>
 			<view class="content-wrap">
-				<view :class="['profile-header', `profile-header-${profileHeaderVariant}`]" @tap="handleProfileAction">
+				<view :class="['profile-header', `profile-header-${profileHeaderVariant}`]" data-skin-component="meProfileHeader" :style="themeSkinComponentStyle('meProfileHeader')" @tap="handleProfileAction">
 					<view class="profile-header-avatar">
 						<image v-if="userInfo.avatar" class="profile-header-avatar-image" :src="userInfo.avatar" mode="aspectFill"></image>
 						<text v-else>{{ avatarFallbackText }}</text>
@@ -19,7 +19,7 @@
 				</view>
 
 				<!-- 会员卡区域 -->
-				<view v-if="isLogin" class="member-card" :class="memberCardThemeClass" data-skin-component="memberCard" :style="themeSkinAssetStyle('memberCard')" @click="goMemberCard">
+				<view v-if="isLogin || themePreviewMode" class="member-card" :class="memberCardThemeClass" data-skin-component="memberCard" :style="themeSkinComponentStyle('memberCard')" @click="goMemberCard">
 					<view class="member-card-shine"></view>
 					<view class="member-top">
 						<view class="member-level">
@@ -46,7 +46,7 @@
 					</view>
 				</view>
 
-				<view class="section-card">
+				<view class="section-card" data-skin-component="meOrderCenter" :style="themeSkinComponentStyle('meOrderCenter')">
 					<view class="section-header" @click="goOrderList()">
 						<text class="section-title">订单中心</text>
 						<text class="section-link">查看全部</text>
@@ -66,7 +66,7 @@
 					</view>
 				</view>
 
-				<view class="section-card">
+				<view class="section-card" data-skin-component="meAddressCard" :style="themeSkinComponentStyle('meAddressCard')">
 					<view class="menu-list">
 						<view class="menu-row" @click="goAddress">
 							<view class="menu-copy">
@@ -91,7 +91,9 @@
 			</view>
 		</scroll-view>
 
+		<!-- #ifdef H5 -->
 		<bottom-tab-bar current="me" />
+		<!-- #endif -->
 	</view>
 </template>
 
@@ -217,6 +219,9 @@ export default {
 
 	methods: {
 		loadThemeForContext() {
+			// 装修预览跨页面导航时，预览主题保存在 themeRuntime 内存中；
+			// 不要在“我的”页重新加载已发布主题覆盖当前草稿预览。
+			if (this.themePreviewMode) return
 			const runtimeStoreCode = themeRuntime.state && themeRuntime.state.storeCode
 			const scanContext = uni.getStorageSync('scanMenuEntryContext')
 			const storeCode = scanContext && scanContext.storeCode

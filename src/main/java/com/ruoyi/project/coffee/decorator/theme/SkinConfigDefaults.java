@@ -12,11 +12,16 @@ public class SkinConfigDefaults
 {
     private static final String DEFAULT_CONFIG = "{\"schemaVersion\":1,\"themeVersion\":1,"
             + "\"page\":{\"backgroundColor\":\"#FFFFFF\",\"textColor\":\"#332C28\",\"secondaryTextColor\":\"#8A7D74\"},"
-            + "\"slots\":{\"heroBanner\":{\"backgroundType\":\"color\",\"backgroundColor\":\"#6F4E37\",\"backgroundImage\":null,\"fit\":\"cover\"},"
+            + "\"slots\":{\"shopHeader\":{\"backgroundType\":\"color\",\"backgroundColor\":\"#FFFFFF\",\"backgroundImage\":null,\"fit\":\"fill\",\"radius\":0},\"heroBanner\":{\"backgroundType\":\"color\",\"backgroundColor\":\"#6F4E37\",\"backgroundImage\":null,\"fit\":\"cover\"},"
             + "\"orderCard\":{\"backgroundType\":\"color\",\"backgroundColor\":\"#FFFFFF\",\"backgroundImage\":null,\"iconColor\":\"#745848\",\"textColor\":\"#302720\",\"secondaryTextColor\":\"#C28B62\",\"radius\":20,\"shadow\":\"light\"},"
             + "\"shopCard\":{\"backgroundType\":\"color\",\"backgroundColor\":\"#FFFFFF\",\"backgroundImage\":null,\"iconColor\":\"#332C28\",\"textColor\":\"#302720\",\"secondaryTextColor\":\"#8A7D74\",\"radius\":20,\"shadow\":\"light\"},"
             + "\"welcomeBanner\":{\"backgroundType\":\"color\",\"backgroundColor\":\"#E8D4C3\",\"backgroundImage\":null,\"fit\":\"cover\",\"radius\":8},"
             + "\"aboutSection\":{\"backgroundColor\":\"#FFFFFF\",\"titleColor\":\"#332C28\",\"image\":\"\"},"
+            + "\"specPanel\":{\"backgroundType\":\"color\",\"backgroundColor\":\"#FFFFFF\",\"backgroundImage\":null,\"fit\":\"fill\",\"radius\":28,\"background\":{\"type\":\"solid\",\"color\":\"#FFFFFF\"}},"
+            + "\"meProfileHeader\":{\"backgroundType\":\"color\",\"backgroundColor\":\"#6F4E37\",\"backgroundImage\":null,\"fit\":\"fill\",\"radius\":24,\"background\":{\"type\":\"solid\",\"color\":\"#6F4E37\"}},"
+            + "\"memberCard\":{\"backgroundType\":\"color\",\"backgroundColor\":\"#7B5138\",\"backgroundImage\":null,\"fit\":\"fill\",\"radius\":24,\"background\":{\"type\":\"solid\",\"color\":\"#7B5138\"}},"
+            + "\"meOrderCenter\":{\"backgroundType\":\"color\",\"backgroundColor\":\"#FFFFFF\",\"backgroundImage\":null,\"fit\":\"fill\",\"radius\":24,\"background\":{\"type\":\"solid\",\"color\":\"#FFFFFF\"}},"
+            + "\"meAddressCard\":{\"backgroundType\":\"color\",\"backgroundColor\":\"#FFFFFF\",\"backgroundImage\":null,\"fit\":\"fill\",\"radius\":24,\"background\":{\"type\":\"solid\",\"color\":\"#FFFFFF\"}},"
             + "\"tabBar\":{\"backgroundColor\":\"#FFFFFF\",\"textColor\":\"#777777\",\"activeTextColor\":\"#44352C\",\"iconColor\":\"#999999\",\"activeIconColor\":\"#44352C\",\"activeBackgroundColor\":\"#F3E4D6\"}}}";
 
     private final ObjectMapper objectMapper;
@@ -43,11 +48,20 @@ public class SkinConfigDefaults
             }
             config.set("assets", assets);
             config.set("productImages", objectMapper.createObjectNode());
+            config.set("decorations", objectMapper.createObjectNode());
 
             ObjectNode homeBannerContent = config.putObject("content").putObject("homeBanner");
             homeBannerContent.put("visible", true);
             homeBannerContent.put("title", "一杯好咖啡，从这里开始");
             homeBannerContent.put("subtitle", "现点现做，认真对待每一杯");
+            ObjectNode shopHeaderContent = (ObjectNode) config.with("content").putObject("shopHeader");
+            shopHeaderContent.put("title", "一杯好咖啡");
+            shopHeaderContent.put("subtitle", "从这里开始");
+            shopHeaderContent.putNull("logoAssetId");
+
+            ObjectNode homeBannerLayout = config.putObject("layout").putObject("homeBanner");
+            homeBannerLayout.put("contentPreset", "LEFT_CENTER");
+            homeBannerLayout.put("safeAreaPreset", "LEFT_CENTER_LARGE");
 
             ObjectNode typography = objectMapper.createObjectNode();
             addTypography(typography, "pageTitle", "#332C28", 18, 700, 1.3);
@@ -84,6 +98,7 @@ public class SkinConfigDefaults
         token.put("color", color);
         token.put("fontSize", fontSize);
         token.put("fontWeight", fontWeight);
+        token.put("fontStyle", "normal");
         token.put("lineHeight", lineHeight);
     }
 }

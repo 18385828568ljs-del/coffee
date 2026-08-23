@@ -1,5 +1,5 @@
 <template>
-	<view class="page">
+	<view class="page" :style="themePageStyle">
 		<app-nav title="线下活动" />
 
 		<scroll-view class="content" scroll-y>

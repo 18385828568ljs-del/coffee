@@ -1,22 +1,10 @@
 <template>
 	<view class="page" :style="themePageStyle">
 		<scroll-view class="content" scroll-y>
-			<view class="brand-strip">
-				<view class="brand-mark"><text>咖</text></view>
-				<view class="brand-copy">
-					<text class="brand-name">一杯好咖啡</text>
-					<text class="brand-caption">从这里开始</text>
-				</view>
+			<view class="brand-strip-actions">
 				<view v-if="decoratorPreview && !isLivePreview" class="skin-switcher" @tap="toggleLocalSkin">
 					<text>{{ activeSkinLabel }}</text>
 					<text class="skin-switcher-arrow">↗</text>
-				</view>
-			</view>
-			<view v-if="isLivePreview" class="preview-environment" :style="previewEnvironmentStyle" data-skin-component="previewEnvironment">
-				<text class="preview-environment-label">装修预览</text>
-				<view class="preview-environment-actions">
-					<button :class="['preview-environment-button', { active: previewEnvironment === 'light' }]" @tap="setPreviewEnvironment('light')">☀ 白天</button>
-					<button :class="['preview-environment-button', { active: previewEnvironment === 'dark' }]" @tap="setPreviewEnvironment('dark')">🌙 夜间</button>
 				</view>
 			</view>
 			<view v-if="themeBannerItems.length" class="hero-section" data-skin-component="homeBanner" :style="themeSkinSlotStyle('heroBanner')">
@@ -40,7 +28,8 @@
 						<view v-else class="hero-image hero-fallback"></view>
 					</swiper-item>
 				</swiper>
-				<view v-if="homeBannerContent.visible && (homeBannerContent.title || homeBannerContent.subtitle)" class="hero-copy">
+				<image v-if="themeSkinDecorationUrl('homeBannerArtText')" class="art-text-layer" :src="themeSkinDecorationUrl('homeBannerArtText')" :style="themeSkinDecorationStyle('homeBannerArtText')" mode="widthFix"></image>
+				<view v-if="homeBannerContent.visible && (homeBannerContent.title || homeBannerContent.subtitle)" class="hero-copy" :style="themeSkinLayoutStyle('homeBanner')">
 					<text v-if="homeBannerContent.title" class="hero-title" data-text-role="bannerTitle">{{ homeBannerContent.title }}</text>
 					<text v-if="homeBannerContent.subtitle" class="hero-subtitle" data-text-role="bannerSubtitle">{{ homeBannerContent.subtitle }}</text>
 				</view>
@@ -65,11 +54,14 @@
 					</view>
 				</view>
 
-				<image class="welcome-image" data-skin-component="sectionBanner" :src="themeSkinAsset('sectionBanner') || welcomeImage" :style="themeSkinSlotStyle('welcomeBanner')" mode="widthFix"></image>
+				<view class="welcome-image-wrap" data-skin-component="sectionBanner">
+					<image class="welcome-image" :src="themeSkinAsset('sectionBanner') || welcomeImage" :style="themeSkinSlotStyle('welcomeBanner')" mode="widthFix"></image>
+					<image v-if="themeSkinDecorationUrl('sectionBannerArtText')" class="art-text-layer" :src="themeSkinDecorationUrl('sectionBannerArtText')" :style="themeSkinDecorationStyle('sectionBannerArtText')" mode="widthFix"></image>
+				</view>
 
 				<view v-if="featuredActivity" class="activity-section">
 					<view class="activity-section-head">
-						<text class="activity-section-title">参与线下活动</text>
+						<text class="activity-section-title" data-text-role="sectionTitle">参与线下活动</text>
 						<view class="activity-more" @tap="goActivityList">
 							<text>更多</text>
 							<text class="activity-more-arrow">›</text>
@@ -95,7 +87,7 @@
 
 				<view class="about-section" :style="aboutSectionStyle">
 					<view class="about-section-head">
-						<text class="about-section-title">关于我们</text>
+						<text class="about-section-title" data-text-role="sectionTitle">关于我们</text>
 					</view>
 					<image class="about-image" data-skin-component="aboutImage" :src="aboutImage" mode="widthFix"></image>
 				</view>
@@ -121,7 +113,9 @@
 			</view>
 		</view>
 
+		<!-- #ifdef H5 -->
 		<bottom-tab-bar current="home" />
+		<!-- #endif -->
 	</view>
 </template>
 
@@ -260,7 +254,7 @@ export default {
 		aboutSectionStyle() {
 			const slot = this.themeSkinSlot('aboutSection')
 			return {
-				backgroundColor: slot.backgroundColor || 'transparent',
+				backgroundColor: 'transparent',
 				'--about-title-color': slot.titleColor || 'var(--theme-text)'
 			}
 		},
@@ -273,14 +267,6 @@ export default {
 		isLivePreview() {
 			return themeRuntime.state.source === 'PREVIEW'
 		},
-		previewEnvironment() {
-			return themeRuntime.effectiveTheme()
-		},
-		previewEnvironmentStyle() {
-			return this.previewEnvironment === 'dark'
-				? { backgroundColor: '#1D1D1F', color: '#FFFFFF' }
-				: { backgroundColor: '#F5F5F7', color: '#1D1D1F' }
-		}
 	},
 
 	methods: {
@@ -289,19 +275,18 @@ export default {
 		},
 		entryTextStyle(slotKey) {
 			const slot = this.themeSkinSlot(slotKey)
-			return { color: slot.textColor || '' }
+			const token = this.themeTypographyToken('actionTitle')
+			return { color: token.color || slot.textColor || '' }
 		},
 		entrySecondaryTextStyle(slotKey) {
 			const slot = this.themeSkinSlot(slotKey)
-			return { color: slot.secondaryTextColor || '' }
+			const token = this.themeTypographyToken('actionSubtitle')
+			return { color: token.color || slot.secondaryTextColor || '' }
 		},
 		toggleLocalSkin() {
 			const next = themeRuntime.state.versionId === 'midnight' ? 'vintage' : 'midnight'
 			themeRuntime.useLocalSkin(next)
 			uni.showToast({ title: next === 'midnight' ? '已切换夜幕皮肤' : '已切换复古皮肤', icon: 'none' })
-		},
-		setPreviewEnvironment(theme) {
-			themeRuntime.setPreviewEnvironment(theme)
 		},
 		resolveEntryContext(options = {}) {
 			const sceneData = parseScene(options.scene)
@@ -505,12 +490,7 @@ export default {
 	min-height: 0;
 }
 
-.brand-strip {
-	display: flex;
-	align-items: center;
-	gap: 18rpx;
-	padding: 30rpx $space-page 18rpx;
-}
+.brand-strip-actions { position: absolute; top: 24rpx; right: $space-page; z-index: 4; }
 
 .brand-mark {
 	width: 72rpx;
@@ -550,49 +530,12 @@ export default {
 
 .skin-switcher-arrow { font-size: 26rpx; line-height: 1; }
 
-.preview-environment {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: 14rpx $space-page 0;
-	box-sizing: border-box;
-}
-
-.preview-environment-label {
-	font-size: 22rpx;
-	font-weight: 700;
-	color: inherit;
-}
-
-.preview-environment-actions {
-	display: flex;
-	gap: 10rpx;
-}
-
-.preview-environment-button {
-	margin: 0;
-	padding: 0 18rpx;
-	height: 54rpx;
-	line-height: 54rpx;
-	border: 2rpx solid var(--theme-border);
-	border-radius: 27rpx;
-	background: var(--theme-surface);
-	color: var(--theme-text-secondary);
-	font-size: 21rpx;
-}
-
-.preview-environment-button::after { border: 0; }
-.preview-environment-button.active {
-	border-color: var(--theme-primary);
-	background: var(--theme-primary);
-	color: var(--theme-button-text);
-}
-
 .hero-section {
 	position: relative;
 	display: block;
 	width: 100%;
-	height: 562.5rpx;
+	/* Keep the carousel prominent on the home page while preserving its fixed layout. */
+	height: 420rpx;
 	overflow: hidden;
 	background-color: var(--theme-surface, #ffffff);
 }
@@ -600,7 +543,7 @@ export default {
 .hero-swiper,
 .hero-image {
 	width: 100%;
-	height: 562.5rpx;
+	height: 420rpx;
 	display: block;
 }
 
@@ -614,6 +557,17 @@ export default {
 	flex-direction: column;
 	gap: 14rpx;
 	transform: translateY(-50%);
+	pointer-events: none;
+}
+
+.welcome-image-wrap {
+	position: relative;
+}
+
+.art-text-layer {
+	position: absolute;
+	z-index: 3;
+	height: auto;
 	pointer-events: none;
 }
 
@@ -760,9 +714,11 @@ export default {
 
 .activity-section-title {
 	font-family: $font-family;
-	font-size: 32rpx;
-	font-weight: 700;
-	color: $text-primary;
+	font-size: var(--skin-section-title-size, 32rpx);
+	font-weight: var(--skin-section-title-weight, 700);
+	line-height: var(--skin-section-title-line-height, 1.35);
+	letter-spacing: var(--skin-section-title-letter-spacing, 0);
+	color: var(--skin-section-title-color, #{$text-primary});
 }
 
 .activity-more {
@@ -801,9 +757,11 @@ export default {
 
 .about-section-title {
 	font-family: $font-family;
-	font-size: 32rpx;
-	font-weight: 700;
-	color: var(--about-title-color);
+	font-size: var(--skin-section-title-size, 32rpx);
+	font-weight: var(--skin-section-title-weight, 700);
+	line-height: var(--skin-section-title-line-height, 1.35);
+	letter-spacing: var(--skin-section-title-letter-spacing, 0);
+	color: var(--skin-section-title-color, var(--about-title-color));
 }
 
 .about-image {

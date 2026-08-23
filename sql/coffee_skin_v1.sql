@@ -11,7 +11,10 @@ VALUES
     ('skin.emptyCart.background', 'emptyCart', '空购物车面板背景', 1, 1372, 1120, 'STRETCH', '{"layoutLocked":true}', 'ACTIVE'),
     ('skin.cartPanel.background', 'cartPanel', '购物车结算面板背景', 1, 1372, 360, 'STRETCH', '{"layoutLocked":true}', 'ACTIVE'),
     ('skin.checkoutBar.background', 'checkoutBar', '确认订单底部操作条背景', 1, 1500, 248, 'STRETCH', '{"layoutLocked":true}', 'ACTIVE'),
+    ('skin.meProfileHeader.background', 'meProfileHeader', '个人信息区域背景', 1, 1372, 320, 'STRETCH', '{"layoutLocked":true}', 'ACTIVE'),
     ('skin.memberCard.background', 'memberCard', '会员卡片背景', 1, 1372, 448, 'STRETCH', '{"layoutLocked":true}', 'ACTIVE'),
+    ('skin.meOrderCenter.background', 'meOrderCenter', '订单中心背景', 1, 1372, 440, 'STRETCH', '{"layoutLocked":true}', 'ACTIVE'),
+    ('skin.meAddressCard.background', 'meAddressCard', '地址菜单区域背景', 1, 1372, 360, 'STRETCH', '{"layoutLocked":true}', 'ACTIVE'),
     ('skin.tabBar.background', 'tabBar', '底部 TabBar 背景', 1, 1500, 224, 'STRETCH', '{"layoutLocked":true}', 'ACTIVE')
 ON DUPLICATE KEY UPDATE
     component_key = VALUES(component_key),

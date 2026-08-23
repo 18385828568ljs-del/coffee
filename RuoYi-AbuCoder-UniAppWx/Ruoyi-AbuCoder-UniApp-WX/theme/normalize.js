@@ -3,6 +3,8 @@ import { COMPONENT_REGISTRY, isAllowedVariant } from './registry.js'
 import { normalizeBackground, normalizeStructuredBackground } from './background-slots.js'
 import { SKIN_COMPONENT_KEYS } from './skin-registry.js'
 import { TYPOGRAPHY_REGISTRY, TYPOGRAPHY_ROLES } from './typography-registry.js'
+import { CONTENT_PRESETS, SAFE_AREA_PRESETS } from './layout-registry.js'
+import { DECORATION_KEYS, PLACEMENT_PRESETS, SIZE_PRESETS } from './decoration-registry.js'
 
 const COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/
 const SKIN_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/
@@ -62,6 +64,9 @@ function copyTypographyToken(target, source, registry) {
 	if (Number.isFinite(fontSize) && fontSize >= sizeControl.min && fontSize <= sizeControl.max) target.fontSize = fontSize
 	const fontWeight = Number(source.fontWeight)
 	if (registry.controls.fontWeight.includes(fontWeight)) target.fontWeight = fontWeight
+	const fontId = Number(source.fontId)
+	if (Number.isInteger(fontId) && fontId > 0) target.fontId = fontId
+	if (source.fontStyle === 'normal' || source.fontStyle === 'italic') target.fontStyle = source.fontStyle
 	const lineHeight = Number(source.lineHeight)
 	if (Number.isFinite(lineHeight) && lineHeight >= 1 && lineHeight <= 2) target.lineHeight = lineHeight
 	const letterSpacing = Number(source.letterSpacing)
@@ -91,6 +96,25 @@ export function normalizeSkinConfigV1(input) {
 		if (typeof homeBannerContent.title === 'string' && homeBannerContent.title.length <= 40) fallback.content.homeBanner.title = homeBannerContent.title
 		if (typeof homeBannerContent.subtitle === 'string' && homeBannerContent.subtitle.length <= 60) fallback.content.homeBanner.subtitle = homeBannerContent.subtitle
 	}
+	const shopHeaderContent = input.content && input.content.shopHeader
+	if (shopHeaderContent && typeof shopHeaderContent === 'object') {
+		const logoAssetId = Number(shopHeaderContent.logoAssetId)
+		if (Number.isInteger(logoAssetId) && logoAssetId > 0) fallback.content.shopHeader.logoAssetId = logoAssetId
+		if (typeof shopHeaderContent.title === 'string' && shopHeaderContent.title.length <= 40) fallback.content.shopHeader.title = shopHeaderContent.title
+		if (typeof shopHeaderContent.subtitle === 'string' && shopHeaderContent.subtitle.length <= 60) fallback.content.shopHeader.subtitle = shopHeaderContent.subtitle
+	}
+	const homeBannerLayout = input.layout && input.layout.homeBanner
+	if (homeBannerLayout && typeof homeBannerLayout === 'object') {
+		if (CONTENT_PRESETS.includes(homeBannerLayout.contentPreset)) fallback.layout.homeBanner.contentPreset = homeBannerLayout.contentPreset
+		if (SAFE_AREA_PRESETS.includes(homeBannerLayout.safeAreaPreset)) fallback.layout.homeBanner.safeAreaPreset = homeBannerLayout.safeAreaPreset
+	}
+	DECORATION_KEYS.forEach((key) => {
+		const source = input.decorations && input.decorations[key]
+		const assetId = Number(source && source.assetId)
+		if (!Number.isInteger(assetId) || assetId <= 0 || !PLACEMENT_PRESETS.includes(source.placementPreset)
+			|| !SIZE_PRESETS.includes(source.sizePreset)) return
+		fallback.decorations[key] = { assetId, placementPreset: source.placementPreset, sizePreset: source.sizePreset }
+	})
 
 	SKIN_COMPONENT_KEYS.forEach((key) => {
 		const value = input.assets && input.assets[key]

@@ -1,5 +1,5 @@
 <template>
-	<view class="page">
+	<view class="page" :style="themePageStyle">
 		<app-nav title="个人资料" fallback-url="/pages/me/me" />
 
 		<view class="content">

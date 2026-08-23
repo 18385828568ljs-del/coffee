@@ -25,33 +25,35 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectScanCartVo">
-        select id, user_id, openid, shop_id, table_no,
-               product_id, product_name, product_image, price, quantity,
-               spec_text, spec_json, selected, status,
-               create_time, update_time, del_flag
-        from t_scan_cart
+        select sc.id, sc.user_id, sc.openid, sc.shop_id, sc.table_no,
+               sc.product_id, sc.product_name,
+               coalesce(nullif(sp.image_url, ''), sc.product_image) as product_image,
+               sc.price, sc.quantity, sc.spec_text, sc.spec_json, sc.selected, sc.status,
+               sc.create_time, sc.update_time, sc.del_flag
+        from t_scan_cart sc
+        left join t_scan_product sp on sp.product_id = sc.product_id
     </sql>
 
     <select id="selectScanCartById" parameterType="Long" resultMap="ScanCartResult">
         <include refid="selectScanCartVo"/>
-        where id = #{id}
+        where sc.id = #{id}
     </select>
 
     <select id="selectScanCartList" parameterType="ScanCart" resultMap="ScanCartResult">
         <include refid="selectScanCartVo"/>
         <where>
-            del_flag = 0
-            <if test="userId != null"> and user_id = #{userId}</if>
-            <if test="openid != null and openid != ''"> and openid = #{openid}</if>
-            <if test="shopId != null"> and shop_id = #{shopId}</if>
-            <if test="tableNo != null and tableNo != ''"> and table_no = #{tableNo}</if>
-            <if test="productId != null"> and product_id = #{productId}</if>
-            <if test="status != null"> and status = #{status}</if>
+            sc.del_flag = 0
+            <if test="userId != null"> and sc.user_id = #{userId}</if>
+            <if test="openid != null and openid != ''"> and sc.openid = #{openid}</if>
+            <if test="shopId != null"> and sc.shop_id = #{shopId}</if>
+            <if test="tableNo != null and tableNo != ''"> and sc.table_no = #{tableNo}</if>
+            <if test="productId != null"> and sc.product_id = #{productId}</if>
+            <if test="status != null"> and sc.status = #{status}</if>
         </where>
         order by
-        case when create_time is null then 1 else 0 end,
-        create_time desc,
-        id desc
+        case when sc.create_time is null then 1 else 0 end,
+        sc.create_time desc,
+        sc.id desc
     </select>
 
     <!--
@@ -61,31 +63,31 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectMatchingCart" parameterType="ScanCart" resultMap="ScanCartResult">
         <include refid="selectScanCartVo"/>
         <where>
-            del_flag = 0
-            and status = 1
-            and product_id = #{productId}
-            <if test="shopId != null"> and shop_id = #{shopId}</if>
-            <if test="tableNo != null and tableNo != ''"> and table_no = #{tableNo}</if>
+            sc.del_flag = 0
+            and sc.status = 1
+            and sc.product_id = #{productId}
+            <if test="shopId != null"> and sc.shop_id = #{shopId}</if>
+            <if test="tableNo != null and tableNo != ''"> and sc.table_no = #{tableNo}</if>
             <choose>
-                <when test="userId != null"> and user_id = #{userId}</when>
+                <when test="userId != null"> and sc.user_id = #{userId}</when>
                 <when test="openid != null and openid != ''">
-                    and (user_id is null or user_id = 0) and openid = #{openid}
+                    and (sc.user_id is null or sc.user_id = 0) and sc.openid = #{openid}
                 </when>
                 <otherwise>
-                    and (user_id is null or user_id = 0)
-                    and (openid is null or openid = '')
+                    and (sc.user_id is null or sc.user_id = 0)
+                    and (sc.openid is null or sc.openid = '')
                 </otherwise>
             </choose>
             <choose>
                 <when test="specJson != null and specJson != ''">
-                    and spec_json = #{specJson}
+                    and sc.spec_json = #{specJson}
                 </when>
                 <otherwise>
-                    and (spec_json is null or spec_json = '')
+                    and (sc.spec_json is null or sc.spec_json = '')
                 </otherwise>
             </choose>
         </where>
-        order by id asc
+        order by sc.id asc
         limit 1
     </select>
 

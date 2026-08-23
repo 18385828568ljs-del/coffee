@@ -4,11 +4,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,6 +76,21 @@ class DecoratorThemeServiceTest
         assertEquals(Integer.valueOf(0), draft.getRevision());
         assertEquals(Long.valueOf(41L), draft.getBasedOnVersionId());
         verify(themeMapper, never()).insertDraftIfAbsent(any(ThemeDraft.class));
+    }
+
+    @Test
+    void draftsPassesRegularListToMapperForOgnlCollectionExpressions()
+    {
+        TenantContext contextWithStore = new TenantContext(9L, 8L, 7L, "OWNER", "LIMITED",
+                Collections.singleton(22L));
+        when(themeMapper.selectDraftThemes(eq(7L), any())).thenReturn(Collections.<DecoratorTheme>emptyList());
+
+        service.drafts(contextWithStore);
+
+        ArgumentCaptor<List<Long>> storeIdsCaptor = ArgumentCaptor.forClass(List.class);
+        verify(themeMapper).selectDraftThemes(eq(7L), storeIdsCaptor.capture());
+        assertEquals(Arrays.asList(22L), storeIdsCaptor.getValue());
+        assertTrue(storeIdsCaptor.getValue().getClass().equals(java.util.ArrayList.class));
     }
 
     @Test

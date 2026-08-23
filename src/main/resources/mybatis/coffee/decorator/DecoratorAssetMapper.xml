@@ -16,6 +16,10 @@
         <result property="checksumSha256" column="checksum_sha256" />
         <result property="auditStatus" column="audit_status" />
         <result property="status" column="status" />
+        <result property="sourceType" column="source_type" />
+        <result property="slotKey" column="slot_key" />
+        <result property="slotSpecVersion" column="slot_spec_version" />
+        <result property="generationResultId" column="generation_result_id" />
         <result property="createdBy" column="created_by" />
         <result property="createdAt" column="created_at" />
         <result property="updatedAt" column="updated_at" />
@@ -23,7 +27,8 @@
 
     <select id="selectAssets" resultMap="AssetResult">
         select id, scope_type, merchant_id, source_store_id, asset_type, name, storage_key, mime_type,
-               width, height, byte_size, checksum_sha256, audit_status, status, created_by, created_at, updated_at
+               width, height, byte_size, checksum_sha256, audit_status, status, source_type, slot_key,
+               slot_spec_version, generation_result_id, created_by, created_at, updated_at
         from assets
         where merchant_id = #{merchantId} and status = 'ACTIVE'
         <if test="assetType != null and assetType != ''">and asset_type = #{assetType}</if>
@@ -33,16 +38,19 @@
 
     <select id="selectAsset" resultMap="AssetResult">
         select id, scope_type, merchant_id, source_store_id, asset_type, name, storage_key, mime_type,
-               width, height, byte_size, checksum_sha256, audit_status, status, created_by, created_at, updated_at
+               width, height, byte_size, checksum_sha256, audit_status, status, source_type, slot_key,
+               slot_spec_version, generation_result_id, created_by, created_at, updated_at
         from assets where merchant_id = #{merchantId} and id = #{assetId}
     </select>
 
     <insert id="insertAsset" parameterType="com.ruoyi.project.coffee.decorator.asset.domain.DecoratorAsset"
             useGeneratedKeys="true" keyProperty="id">
         insert into assets (scope_type, merchant_id, source_store_id, asset_type, name, storage_key, mime_type,
-            width, height, byte_size, checksum_sha256, audit_status, status, created_by, created_at, updated_at)
+            width, height, byte_size, checksum_sha256, audit_status, status, source_type, slot_key,
+            slot_spec_version, generation_result_id, created_by, created_at, updated_at)
         values (#{scopeType}, #{merchantId}, #{sourceStoreId}, #{assetType}, #{name}, #{storageKey}, #{mimeType},
-            #{width}, #{height}, #{byteSize}, #{checksumSha256}, #{auditStatus}, #{status}, #{createdBy}, now(), now())
+            #{width}, #{height}, #{byteSize}, #{checksumSha256}, #{auditStatus}, #{status}, #{sourceType}, #{slotKey},
+            #{slotSpecVersion}, #{generationResultId}, #{createdBy}, now(), now())
     </insert>
 
     <update id="archiveAsset">
@@ -89,7 +97,8 @@
 
     <select id="selectUsableAssets" resultMap="AssetResult">
         select id, scope_type, merchant_id, source_store_id, asset_type, name, storage_key, mime_type,
-               width, height, byte_size, checksum_sha256, audit_status, status, created_by, created_at, updated_at
+               width, height, byte_size, checksum_sha256, audit_status, status, source_type, slot_key,
+               slot_spec_version, generation_result_id, created_by, created_at, updated_at
         from assets
         where id in
         <foreach item="assetId" collection="assetIds" open="(" separator="," close=")">#{assetId}</foreach>
