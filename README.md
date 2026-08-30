@@ -196,15 +196,42 @@ npm run dev:h5
 | AI 结果 | `GET /coffee/decorator/ai/tasks/{taskId}/results`、`POST /coffee/decorator/ai/results/{resultId}/apply` |
 | 小程序主题 | `GET /api/wx/stores/{storeCode}/theme`、`GET /api/wx/stores/{storeCode}/skin`、`GET /api/mini/skin` |
 
-### 本周工作内容
-# 完成了ljs和sfy分支最新代码的合并，并对相关接口进行测试。合并ljs和sfy分支时发现一下分支冲突：
-ljs:
-both modified:   ../../README.md
-both modified:   components/immersive-product-card.vue
-both modified:   pages/index/index.vue
-both modified:   pages/scan/menu.vue
-sfy：
-.gitignore
-pages/scan/confirm.vue
-src/main/resources/mybatis/coffee/ScanCartMapper.xml
+# 本周工作内容
+### 完成了ljs和sfy分支最新代码的合并，并对相关接口进行测试。合并ljs和sfy分支时发现一下分支冲突：
+- ljs分支:
+- both modified:   ../../README.md
+- both modified:   components/immersive-product-card.vue
+- both modified:   pages/index/index.vue
+- both modified:   pages/scan/menu.vue
+- sfy分支：
+- .gitignore
+- pages/scan/confirm.vue
+- src/main/resources/mybatis/coffee/ScanCartMapper.xml
+## 解决
+### components/immersive-product-card.vue
+- 保留主题样式功能
+- 保留 imageOverride
+- 保留 tableNo
+- 删除已经废弃的 shopId
+### pages/index/index.vue
+- 保留主题运行时和装修预览
+- 保留 storeCode、shopName、previewToken
+- 删除 shopId
+- 首页跳转扫码菜单时只传递有效的门店和桌台上下文
+### pages/scan/menu.vue
+- 保留主题皮肤、主题卡片和图片覆盖功能
+- 保留 storeCode、shopName 场景解析
+- 删除 shopId
+- 修正二维码 scene 的解析逻辑
+- .gitignore
+保留当前项目已有的本地配置、构建产物、日志和备份文件忽略规则。
+### pages/scan/confirm.vue
+- 保留主题运行时加载
+- 保留扫码确认页现有订单逻辑
+- 删除已经废弃的 shopId 和 shopName 字段
+### src/main/resources/mybatis/coffee/ScanCartMapper.xml
+- 保留商品图片为空时从扫码商品表回退查询图片的逻辑
+- 使用 sc 表别名，修正查询条件引用
+- 删除所有 shop_id 查询、插入、更新和删除条件
+- 与当前 t_scan_cart 表结构保持一致
 
