@@ -13,6 +13,7 @@ import com.ruoyi.project.coffee.decorator.theme.DecoratorThemeService;
 import com.ruoyi.project.coffee.decorator.theme.DecoratorPreviewService;
 import com.ruoyi.project.coffee.decorator.theme.domain.PublishedStoreTheme;
 import com.ruoyi.project.coffee.decorator.theme.domain.PreviewTheme;
+import com.ruoyi.project.coffee.decorator.font.DecoratorFontService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RestController
@@ -27,6 +28,9 @@ public class CustomerThemeController
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private DecoratorFontService fontService;
 
     @GetMapping("/stores/{storeCode}/theme")
     public AjaxResult published(@PathVariable String storeCode)
@@ -90,8 +94,10 @@ public class CustomerThemeController
         result.put("versionNo", theme.getVersionNo());
         result.put("storeId", theme.getStoreCode());
         result.put("storeCode", theme.getStoreCode());
-        result.put("config", readConfig(theme.getConfigJson()));
+        Object config = readConfig(theme.getConfigJson());
+        result.put("config", config);
         result.put("assetUrls", theme.getAssetUrls());
+        result.put("fontResources", fontResources(theme.getMerchantId(), config));
         return result;
     }
 
@@ -105,9 +111,18 @@ public class CustomerThemeController
         result.put("storeId", preview.getStoreCode());
         result.put("storeCode", preview.getStoreCode());
         result.put("expiresAt", preview.getExpiresAt());
-        result.put("config", readConfig(preview.getConfigJson()));
+        Object config = readConfig(preview.getConfigJson());
+        result.put("config", config);
         result.put("assetUrls", preview.getAssetUrls());
+        result.put("fontResources", fontResources(preview.getMerchantId(), config));
         return result;
+    }
+
+    private Object fontResources(Long merchantId, Object config)
+    {
+        return fontService != null && config instanceof com.fasterxml.jackson.databind.JsonNode
+                ? fontService.resources(merchantId, (com.fasterxml.jackson.databind.JsonNode) config)
+                : java.util.Collections.emptyMap();
     }
 
     private Object readConfig(String configJson)

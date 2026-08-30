@@ -6,7 +6,6 @@ export const skinManager = Object.freeze({
 	state: themeRuntime.state,
 	loadActive: themeRuntime.loadPublished,
 	loadPreview: themeRuntime.loadPreview,
-	setPreviewEnvironment: themeRuntime.setPreviewEnvironment,
 	effectiveTheme: themeRuntime.effectiveTheme,
 	setSystemTheme: themeRuntime.setSystemTheme,
 	apply: themeRuntime.apply

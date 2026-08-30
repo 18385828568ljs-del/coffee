@@ -1,5 +1,5 @@
 <template>
-	<view class="page">
+	<view class="page" :style="themePageStyle">
 		<app-nav title="会员卡" fallback-url="/pages/me/me" />
 
 		<scroll-view class="content" scroll-y>

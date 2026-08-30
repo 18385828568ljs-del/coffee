@@ -1,6 +1,7 @@
 <script>
 	import { restoreLocalSession } from '@/utils/session.js'
 	import { themeRuntime } from '@/theme/runtime.js'
+	import { baseUrl } from '@/utils/apiconfig.js'
 
 	export default {
 		onLaunch: async function(e) {
@@ -53,6 +54,7 @@
 		globalData: {
 			userinfo: null,
 			token:'',
+			apiBaseUrl: baseUrl,
 		},
 	}
 </script>
@@ -60,6 +62,29 @@
 <style lang="scss">
 	/*每个页面公共css */
 	@import "@/uni_modules/uview-ui/index.scss";
+
+	$skin-text-roles: (
+		pageTitle: page-title, sectionTitle: section-title, bannerTitle: banner-title,
+		bannerSubtitle: banner-subtitle, actionTitle: action-title, actionSubtitle: action-subtitle,
+		productTitle: product-title, price: price, metaText: meta-text, bodyText: body-text,
+		panelTitle: panel-title, optionTitle: option-title, optionText: option-text,
+		buttonPrimary: button-primary, buttonSecondary: button-secondary, memberTitle: member-title,
+		memberValue: member-value, emptyTitle: empty-title, emptyDescription: empty-description,
+		tabText: tab-text, tabTextActive: tab-text-active
+	);
+
+	@each $attribute, $variable in $skin-text-roles {
+		[data-text-role="#{$attribute}"] {
+			font-family: var(--skin-#{$variable}-family, inherit) !important;
+			font-style: var(--skin-#{$variable}-style, normal) !important;
+			font-size: var(--skin-#{$variable}-size, inherit) !important;
+			font-weight: var(--skin-#{$variable}-weight, inherit) !important;
+			line-height: var(--skin-#{$variable}-line-height, inherit) !important;
+			letter-spacing: var(--skin-#{$variable}-letter-spacing, 0) !important;
+			color: var(--skin-#{$variable}-color, inherit) !important;
+			text-shadow: var(--skin-#{$variable}-shadow, none) !important;
+		}
+	}
 
 	/* #ifdef H5 */
 	html,
@@ -76,6 +101,7 @@
 
 	body {
 		overflow-x: hidden;
+		background: var(--theme-page, #FFFFFF);
 	}
 
 	/* The project renders its own themed Web tab bar. */

@@ -442,7 +442,10 @@ export default {
 
 .flip-face {
 	position: absolute;
-	inset: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
 	width: 100%;
 	height: 100%;
 	-webkit-backface-visibility: hidden;
@@ -455,6 +458,7 @@ export default {
 .flip-face-front {
 	position: relative;
 	height: auto;
+	z-index: 1;
 }
 
 .flip-card:not(.is-flipped-card) .flip-face-front {
@@ -474,7 +478,22 @@ export default {
 .flip-face-back {
 	transform: rotateY(180deg);
 	background: $bg-card;
+	z-index: 2;
 	pointer-events: none;
+}
+
+/* Some H5 WebViews do not consistently honor backface-visibility on nested
+ * uni-app views. Keep the inactive face out of the paint tree explicitly. */
+.flip-card-inner:not(.is-flipped) .flip-face-back {
+	visibility: hidden;
+}
+
+.flip-card-inner.is-flipped .flip-face-front {
+	visibility: hidden;
+}
+
+.flip-card-inner.is-flipped .flip-face-back {
+	visibility: visible;
 }
 
 .flip-card-inner.is-flipped .flip-face-front {

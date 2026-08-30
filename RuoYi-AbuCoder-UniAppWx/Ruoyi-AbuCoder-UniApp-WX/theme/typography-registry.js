@@ -2,7 +2,7 @@ import { themeRpx } from './units.js'
 
 const role = (label, defaults, controls = {}) => Object.freeze({
 	label,
-	defaults: Object.freeze(defaults),
+	defaults: Object.freeze({ fontStyle: 'normal', ...defaults }),
 	controls: Object.freeze({
 		fontSize: { min: 10, max: 32, step: 1 },
 		fontWeight: [400, 500, 600, 700, 800],
@@ -47,7 +47,7 @@ export function cloneDefaultTypography() {
 	}, {})
 }
 
-export function buildTypographyVariables(typography = {}) {
+export function buildTypographyVariables(typography = {}, fontResources = {}) {
 	return TYPOGRAPHY_ROLES.reduce((style, key) => {
 		const token = { ...TYPOGRAPHY_REGISTRY[key].defaults, ...(typography[key] || {}) }
 		const prefix = `--skin-${toKebab(key)}`
@@ -56,9 +56,10 @@ export function buildTypographyVariables(typography = {}) {
 		style[`${prefix}-weight`] = String(token.fontWeight)
 		style[`${prefix}-line-height`] = String(token.lineHeight)
 		style[`${prefix}-letter-spacing`] = themeRpx(Number(token.letterSpacing || 0) * 2)
-		style[`${prefix}-family`] = token.fontFamily || 'inherit'
+		const font = token.fontId ? fontResources[String(token.fontId)] : null
+		style[`${prefix}-family`] = (font && font.familyName) || token.fontFamily || 'inherit'
+		style[`${prefix}-style`] = token.fontStyle || (font && font.style) || 'normal'
 		style[`${prefix}-shadow`] = token.textShadow || 'none'
 		return style
 	}, {})
 }
-

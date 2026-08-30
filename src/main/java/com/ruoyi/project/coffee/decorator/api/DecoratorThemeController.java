@@ -64,11 +64,31 @@ public class DecoratorThemeController
         return AjaxResult.success(themeService.themes(context(), scopeType, scopeId));
     }
 
+    @GetMapping("/drafts")
+    public AjaxResult drafts()
+    {
+        return AjaxResult.success(themeService.drafts(context()));
+    }
+
     @PostMapping("/themes")
     public AjaxResult createTheme(@RequestBody DecoratorThemeCreateRequest request)
     {
         return AjaxResult.success(themeService.createTheme(context(), request.getScopeType(), request.getScopeId(),
                 request.getName(), request.getSourceType(), request.getSourceThemeId(), request.getSourceTemplateId()));
+    }
+
+    @DeleteMapping("/themes/{themeId}")
+    public AjaxResult deleteTheme(@PathVariable Long themeId)
+    {
+        themeService.deleteTheme(context(), themeId);
+        return AjaxResult.success();
+    }
+
+    @DeleteMapping("/themes/{themeId}/draft")
+    public AjaxResult deleteDraft(@PathVariable Long themeId)
+    {
+        themeService.deleteDraft(context(), themeId);
+        return AjaxResult.success();
     }
 
     @PostMapping("/themes/master")

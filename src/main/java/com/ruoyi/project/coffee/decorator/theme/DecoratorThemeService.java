@@ -20,6 +20,7 @@ import com.ruoyi.project.coffee.decorator.context.DecoratorPermission;
 import com.ruoyi.project.coffee.decorator.context.TenantContext;
 import com.ruoyi.project.coffee.decorator.context.TenantContextService;
 import com.ruoyi.project.coffee.decorator.asset.DecoratorAssetService;
+import com.ruoyi.project.coffee.decorator.font.DecoratorFontService;
 import com.ruoyi.project.coffee.decorator.mapper.DecoratorThemeMapper;
 import com.ruoyi.project.coffee.decorator.theme.domain.DecoratorTheme;
 import com.ruoyi.project.coffee.decorator.theme.domain.PublishedStoreTheme;
@@ -45,6 +46,9 @@ public class DecoratorThemeService
 
     @Autowired
     private DecoratorAssetService assetService;
+
+    @Autowired
+    private DecoratorFontService fontService;
 
     @Autowired
     private SkinConfigDefaults skinConfigDefaults;
@@ -83,6 +87,18 @@ public class DecoratorThemeService
         }
         List<DecoratorTheme> result = themeMapper.selectThemes(context.getMerchantId(), normalizedScope,
                 normalizedScopeId);
+        return result == null ? Collections.<DecoratorTheme>emptyList() : result;
+    }
+
+    /** Returns every accessible scheme whose draft differs from its latest published version. */
+    public List<DecoratorTheme> drafts(TenantContext context)
+    {
+        contextService.requirePermission(context, DecoratorPermission.THEME_VIEW);
+        // TenantContext exposes an unmodifiable set. MyBatis OGNL evaluates collection
+        // expressions reflectively, which fails on that JDK collection type.
+        // Pass a regular list so dynamic SQL can safely evaluate size/foreach nodes.
+        List<Long> accessibleStoreIds = new ArrayList<Long>(context.getStoreIds());
+        List<DecoratorTheme> result = themeMapper.selectDraftThemes(context.getMerchantId(), accessibleStoreIds);
         return result == null ? Collections.<DecoratorTheme>emptyList() : result;
     }
 
@@ -173,6 +189,65 @@ public class DecoratorThemeService
         return theme;
     }
 
+    /**
+     * Removes a scheme from the workbench while preserving its immutable
+     * versions and asset references for audit/history. A live scheme must be
+     * switched away from the store before it can be removed.
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteTheme(TenantContext context, Long themeId)
+    {
+        DecoratorTheme theme = requireTheme(context, themeId, DecoratorPermission.THEME_EDIT);
+        DecoratorTheme active = activeTheme(context, theme.getScopeType(),
+                "STORE".equals(theme.getScopeType()) ? theme.getOwnerStoreId() : context.getMerchantId());
+        if (active != null && themeId.equals(active.getId()))
+        {
+            throw new ServiceException("当前线上方案不能删除，请先切换到其他方案并发布");
+        }
+        if (themeMapper.softDeleteTheme(context.getMerchantId(), themeId, context.getUserId()) != 1)
+        {
+            throw new ServiceException("装修方案不存在或已删除");
+        }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteDraft(TenantContext context, Long themeId)
+    {
+        DecoratorTheme theme = requireTheme(context, themeId, DecoratorPermission.THEME_EDIT);
+        ThemeDraft draft = themeMapper.selectDraftForUpdate(context.getMerchantId(), themeId);
+        if (draft == null)
+        {
+            return;
+        }
+        ThemeVersion latest = themeMapper.selectLatestVersion(context.getMerchantId(), themeId);
+        if (latest == null)
+        {
+            DecoratorTheme active = activeTheme(context, theme.getScopeType(),
+                    "STORE".equals(theme.getScopeType()) ? theme.getOwnerStoreId() : context.getMerchantId());
+            if (active != null && themeId.equals(active.getId()))
+            {
+                throw new ServiceException("当前线上方案没有可删除的草稿");
+            }
+            if (themeMapper.softDeleteTheme(context.getMerchantId(), themeId, context.getUserId()) != 1)
+            {
+                throw new ServiceException("装修草稿不存在或已删除");
+            }
+            return;
+        }
+        JsonNode publishedConfig = configValidator.validate(latest.getConfigJson());
+        int updated = themeMapper.updateDraft(context.getMerchantId(), themeId, draft.getRevision(),
+                canonicalJson(publishedConfig), latest.getSchemaVersion(), context.getUserId(), latest.getId());
+        if (updated != 1)
+        {
+            throw new ThemeConflictException("THEME_DRAFT_CONFLICT: 草稿已被其他人更新");
+        }
+        ThemeDraft reset = themeMapper.selectDraft(context.getMerchantId(), themeId);
+        if (assetService != null && reset != null)
+        {
+            assetService.replaceDraftReferences(context.getMerchantId(), themeId, reset.getId(), publishedConfig);
+        }
+    }
+
     @Transactional(rollbackFor = Exception.class)
     public DecoratorTheme initializeMasterTheme(TenantContext context, Long templateId)
     {
@@ -245,6 +320,7 @@ public class DecoratorThemeService
         requireTheme(context, themeId, DecoratorPermission.THEME_EDIT);
         JsonNode config = configValidator.validate(configJson);
         validateAssetReferences(context.getMerchantId(), config);
+        if (fontService != null) fontService.validateReferences(context.getMerchantId(), config);
         return config;
     }
 
@@ -315,6 +391,7 @@ public class DecoratorThemeService
         }
         JsonNode validConfig = configValidator.validate(draft.getConfigJson());
         validateAssetReferences(context.getMerchantId(), validConfig);
+        if (fontService != null) fontService.validateReferences(context.getMerchantId(), validConfig);
         String canonicalJson = canonicalJson(validConfig);
         String configHash = sha256(canonicalJson);
         ThemeVersion latest = themeMapper.selectLatestVersion(context.getMerchantId(), themeId);

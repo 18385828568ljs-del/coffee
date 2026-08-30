@@ -222,7 +222,7 @@ CREATE TABLE IF NOT EXISTS ai_generation_tasks (
     slot_id BIGINT NOT NULL,
     slot_spec_version INT NOT NULL,
     reference_asset_id BIGINT NULL,
-    prompt_text VARCHAR(1000) NULL,
+    prompt_text TEXT NULL,
     provider VARCHAR(32) NOT NULL,
     provider_task_id VARCHAR(160) NULL,
     status VARCHAR(24) NOT NULL DEFAULT 'PENDING',

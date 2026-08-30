@@ -150,6 +150,38 @@
         order by is_active desc, t.updated_at desc, t.id desc
     </select>
 
+    <select id="selectDraftThemes" resultMap="ThemeResult">
+        select t.id, t.merchant_id, t.name, t.scope_type, t.owner_store_id, t.source_template_id,
+               t.status, t.cloned_from_theme_id, t.cloned_from_version_id, t.updated_at,
+               v.version_no latest_version_no, d.revision draft_revision,
+               case when exists (
+                   select 1 from store_theme_bindings active_binding
+                   where active_binding.merchant_id = t.merchant_id
+                     and active_binding.theme_id = t.id
+                     and (active_binding.mode = 'FOLLOW_MERCHANT' or active_binding.store_id = t.owner_store_id)
+               ) then 1 else 0 end is_active,
+               case when v.id is null then 1 else 1 end has_unpublished_changes
+        from themes t
+        inner join theme_drafts d on d.merchant_id = t.merchant_id and d.theme_id = t.id
+        left join theme_versions v on v.id = (
+            select latest.id from theme_versions latest
+            where latest.merchant_id = t.merchant_id and latest.theme_id = t.id
+            order by latest.version_no desc limit 1
+        )
+        where t.merchant_id = #{merchantId} and t.status = 'ACTIVE'
+          and (v.id is null or d.config_json &lt;&gt; v.config_json)
+          <if test="storeIds != null and storeIds.size() &gt; 0">
+          and (t.scope_type = 'MERCHANT' or t.owner_store_id in
+              <foreach collection="storeIds" item="storeId" open="(" separator="," close=")">
+                  #{storeId}
+              </foreach>)
+          </if>
+          <if test="storeIds == null or storeIds.size() == 0">
+          and t.scope_type = 'MERCHANT'
+          </if>
+        order by d.updated_at desc, t.updated_at desc, t.id desc
+    </select>
+
     <select id="selectActiveTheme" resultMap="ThemeResult">
         select t.id, t.merchant_id, t.name, t.scope_type, t.owner_store_id, t.source_template_id,
                t.status, t.cloned_from_theme_id, t.cloned_from_version_id, t.updated_at
@@ -192,6 +224,12 @@
         where merchant_id = #{merchantId} and theme_id = #{themeId}
         for update
     </select>
+
+    <update id="softDeleteTheme">
+        update themes
+        set status = 'DELETED', updated_at = now()
+        where merchant_id = #{merchantId} and id = #{themeId} and status = 'ACTIVE'
+    </update>
 
     <update id="updateDraft">
         update theme_drafts

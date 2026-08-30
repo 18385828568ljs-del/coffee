@@ -1,6 +1,6 @@
 <template>
 	<view class="bottom-nav">
-		<theme-tab-bar class="bottom-tab-bar-fill" :items="navItems" :current="current" :readonly="readonly" @select="switchTab" />
+		<theme-tab-bar class="bottom-tab-bar-fill" :items="navItems" :current="current" :readonly="readonly" :embedded="true" @select="switchTab" />
 	</view>
 </template>
 
@@ -72,9 +72,11 @@ export default {
 .bottom-nav {
 	@include bottom-tab-shell;
 	z-index: 60;
-	padding: 0;
-	background: transparent;
+	height: calc(#{$bottom-nav-shell-height} + env(safe-area-inset-bottom));
+	padding: 0 0 env(safe-area-inset-bottom);
+	background: var(--theme-surface);
 	border-top: 0;
+	box-sizing: border-box;
 }
 
 .bottom-tab-bar-fill {

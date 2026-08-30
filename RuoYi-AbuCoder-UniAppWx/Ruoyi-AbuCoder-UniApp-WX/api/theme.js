@@ -16,7 +16,7 @@ export async function fetchSkin(storeId, previewToken = '') {
 	if (token && !/^(?:[A-Za-z0-9_-]{22}|[A-Za-z0-9_-]{43})$/.test(token)) return null
 	if (!code && !token) return null
 	if (code && !/^[A-Za-z0-9_-]{1,64}$/.test(code)) return null
-	const query = `${code ? `storeId=${encodeURIComponent(code)}` : ''}${token ? `${code ? '&' : ''}previewToken=${encodeURIComponent(token)}` : ''}`
+	const query = `${code ? `storeId=${encodeURIComponent(code)}` : ''}${token ? `${code ? '&' : ''}previewToken=${encodeURIComponent(token)}` : ''}${(code || token) ? '&' : ''}_t=${Date.now()}`
 	const response = await requestPromise({
 		url: `${baseUrl}/api/mini/skin?${query}`,
 		method: 'GET'
@@ -32,7 +32,7 @@ export async function fetchPublishedTheme(storeCode) {
 	const code = String(storeCode || '').trim()
 	if (!/^[A-Za-z0-9_-]{1,64}$/.test(code)) return null
 	const response = await requestPromise({
-		url: `${baseUrl}/api/wx/stores/${encodeURIComponent(code)}/skin`,
+		url: `${baseUrl}/api/wx/stores/${encodeURIComponent(code)}/skin?_t=${Date.now()}`,
 		method: 'GET'
 	})
 	if (!isSuccessResponse(response) || !response.data.data) return null
@@ -43,7 +43,7 @@ export async function fetchPublishedTheme(storeCode) {
 export async function fetchPublishedSkinVersion(storeCode) {
 	const code = String(storeCode || '').trim()
 	if (!/^[A-Za-z0-9_-]{1,64}$/.test(code)) return null
-	const response = await requestPromise({ url: `${baseUrl}/api/wx/stores/${encodeURIComponent(code)}/skin/version`, method: 'GET' })
+	const response = await requestPromise({ url: `${baseUrl}/api/wx/stores/${encodeURIComponent(code)}/skin/version?_t=${Date.now()}`, method: 'GET' })
 	if (!isSuccessResponse(response) || !response.data.data) return null
 	return response.data.data.versionId || response.data.data.version
 }

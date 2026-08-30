@@ -1,5 +1,5 @@
 ﻿<template>
-	<view class="page">
+	<view class="page" :style="themePageStyle">
 		<app-nav title="点单详情" fallback-url="/pages/order/list?type=scan" />
 
 		<scroll-view class="content" scroll-y>

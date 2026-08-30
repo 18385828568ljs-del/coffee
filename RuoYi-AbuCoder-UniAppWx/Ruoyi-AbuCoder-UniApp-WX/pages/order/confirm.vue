@@ -153,9 +153,11 @@ import { activityApi, addressApi, orderApi, walletApi, resolveImageUrl } from '@
 import { ensureLocalLogin } from '@/utils/session.js'
 import { requestPromise, isSuccessResponse } from '@/utils/request-helper.js'
 import { hideBusy, showBusy, showError, showSuccess } from '@/utils/ui-feedback.js'
+import { themeRuntime } from '@/theme/runtime.js'
 
 const ORDER_DRAFT_KEY = 'orderConfirmDraft'
 const SELECTED_ADDRESS_KEY = 'selectedOrderAddress'
+const DEFAULT_STORE_CODE = '1'
 
 function buildAddressText(address) {
 	if (!address) {
@@ -211,8 +213,9 @@ export default {
 		}
 	},
 
-	onLoad(options = {}) {
+	async onLoad(options = {}) {
 		const decoratorPreview = this.themePreviewMode || String(options.decoratorPreview || '') === '1'
+		if (!decoratorPreview) await themeRuntime.loadPublished(themeRuntime.state.storeCode || DEFAULT_STORE_CODE)
 		if (!decoratorPreview && !ensureLocalLogin()) {
 			setTimeout(() => {
 				this.goBack()
@@ -223,7 +226,8 @@ export default {
 		this.loadWalletBalance()
 	},
 
-	onShow() {
+	async onShow() {
+		if (!this.themePreviewMode) await themeRuntime.loadPublished(themeRuntime.state.storeCode || DEFAULT_STORE_CODE)
 		this.consumeSelectedAddress()
 	},
 
@@ -330,7 +334,8 @@ export default {
 		},
 
 		getItemImage(item) {
-			return resolveImageUrl(item.productImg || item.productImage || item.imageUrl)
+			return this.themeSkinProductImage(item.productId || item.id)
+				|| resolveImageUrl(item.productImg || item.productImage || item.imageUrl)
 		},
 
 		formatMoney(value) {

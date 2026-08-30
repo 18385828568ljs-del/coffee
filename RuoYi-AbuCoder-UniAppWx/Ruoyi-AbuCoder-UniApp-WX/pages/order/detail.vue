@@ -1,5 +1,5 @@
 <template>
-	<view class="page">
+	<view class="page" :style="themePageStyle">
 		<app-nav title="订单详情" fallback-url="/pages/me/me" />
 
 		<scroll-view class="content" scroll-y>

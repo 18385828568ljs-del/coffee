@@ -1,5 +1,5 @@
 <template>
-	<view class="page">
+	<view class="page" :style="themePageStyle">
 		<app-nav title="确认点单" />
 
 		<view v-if="tableNo" class="table-context-card">
@@ -95,11 +95,14 @@
 </template>
 
 <script>
-import { scanCartApi, scanOrderApi, resolveImageUrl } from '@/utils/apiconfig.js'
+import { scanCartApi, scanMenuApi, scanOrderApi, resolveImageUrl } from '@/utils/apiconfig.js'
 import { getLocalUserInfo, getLocalUserId, ensureLocalLogin } from '@/utils/session.js'
 import { requestPromise, isSuccessResponse } from '@/utils/request-helper.js'
 import { getToken } from '@/utils/auth.js'
 import { showError, showSuccess, showBusy, hideBusy } from '@/utils/ui-feedback.js'
+import { themeRuntime } from '@/theme/runtime.js'
+
+const DEFAULT_STORE_CODE = '1'
 
 function toNumber(value) {
 	const numberValue = Number(value || 0)
@@ -125,13 +128,15 @@ export default {
 		}
 	},
 
-	onLoad(options = {}) {
+	async onLoad(options = {}) {
 		this.tableNo = options.tableNo ? decodeURIComponent(String(options.tableNo)).trim() : ''
+		await themeRuntime.loadPublished(themeRuntime.state.storeCode || DEFAULT_STORE_CODE)
 		this.loadCartList()
 		this.loadSubscribeConfig()
 	},
 
-	onShow() {
+	async onShow() {
+		await themeRuntime.loadPublished(themeRuntime.state.storeCode || DEFAULT_STORE_CODE)
 		this.loadCartList()
 	},
 
@@ -169,7 +174,8 @@ export default {
 		},
 
 		itemImage(item) {
-			return resolveImageUrl((item && item.productImage) || '')
+			return this.themeSkinProductImage(item && (item.productId || item.id))
+				|| resolveImageUrl((item && (item.productImage || item.productImg || item.imageUrl)) || '')
 		},
 
 		async loadCartList() {
@@ -190,6 +196,7 @@ export default {
 					url: scanCartApi.list,
 					method: 'GET',
 					data: {
+						shopId: this.shopId,
 						tableNo: this.tableNo
 					},
 					header: this.authHeader()
@@ -208,6 +215,7 @@ export default {
 				this.memberDiscount = 0
 				this.activitySummary = ''
 				if (this.cartList.length) {
+					await this.refreshCurrentProductImages()
 					await this.loadPreview()
 				}
 			} catch (error) {
@@ -217,12 +225,33 @@ export default {
 			}
 		},
 
+		async refreshCurrentProductImages() {
+			const items = Array.isArray(this.cartList) ? this.cartList : []
+			const requests = items.map(async (item) => {
+				const productId = item && (item.productId || item.id)
+				if (!productId) return item
+				try {
+					const response = await requestPromise({
+						url: `${scanMenuApi.productDetail}${encodeURIComponent(productId)}`,
+						method: 'GET',
+						header: this.authHeader()
+					})
+					const product = response && response.data && response.data.data
+					const image = product && (product.imageUrl || product.productImage || product.image)
+					if (isSuccessResponse(response) && image) return { ...item, productImage: image }
+				} catch (error) {}
+				return item
+			})
+			this.cartList = await Promise.all(requests)
+		},
+
 		async loadPreview() {
 			try {
 				const res = await requestPromise({
 					url: scanOrderApi.preview,
 					method: 'GET',
 					data: {
+						shopId: this.shopId,
 						tableNo: this.tableNo
 					},
 					header: this.authHeader()
@@ -253,6 +282,7 @@ export default {
 					method: 'POST',
 					header: this.authHeader(),
 					data: {
+						shopId: this.shopId,
 						tableNo: this.tableNo,
 						openid: userInfo.openid || '',
 						remark: this.remark,

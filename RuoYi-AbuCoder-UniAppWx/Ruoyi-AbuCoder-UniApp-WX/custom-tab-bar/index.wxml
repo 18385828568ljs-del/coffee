@@ -1,1 +1,14 @@
-<view></view>
+<view class="custom-tab-bar" style="background-color: {{backgroundColor}};{{backgroundStyle}}">
+	<image wx:if="{{backgroundImage}}" class="custom-tab-background" src="{{backgroundImage}}" mode="scaleToFill" />
+	<view
+		wx:for="{{tabs}}"
+		wx:key="key"
+		class="custom-tab-item {{index === current ? 'active' : ''}}"
+		data-index="{{index}}"
+		style="color: {{index === current ? activeTextColor : textColor}}; background-color: {{index === current ? activeBackgroundColor : 'transparent'}};"
+		bindtap="selectTab"
+	>
+		<image class="custom-tab-icon" src="{{index === current && item.activeIcon ? item.activeIcon : item.icon}}" mode="aspectFit" />
+		<text>{{item.label}}</text>
+	</view>
+</view>

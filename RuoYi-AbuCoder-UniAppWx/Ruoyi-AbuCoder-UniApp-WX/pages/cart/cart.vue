@@ -137,7 +137,9 @@
 				</view>
 		</view>
 
+		<!-- #ifdef H5 -->
 		<bottom-tab-bar current="cart" />
+		<!-- #endif -->
 	</view>
 </template>
 
@@ -147,8 +149,10 @@ import { ensureLocalLogin, getLocalUserId } from '@/utils/session.js'
 import { requestPromise, isSuccessResponse } from '@/utils/request-helper.js'
 import { hideBusy, showBusy, showConfirm, showError, showSuccess } from '@/utils/ui-feedback.js'
 import { getToken } from '@/utils/auth.js'
+import { themeRuntime } from '@/theme/runtime.js'
 
 const ORDER_DRAFT_KEY = 'orderConfirmDraft'
+const DEFAULT_STORE_CODE = '1'
 
 function toNumber(value) {
 	const number = Number(value || 0)
@@ -217,15 +221,23 @@ export default {
 		}
 	},
 
-	onLoad() {
+	async onLoad() {
+		await this.loadPublishedTheme()
 		this.loadCartList()
 	},
 
-	onShow() {
+	async onShow() {
+		await this.loadPublishedTheme()
 		this.loadCartList()
 	},
 
 	methods: {
+		loadPublishedTheme() {
+			if (!this.themePreviewMode) {
+				return themeRuntime.loadPublished(themeRuntime.state.storeCode || DEFAULT_STORE_CODE)
+			}
+			return Promise.resolve()
+		},
 		authHeader() {
 			const token = getToken()
 			const header = { 'Content-Type': 'application/json' }
@@ -245,7 +257,8 @@ export default {
 		},
 
 		getCartImage(item) {
-			return resolveImageUrl(item.productImg || item.productImage || item.imageUrl)
+			return this.themeSkinProductImage(item.productId || item.id)
+				|| resolveImageUrl(item.productImageUrl || item.productImg || item.productImage || item.imageUrl)
 		},
 
 		getCartId(item) {
@@ -577,7 +590,8 @@ export default {
 				cartId: item.cartId,
 				productId: item.productId,
 				productName: item.productName,
-				productImage: item.productImage || item.productImg || item.imageUrl || '',
+				productImage: this.themeSkinProductImage(item.productId || item.id)
+					|| item.productImage || item.productImg || item.imageUrl || '',
 				price: item.price,
 				salePrice: item.salePrice || item.price,
 				quantity: item.quantity,
@@ -965,7 +979,9 @@ export default {
 }
 
 .bottom-space {
-	height: 156rpx;
+	/* Keep the last checkout row above the fixed tab bar, including the device home-indicator area. */
+	height: calc(#{$bottom-nav-shell-height} + 32rpx + env(safe-area-inset-bottom));
+	flex-shrink: 0;
 }
 
 .section-checkout {

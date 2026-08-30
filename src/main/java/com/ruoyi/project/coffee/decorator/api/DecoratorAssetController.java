@@ -31,9 +31,10 @@ public class DecoratorAssetController
     @PostMapping
     public AjaxResult upload(@RequestParam MultipartFile file, @RequestParam String assetType,
             @RequestParam(required = false) String name,
+            @RequestParam(required = false) String slotKey,
             @RequestParam(required = false) Long storeId)
     {
-        return AjaxResult.success(assetService.upload(TenantContextHolder.require(), assetType, name, storeId, file));
+        return AjaxResult.success(assetService.upload(TenantContextHolder.require(), assetType, name, storeId, slotKey, file));
     }
 
     @DeleteMapping("/{assetId}")

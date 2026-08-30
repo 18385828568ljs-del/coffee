@@ -22,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.project.coffee.decorator.asset.domain.DecoratorAsset;
+import com.ruoyi.project.coffee.decorator.asset.domain.BackgroundSlotSpec;
 import com.ruoyi.project.coffee.decorator.context.DecoratorPermission;
 import com.ruoyi.project.coffee.decorator.context.TenantContext;
 import com.ruoyi.project.coffee.decorator.context.TenantContextService;
@@ -34,13 +35,13 @@ public class DecoratorAssetService
 {
     private static final long MAX_IMAGE_BYTES = 10L * 1024L * 1024L;
     private static final Set<String> ASSET_TYPES = Collections.unmodifiableSet(
-            new LinkedHashSet<String>(Arrays.asList("LOGO", "HEADER", "COMPONENT_BACKGROUND")));
+            new LinkedHashSet<String>(Arrays.asList("LOGO", "HEADER", "COMPONENT_BACKGROUND", "ART_TEXT")));
     private static final Set<String> IMAGE_TYPES = Collections.unmodifiableSet(
             new LinkedHashSet<String>(Arrays.asList("image/jpeg", "image/png", "image/gif")));
     private static final Set<String> SKIN_COMPONENT_KEYS = Collections.unmodifiableSet(
-            new LinkedHashSet<String>(Arrays.asList("homeBanner", "actionCard", "sectionBanner",
+            new LinkedHashSet<String>(Arrays.asList("shopHeader", "homeBanner", "actionCard", "sectionBanner",
                     "aboutImage", "productCard", "specPanel", "emptyCart", "cartPanel", "checkoutBar",
-                    "memberCard", "tabBar")));
+                    "meProfileHeader", "memberCard", "meOrderCenter", "meAddressCard", "tabBar")));
 
     @Autowired
     private DecoratorAssetMapper assetMapper;
@@ -50,6 +51,9 @@ public class DecoratorAssetService
 
     @Autowired
     private FileStorageService fileStorageService;
+
+    @Autowired
+    private BackgroundSlotService slotService;
 
     public List<DecoratorAsset> list(TenantContext context, String assetType)
     {
@@ -62,6 +66,13 @@ public class DecoratorAssetService
     @Transactional(rollbackFor = Exception.class)
     public DecoratorAsset upload(TenantContext context, String assetType, String name,
             Long storeId, MultipartFile file)
+    {
+        return upload(context, assetType, name, storeId, null, file);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public DecoratorAsset upload(TenantContext context, String assetType, String name,
+            Long storeId, String slotKey, MultipartFile file)
     {
         contextService.requirePermission(context, DecoratorPermission.ASSET_MANAGE);
         String type = normalizeType(assetType, true);
@@ -82,6 +93,11 @@ public class DecoratorAssetService
             {
                 throw new ServiceException("图片内容无法识别");
             }
+            BackgroundSlotSpec slot = null;
+            if ("COMPONENT_BACKGROUND".equals(type) && slotKey != null && !slotKey.trim().isEmpty())
+            {
+                slot = slotService.validateUpload(slotKey.trim(), image.getWidth(), image.getHeight(), content.length);
+            }
             StoredFileInfo stored = fileStorageService.upload(file);
             DecoratorAsset asset = new DecoratorAsset();
             asset.setScopeType("MERCHANT");
@@ -97,6 +113,12 @@ public class DecoratorAssetService
             asset.setChecksumSha256(sha256(content));
             asset.setAuditStatus("APPROVED");
             asset.setStatus("ACTIVE");
+            asset.setSourceType("UPLOAD");
+            if (slot != null)
+            {
+                asset.setSlotKey(slot.getComponentKey());
+                asset.setSlotSpecVersion(slot.getSpecVersion());
+            }
             asset.setCreatedBy(context.getUserId());
             assetMapper.insertAsset(asset);
             return assetMapper.selectAsset(context.getMerchantId(), asset.getId());
@@ -165,7 +187,8 @@ public class DecoratorAssetService
             DecoratorAsset asset = byId.get(entry.getValue());
             if (asset == null) throw new ServiceException("THEME_ASSET_INVALID: 素材不存在、未审核或无权使用");
             String expected = entry.getKey().equals("brand.logo") ? "LOGO"
-                    : entry.getKey().equals("brand.header") ? "HEADER" : "COMPONENT_BACKGROUND";
+                    : entry.getKey().equals("brand.header") ? "HEADER"
+                    : entry.getKey().startsWith("decorations.") ? "ART_TEXT" : "COMPONENT_BACKGROUND";
             if (!expected.equals(asset.getAssetType()))
             {
                 throw new ServiceException("THEME_ASSET_INVALID: " + entry.getKey() + " 的素材类型不匹配");
@@ -208,6 +231,13 @@ public class DecoratorAssetService
         {
             String productId = productIds.next();
             addReference(result, "productImages." + productId, productImages.get(productId));
+        }
+        JsonNode decorations = config.path("decorations");
+        java.util.Iterator<String> decorationKeys = decorations.fieldNames();
+        while (decorationKeys.hasNext())
+        {
+            String key = decorationKeys.next();
+            addReference(result, "decorations." + key, decorations.path(key).get("assetId"));
         }
         addReference(result, "brand.logo", config.path("brand").get("logoAssetId"));
         addReference(result, "brand.header", config.path("brand").get("headerAssetId"));

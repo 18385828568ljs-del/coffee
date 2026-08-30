@@ -25,6 +25,7 @@ export function installDecoratorPreviewBridge() {
 		if (message.type === 'SKIN_CONFIG_UPDATE' && message.payload) {
 			themeRuntime.apply(message.payload, {
 				assetUrls: message.assetUrls,
+				fontResources: message.fontResources,
 				preview: true,
 				persist: false
 			})

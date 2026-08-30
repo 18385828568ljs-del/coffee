@@ -1,5 +1,5 @@
 <template>
-	<view class="page">
+	<view class="page" :style="themePageStyle">
 		<app-nav title="付款成功" />
 		<view class="result-card">
 			<view class="success-mark">
