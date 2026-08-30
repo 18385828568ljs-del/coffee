@@ -6,6 +6,7 @@ import AppNav from '@/components/app-nav.vue'
 import BottomTabBar from '@/components/bottom-tab-bar.vue'
 import { themeMixin, themeRuntime } from '@/theme/runtime.js'
 import { installDecoratorPreviewBridge } from '@/theme/preview-bridge.js'
+import { syncCustomTabBar } from '@/utils/tab-bar.js'
 
 // #ifdef H5
 import '@dcloudio/uni-h5/dist/index.css'
@@ -13,6 +14,11 @@ import '@dcloudio/uni-h5/dist/index.css'
 
 Vue.mixin(share)
 Vue.mixin(themeMixin)
+Vue.mixin({
+	onShow() {
+		syncCustomTabBar(this)
+	}
+})
 themeRuntime.restore()
 installDecoratorPreviewBridge()
 

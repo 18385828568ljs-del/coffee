@@ -2,6 +2,7 @@
 <html lang="zh" xmlns:th="http://www.thymeleaf.org">
 <head>
     <th:block th:include="include :: header('商家装修工作台')" />
+    <link th:href="@{/css/coffee-decorator-visual-studio.css}" rel="stylesheet" />
     <style>
         :root { --workbench-accent:#24543b; --workbench-border:#dfe4e1; --workbench-muted:#68736d; }
         body { background:#f4f6f5; color:#1f2924; }
@@ -19,11 +20,14 @@
         .skin-v1-help { margin:7px 0 0; color:#68736d; font-size:12px; line-height:1.5; }
         .skin-page-tabs { display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; }
         .skin-page-tab { min-width:58px; padding:7px 9px; border:1px solid var(--workbench-border); border-radius:4px; color:#53615a; background:#fff; white-space:nowrap; }
+        .skin-page-tab.is-global { margin-left:8px; border-left-width:3px; }
         .skin-page-tab.is-active { border-color:var(--workbench-accent); color:#fff; background:var(--workbench-accent); }
         .skin-component-list { display:grid; gap:6px; margin-top:10px; }
         .skin-component-option { width:100%; padding:9px 10px; display:flex; align-items:center; justify-content:space-between; gap:8px; border:1px solid var(--workbench-border); border-radius:4px; background:#fff; text-align:left; }
         .skin-component-option.is-active { border-color:var(--workbench-accent); box-shadow:inset 3px 0 0 var(--workbench-accent); }
-        .skin-component-option small { color:var(--workbench-muted); }
+        .skin-component-option small { color:var(--workbench-muted); font-size:11px; line-height:1.35; text-align:right; }
+        .skin-component-name { min-width:0; font-weight:600; }
+        .skin-component-meta { max-width:46%; }
         .skin-editor-tabs { display:grid; grid-template-columns:1fr 1fr; margin:10px 0 12px; border-bottom:1px solid var(--workbench-border); }
         .skin-editor-tab { padding:8px; border:0; border-bottom:2px solid transparent; color:#68736d; background:transparent; }
         .skin-editor-tab.is-active { border-bottom-color:var(--workbench-accent); color:#1f2924; font-weight:700; }
@@ -50,6 +54,10 @@
         .skin-ai-reference-note { margin:5px 0 0; color:#68736d; font-size:11px; line-height:1.5; }
         .skin-action-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
         .skin-action-row .btn { flex:1 1 110px; min-width:0; white-space:nowrap; }
+        .skin-ai-inline { margin-top:12px; padding-top:12px; border-top:1px solid var(--workbench-border); }
+        .skin-ai-inline-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
+        .skin-ai-inline-head strong { font-size:13px; }
+        .skin-ai-note { margin:6px 0 0; color:var(--workbench-muted); font-size:11px; line-height:1.5; }
         .skin-content-fields { padding-bottom:12px; margin-bottom:12px; border-bottom:1px solid var(--workbench-border); }
         .skin-content-fields .field-row + .field-row { margin-top:10px; }
         .skin-single-asset-editor[hidden], .skin-product-image-editor[hidden] { display:none !important; }
@@ -173,7 +181,7 @@
     <main id="workbenchMain" class="workbench-main skin-v1-active" style="display:none">
         <section class="editor-column" aria-label="主题和颜色设置">
             <div class="skin-v1-panel">
-                <h3>页面皮肤</h3>
+                <h3>全局样式</h3>
                 <div class="field-row" style="margin-top:12px">
                     <label for="skinPageBackgroundType">页面背景</label>
                     <select id="skinPageBackgroundType" class="form-control"><option value="solid">纯色</option><option value="gradient">渐变</option></select>
@@ -190,17 +198,22 @@
                 <p class="skin-v1-help">渐变使用双色线性配置，保存为结构化主题数据，可随时恢复为纯色。</p>
             </div>
             <div class="skin-v1-panel">
-                <h3>组件导航</h3>
+                <h3>页面模块</h3>
                 <div id="skinPageTabs" class="skin-page-tabs"></div>
                 <div id="skinComponentList" class="skin-component-list"></div>
+                <p id="skinPageGuide" class="skin-v1-help">点击右侧预览区域可直接定位到对应模块。</p>
             </div>
             <div class="skin-v1-panel" id="skinComponentEditor">
-                <h3 id="skinComponentTitle">组件外观</h3>
+                <h3 id="skinComponentTitle">模块属性</h3>
                 <p id="skinComponentKey" class="skin-v1-help"></p>
                 <div class="skin-editor-tabs">
-                    <button type="button" class="skin-editor-tab is-active" data-skin-tab="background">背景</button>
-                    <button type="button" class="skin-editor-tab" data-skin-tab="typography">文字</button>
-                    <button type="button" class="skin-editor-tab" data-skin-tab="ai">AI</button>
+                    <button type="button" class="skin-editor-tab is-active" data-skin-tab="content">内容</button>
+                    <button type="button" class="skin-editor-tab" data-skin-tab="background">图片与背景</button>
+                    <button type="button" class="skin-editor-tab" data-skin-tab="typography">文字样式</button>
+                </div>
+                <div id="skinContentPane" class="skin-pane" hidden>
+                    <div id="skinContentFields" class="skin-content-fields"></div>
+                    <p class="skin-v1-help">只编辑该模块拥有的静态文字；商品名、价格和订单状态来自业务数据。</p>
                 </div>
                 <div id="skinBackgroundPane" class="skin-pane">
                     <div id="skinSingleAssetEditor" class="skin-single-asset-editor">
@@ -233,15 +246,11 @@
                         <div id="skinProductImageList" class="skin-product-image-list"></div>
                         <p class="skin-v1-help">未指定装修图片时继续使用商品资料中的原图。</p>
                     </div>
+                    <button id="skinAiOpenBtn" type="button" class="btn btn-default btn-block" style="margin-top:8px"><i class="fa fa-magic"></i> AI 设计背景</button>
                     <input id="skinAssetFileInput" type="file" accept="image/jpeg,image/png,image/gif" multiple style="display:none">
                     <input id="skinProductImageFileInput" type="file" accept="image/jpeg,image/png,image/gif" style="display:none">
                 </div>
                 <div id="skinTypographyPane" class="skin-pane" hidden>
-                    <div id="skinContentFields" class="skin-content-fields" hidden>
-                        <div id="skinBannerVisibleRow" class="toggle-line"><strong>Banner 叠加文字</strong><label><input id="skinBannerTextVisible" type="checkbox"> 显示</label></div>
-                        <div class="field-row"><label for="skinBannerTitle">主标题</label><input id="skinBannerTitle" type="text" class="form-control" maxlength="40"></div>
-                        <div class="field-row"><label for="skinBannerSubtitle">副标题</label><input id="skinBannerSubtitle" type="text" class="form-control" maxlength="60"></div>
-                    </div>
                     <div class="field-row"><label for="skinTextRole">文字角色</label><select id="skinTextRole" class="form-control"></select></div>
                     <div id="skinTypographyFields" class="field-grid" style="margin-top:10px"></div>
                     <div class="skin-action-row skin-typography-actions">
@@ -249,24 +258,14 @@
                     </div>
                     <p class="skin-v1-help">其他组件的文字内容保持为小程序真实数据。</p>
                 </div>
-                <div id="skinAiPanel" class="skin-pane" hidden>
-                    <div class="field-row"><label for="skinAiType">换肤模式</label><select id="skinAiType" class="form-control"></select></div>
+                <div id="skinAiPanel" class="skin-ai-inline" hidden>
+                    <div class="skin-ai-inline-head"><strong>AI 改图</strong><button id="skinAiCloseBtn" type="button" class="btn btn-default btn-xs">收起</button></div>
+                    <p class="skin-ai-note">AI 只生成无文字背景；标题、价格和按钮文字由“文字样式”独立控制。</p>
+                    <div class="field-row"><label for="skinAiType">生成方式</label><select id="skinAiType" class="form-control"></select></div>
                     <div class="field-row"><label for="skinAiBackgroundStyle">目标风格</label><input id="skinAiBackgroundStyle" class="form-control" maxlength="32" placeholder="商家自行填写，例如：古风、日式、赛博朋克"></div>
                     <div class="field-row"><label for="skinAiPrimaryColor">主色调</label><input id="skinAiPrimaryColor" class="form-control" maxlength="32" placeholder="例如：青绿色、墨黑金、#2F5D50"></div>
                     <div id="skinAiDynamicFields"></div>
                     <div id="skinAiPromptRow" class="field-row"><label for="skinAiPrompt">目标风格描述</label><textarea id="skinAiPrompt" class="form-control" maxlength="500" rows="3" placeholder="只描述想切换的风格，例如：古风、青绿色、宣纸肌理、工笔线稿；不要描述新的布局或画面元素"></textarea></div>
-                    <div id="skinAiTextFields" hidden>
-                        <div class="field-row"><label for="skinAiText">艺术字文案</label><input id="skinAiText" class="form-control" maxlength="20"></div>
-                        <div class="field-row"><label for="skinAiStyle">风格</label><select id="skinAiStyle" class="form-control"><option value="RETRO">复古</option><option value="MINIMAL">简洁</option><option value="HANDWRITTEN">手写</option></select></div>
-                        <div class="field-row"><label for="skinAiPlacement">位置</label><select id="skinAiPlacement" class="form-control"><option value="LEFT_CENTER">左侧</option><option value="CENTER">居中</option><option value="RIGHT_CENTER">右侧</option></select></div>
-                        <div class="field-row"><label for="skinAiSize">尺寸</label><select id="skinAiSize" class="form-control"><option value="SMALL">小</option><option value="MEDIUM" selected>中</option><option value="LARGE">大</option></select></div>
-                    </div>
-                    <div id="skinAiEmbeddedFields" hidden>
-                        <div class="field-row"><label for="skinAiEmbeddedText">图片中文字</label><input id="skinAiEmbeddedText" class="form-control" maxlength="20"></div>
-                        <div class="field-row"><label for="skinAiEmbeddedPlacement">文字位置</label><select id="skinAiEmbeddedPlacement" class="form-control"><option value="LEFT_CENTER">左侧居中</option><option value="CENTER">居中</option><option value="RIGHT_CENTER">右侧居中</option></select></div>
-                        <div class="field-row"><label for="skinAiEmbeddedSize">文字尺寸</label><select id="skinAiEmbeddedSize" class="form-control"><option value="SMALL">小</option><option value="MEDIUM">中</option><option value="LARGE" selected>大</option></select></div>
-                        <p class="skin-v1-help">文字会成为图片的一部分，修改文案需要重新生成。</p>
-                    </div>
                     <div id="skinAiSizeNotice" class="skin-spec" hidden></div>
                     <div class="field-row"><label for="skinAiCount">候选数量</label><select id="skinAiCount" class="form-control"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></div>
                     <button id="skinAiGenerateBtn" type="button" class="btn btn-primary btn-block"><i class="fa fa-magic"></i> 生成候选</button>
@@ -346,11 +345,13 @@
 </div>
 
 <th:block th:include="include :: footer" />
+<script th:src="@{/js/jquery-ui-1.10.4.min.js}"></script>
+<script th:src="@{/js/coffee-decorator-visual-studio.js}"></script>
 <script th:inline="javascript">
 var decoratorBase = ctx + 'coffee/decorator';
 var configuredH5PreviewUrl = /*[[${h5PreviewUrl}]]*/ '';
 var h5PreviewOrigin = '';
-var state = { merchantId:null, role:'', permissions:[], stores:[], templates:[], themes:[], drafts:[], assets:[], fonts:[], skinProducts:[], theme:null, draft:null, publishedVersion:null, publishedConfig:null, draftRevision:null, savedConfig:null, draftConfig:null, config:null, dirty:false, saving:false, publishing:false, saveFailed:false, savePromise:null, h5Ready:false, autoSaveTimer:null, aiPollTimer:null, aiTaskId:null, aiTask:null, aiContextKey:null, aiCapabilities:{}, versionItems:[], versionDialog:null, scopeReadOnly:false, activeSkinPage:'home', activeSkinComponent:'homeBanner', activeTextRole:'bannerTitle', skinEditorTab:'background', activeProductUploadId:null, activeProductAiId:null, activeBannerReplaceIndex:null };
+ var state = { merchantId:null, role:'', permissions:[], stores:[], templates:[], themes:[], drafts:[], assets:[], fonts:[], skinProducts:[], theme:null, draft:null, publishedVersion:null, publishedConfig:null, draftRevision:null, savedConfig:null, draftConfig:null, config:null, dirty:false, saving:false, publishing:false, saveFailed:false, savePromise:null, h5Ready:false, autoSaveTimer:null, aiPollTimer:null, aiTaskId:null, aiTask:null, aiContextKey:null, aiCapabilities:{}, versionItems:[], versionDialog:null, scopeReadOnly:false, activeSkinPage:'home', activeSkinComponent:'homeBanner', activeTextRole:'bannerTitle', skinEditorTab:'content', skinAiExpanded:false, activeEntryCardTarget:'order', activeProductUploadId:null, activeProductAiId:null, activeBannerReplaceIndex:null };
 var colorLabels = { primary:'品牌主色', pageBackground:'页面背景', surface:'内容表面', textPrimary:'主要文字', textSecondary:'次要文字', buttonBackground:'按钮背景', buttonText:'按钮文字', border:'边框颜色' };
 var componentOptions = {
     activityBanner:{ label:'活动横幅', options:{single:'单图',carousel:'轮播'} },
@@ -364,26 +365,27 @@ var backgroundSlots = {
     productCard:{ label:'商品卡片纹理', slotKey:'productCard.background', renderMode:'repeat' }
 };
 
-var skinPages = [ {key:'home',name:'首页'}, {key:'menu',name:'点单'}, {key:'cart',name:'购物车'}, {key:'checkout',name:'确认订单'}, {key:'me',name:'我的'}, {key:'global',name:'全局'} ];
-var skinComponents = [
-    {key:'homeBanner',name:'头部 Banner 轮播图',page:'home',stretchMode:'cover',width:750,height:360,textRoles:['bannerTitle','bannerSubtitle'],collection:true},
-    {key:'actionCard',name:'功能按钮卡片背景',page:'home',stretchMode:'fill',width:335,height:180,textRoles:['actionTitle','actionSubtitle']},
-    {key:'sectionBanner',name:'欢迎牌 / 分区横幅背景',page:'home',stretchMode:'fill',width:686,height:144,textRoles:['sectionTitle']},
-    {key:'aboutImage',name:'关于我们图片',page:'home',stretchMode:'fill',width:686,height:1000,textRoles:['sectionTitle'],kind:'image'},
-    {key:'productImages',name:'商品主图',page:'menu',textRoles:[],kind:'productImages',collection:true},
-    {key:'productCard',name:'商品卡片背景',page:'menu',stretchMode:'fill',width:686,height:320,textRoles:['productTitle','price','metaText','bodyText','buttonPrimary']},
-    {key:'specPanel',name:'商品规格弹窗背景',page:'menu',stretchMode:'fill',width:686,height:720,textRoles:['panelTitle','optionTitle','optionText','price','buttonPrimary','buttonSecondary']},
-    {key:'emptyCart',name:'空购物车面板背景',page:'cart',stretchMode:'fill',width:686,height:560,textRoles:['emptyTitle','emptyDescription','buttonPrimary']},
-    {key:'cartPanel',name:'购物车结算面板背景',page:'cart',stretchMode:'fill',width:686,height:180,textRoles:['panelTitle','price','metaText','buttonPrimary']},
-    {key:'checkoutBar',name:'确认订单底部操作条背景',page:'checkout',stretchMode:'fill',width:750,height:124,textRoles:['price','metaText','buttonPrimary']},
-    {key:'meProfileHeader',name:'个人信息区域背景',page:'me',stretchMode:'fill',width:686,height:160,textRoles:[],aiEnabled:false},
-    {key:'memberCard',name:'会员卡片背景',page:'me',stretchMode:'fill',width:686,height:224,textRoles:['memberTitle','memberValue','metaText','buttonSecondary'],aiEnabled:true},
-    {key:'meOrderCenter',name:'订单中心背景',page:'me',stretchMode:'fill',width:686,height:220,textRoles:[],aiEnabled:false},
-    {key:'meAddressCard',name:'地址菜单区域背景',page:'me',stretchMode:'fill',width:686,height:180,textRoles:[],aiEnabled:false},
-    {key:'tabBar',name:'底部 TabBar 背景',page:'global',stretchMode:'fill',width:750,height:112,textRoles:['tabText','tabTextActive']}
-];
+ var skinPages = [ {key:'home',name:'首页'}, {key:'menu',name:'点单'}, {key:'cart',name:'购物车'}, {key:'checkout',name:'确认订单'}, {key:'me',name:'我的'}, {key:'global',name:'全局样式',group:'global'} ];
+ var skinComponents = [
+     {key:'homeBanner',name:'首页 · 顶部轮播图',summary:'图片 · 轮播顺序 · 内容 · 文字样式 · AI 设计背景',page:'home',stretchMode:'cover',width:750,height:360,textRoles:['bannerTitle','bannerSubtitle'],collection:true,contentFields:['homeBanner']},
+     {key:'actionCard',name:'首页 · 点单/商店入口卡片',summary:'统一样式 · 分别设置 · 文字样式 · AI 设计背景',page:'home',stretchMode:'fill',width:335,height:180,textRoles:['actionTitle','actionSubtitle'],entryCard:true},
+     {key:'sectionBanner',name:'首页 · 欢迎区横幅图片',summary:'图片 · AI 设计背景',page:'home',stretchMode:'fill',width:686,height:144,textRoles:[]},
+     {key:'aboutImage',name:'首页 · 关于我们故事长图',summary:'图片 · AI 设计背景',page:'home',stretchMode:'fill',width:686,height:1000,textRoles:[],kind:'image'},
+     {key:'aboutTitle',name:'首页 · 关于我们区块标题',summary:'文字样式',page:'home',stretchMode:'fill',width:686,height:60,textRoles:['sectionTitle'],kind:'text',aiEnabled:false},
+     {key:'productImages',name:'点单 · 商品图片（逐个商品）',summary:'选择商品 · 图片 · AI 改图',page:'menu',textRoles:[],kind:'productImages',collection:true},
+     {key:'productCard',name:'点单 · 商品卡片',summary:'卡片背景 · 商品信息样式 · AI 设计背景',page:'menu',stretchMode:'fill',width:686,height:320,textRoles:['productTitle','price','metaText','bodyText','buttonPrimary']},
+     {key:'specPanel',name:'点单 · 商品规格弹窗',summary:'弹窗背景 · 规格/按钮样式 · AI 设计背景',page:'menu',stretchMode:'fill',width:686,height:720,textRoles:['panelTitle','optionTitle','optionText','price','buttonPrimary','buttonSecondary']},
+     {key:'emptyCart',name:'购物车 · 空购物车提示',summary:'提示背景 · 标题说明 · 按钮样式 · AI 设计背景',page:'cart',stretchMode:'fill',width:686,height:560,textRoles:['emptyTitle','emptyDescription','buttonPrimary']},
+     {key:'cartPanel',name:'购物车 · 底部结算栏',summary:'结算背景 · 金额/按钮样式 · AI 设计背景',page:'cart',stretchMode:'fill',width:686,height:180,textRoles:['panelTitle','price','metaText','buttonPrimary']},
+     {key:'checkoutBar',name:'确认订单 · 底部提交栏',summary:'提交栏背景 · 金额/按钮样式 · AI 设计背景',page:'checkout',stretchMode:'fill',width:750,height:124,textRoles:['price','metaText','buttonPrimary']},
+     {key:'meProfileHeader',name:'我的 · 顶部个人信息区',summary:'区域背景 · AI 设计背景',page:'me',stretchMode:'fill',width:686,height:160,textRoles:[]},
+     {key:'memberCard',name:'我的 · 会员卡',summary:'卡片背景 · 会员信息样式 · AI 设计背景',page:'me',stretchMode:'fill',width:686,height:224,textRoles:['memberTitle','memberValue','metaText','buttonSecondary']},
+     {key:'meOrderCenter',name:'我的 · 订单中心卡片',summary:'卡片背景 · AI 设计背景',page:'me',stretchMode:'fill',width:686,height:220,textRoles:[]},
+     {key:'meAddressCard',name:'我的 · 地址与余额入口',summary:'入口卡片背景 · AI 设计背景',page:'me',stretchMode:'fill',width:686,height:180,textRoles:[]},
+     {key:'tabBar',name:'全局样式 · 底部导航栏',summary:'导航背景 · 图标/文字样式 · AI 设计背景',page:'global',stretchMode:'fill',width:750,height:112,textRoles:['tabText','tabTextActive']}
+ ];
 var skinComponentBackgroundSlots = { actionCard:'orderCard', specPanel:'specPanel', meProfileHeader:'meProfileHeader', memberCard:'memberCard', meOrderCenter:'meOrderCenter', meAddressCard:'meAddressCard' };
-var typographyLabels = { pageTitle:'页面标题',sectionTitle:'分区标题',bannerTitle:'Banner 标题',bannerSubtitle:'Banner 副标题',actionTitle:'功能标题',actionSubtitle:'功能副标题',productTitle:'商品名称',price:'价格',metaText:'辅助文字',bodyText:'正文',panelTitle:'面板标题',optionTitle:'规格组标题',optionText:'规格选项',buttonPrimary:'主要按钮',buttonSecondary:'次要按钮',memberTitle:'会员标题',memberValue:'会员数值',emptyTitle:'空状态标题',emptyDescription:'空状态说明',tabText:'Tab 文字',tabTextActive:'选中 Tab 文字'};
+ var typographyLabels = { pageTitle:'页面标题',sectionTitle:'区块标题样式',bannerTitle:'Banner 主标题',bannerSubtitle:'Banner 副标题',actionTitle:'入口标题',actionSubtitle:'入口说明',productTitle:'商品名称',price:'价格',metaText:'辅助文字',bodyText:'正文',panelTitle:'面板标题',optionTitle:'规格组标题',optionText:'规格选项',buttonPrimary:'主要按钮',buttonSecondary:'次要按钮',memberTitle:'会员标题',memberValue:'会员数值',emptyTitle:'空状态标题',emptyDescription:'空状态说明',tabText:'导航文字',tabTextActive:'选中导航文字'};
 function typographyToken(color,fontSize,fontWeight,lineHeight) { return {color:color,fontSize:fontSize,fontWeight:fontWeight,fontStyle:'normal',lineHeight:lineHeight}; }
 var skinTypographyDefaults = {
     pageTitle:typographyToken('#332C28',18,700,1.3), sectionTitle:typographyToken('#332C28',16,700,1.35), bannerTitle:typographyToken('#332C28',26,800,1.2), bannerSubtitle:typographyToken('#88776A',12,500,1.5),
@@ -393,7 +395,7 @@ var skinTypographyDefaults = {
     memberValue:typographyToken('#FFFFFF',22,800,1.2), emptyTitle:typographyToken('#38271F',17,700,1.35), emptyDescription:typographyToken('#88776A',12,400,1.55), tabText:typographyToken('#8A7B70',11,400,1.2), tabTextActive:typographyToken('#875629',11,700,1.2)
 };
 var DEFAULT_SKIN_CONFIG = { schemaVersion:1, themeVersion:1, page:{ backgroundColor:'#FFFFFF', background:{type:'solid',color:'#FFFFFF'}, textColor:'#332C28', secondaryTextColor:'#8A7D74' }, colors:{primary:'#6F4E37',pageBackground:'#FFFFFF',cardBackground:'#FFFFFF',textPrimary:'#332C28',textSecondary:'#8A7D74'}, content:{shopHeader:{logoAssetId:null,title:'一杯好咖啡',subtitle:'从这里开始'},homeBanner:{visible:true,title:'一杯好咖啡，从这里开始',subtitle:'现点现做，认真对待每一杯'}}, layout:{homeBanner:{contentPreset:'LEFT_CENTER',safeAreaPreset:'LEFT_CENTER_LARGE'}}, assets:{}, productImages:{}, typography:clone(skinTypographyDefaults), slots:{ shopHeader:{backgroundType:'color',backgroundColor:'#FFFFFF',backgroundImage:null,fit:'fill',radius:0}, heroBanner:{backgroundType:'color',backgroundColor:'#6F4E37',backgroundImage:null,fit:'cover'}, orderCard:{backgroundType:'color',backgroundColor:'#FFFFFF',backgroundImage:null,iconColor:'#745848',textColor:'#302720',secondaryTextColor:'#C28B62',radius:20,shadow:'light'}, shopCard:{backgroundType:'color',backgroundColor:'#FFFFFF',backgroundImage:null,fit:'cover',iconColor:'#332C28',textColor:'#302720',secondaryTextColor:'#8A7D74',radius:20,shadow:'light'}, welcomeBanner:{backgroundType:'color',backgroundColor:'#E8D4C3',backgroundImage:null,fit:'cover',radius:8}, aboutSection:{backgroundColor:'#FFFFFF',titleColor:'#332C28',image:''}, specPanel:{backgroundType:'color',backgroundColor:'#FFFFFF',backgroundImage:null,fit:'fill',radius:28,background:{type:'solid',color:'#FFFFFF'}}, meProfileHeader:{backgroundType:'color',backgroundColor:'#6F4E37',backgroundImage:null,fit:'fill',radius:24,background:{type:'solid',color:'#6F4E37'}}, memberCard:{backgroundType:'color',backgroundColor:'#7B5138',backgroundImage:null,fit:'fill',radius:24,background:{type:'solid',color:'#7B5138'}}, meOrderCenter:{backgroundType:'color',backgroundColor:'#FFFFFF',backgroundImage:null,fit:'fill',radius:24,background:{type:'solid',color:'#FFFFFF'}}, meAddressCard:{backgroundType:'color',backgroundColor:'#FFFFFF',backgroundImage:null,fit:'fill',radius:24,background:{type:'solid',color:'#FFFFFF'}}, tabBar:{backgroundColor:'#FFFFFF',textColor:'#777777',activeTextColor:'#44352C',iconColor:'#999999',activeIconColor:'#44352C',activeBackgroundColor:'#F3E4D6'} } };
-skinComponents.filter(function(item){return item.kind!=='productImages';}).forEach(function(item){ DEFAULT_SKIN_CONFIG.assets[item.key]=item.key==='homeBanner' ? [] : null; });
+ skinComponents.filter(function(item){return item.kind!=='productImages' && item.kind!=='text';}).forEach(function(item){ DEFAULT_SKIN_CONFIG.assets[item.key]=item.key==='homeBanner' ? [] : null; });
 function clone(value) { return JSON.parse(JSON.stringify(value)); }
 function asArray(value) { return value == null ? [] : (Array.isArray(value) ? value : [value]); }
 function toSkinConfig(raw) {
@@ -461,6 +463,12 @@ function renderPageBackgroundEditor() {
 }
 $(function() {
     buildFields();
+    DecoratorVisualStudio.init({
+        onGenerate:startVisualStudioTask,
+        onPreview:previewAiResult,
+        onAccept:acceptAiResult,
+        onApply:applyAiResult
+    });
     bindEvents();
     configureH5Preview();
     loadMerchants();
@@ -785,16 +793,17 @@ function buildFields() {
 function renderSkinNavigation() {
     var tabs=$('#skinPageTabs').empty();
     skinPages.forEach(function(page) {
-        $('<button type="button" class="skin-page-tab"></button>').text(page.name).toggleClass('is-active',page.key===state.activeSkinPage).attr('data-page',page.key).appendTo(tabs);
+        $('<button type="button" class="skin-page-tab"></button>').text(page.name).toggleClass('is-active',page.key===state.activeSkinPage).toggleClass('is-global',page.group==='global').attr('data-page',page.key).appendTo(tabs);
     });
     var components=skinComponents.filter(function(item){ return item.page===state.activeSkinPage; });
     if (!components.some(function(item){return item.key===state.activeSkinComponent;})) state.activeSkinComponent=components[0] ? components[0].key : 'tabBar';
     var list=$('#skinComponentList').empty();
     components.forEach(function(item) {
-        var button=$('<button type="button" class="skin-component-option"><span></span><small></small></button>');
+        var button=$('<button type="button" class="skin-component-option"><span class="skin-component-name"></span><small class="skin-component-meta"></small></button>');
         button.attr('data-component',item.key).toggleClass('is-active',item.key===state.activeSkinComponent);
-        button.find('span').text(item.name); button.find('small').text(item.key); list.append(button);
+        button.find('.skin-component-name').text(item.name); button.find('.skin-component-meta').text('可改：' + (item.summary || '样式')); list.append(button);
     });
+    $('#skinPageGuide').text(state.activeSkinPage==='global' ? '全局样式会作用于多个页面；点击预览中的导航栏可定位。' : '正在编辑：' + (skinPages.find(function(page){return page.key===state.activeSkinPage;}) || {}).name + '。点击右侧预览区域可直接定位。');
     renderSkinComponentEditor();
 }
 
@@ -836,29 +845,49 @@ function renderSkinComponentEditor() {
     clearAiStateForContext(aiContextKey(component));
     var productImageEditor=component.kind==='productImages';
     var carouselEditor=component.key==='homeBanner';
+    var textOnly=component.kind==='text';
     var aiEditor=component.aiEnabled!==false;
-    if (!aiEditor && state.skinEditorTab==='ai') state.skinEditorTab='background';
+    var canContent=!!component.contentFields, canBackground=!textOnly, canTypography=!!component.textRoles.length;
+    if (textOnly) state.skinEditorTab='typography';
+    else if ((state.skinEditorTab==='content' && !canContent) || (state.skinEditorTab==='background' && !canBackground) || (state.skinEditorTab==='typography' && !canTypography)) state.skinEditorTab=canContent ? 'content' : (canBackground ? 'background' : 'typography');
     if (component.textRoles.length && component.textRoles.indexOf(state.activeTextRole)<0) state.activeTextRole=component.textRoles[0];
     $('#skinComponentTitle').text(component.name);
-    $('#skinComponentKey').text(component.key + ' · 布局锁定');
-    $('.skin-editor-tab[data-skin-tab="background"]').text(component.kind==='image' || productImageEditor ? '图片' : '背景');
-    $('.skin-editor-tab[data-skin-tab="typography"]').toggle(!!component.textRoles.length);
-    $('.skin-editor-tab[data-skin-tab="ai"]').toggle(aiEditor);
-    $('.skin-editor-tabs').css('grid-template-columns','repeat(' + (1 + (component.textRoles.length ? 1 : 0) + (aiEditor ? 1 : 0)) + ',1fr)');
+    $('#skinComponentKey').text('可改对象：' + (component.summary || '样式') + ' · 布局与尺寸固定');
+    $('.skin-editor-tab[data-skin-tab="background"]').text(textOnly ? '图片与背景' : (component.kind==='image' || productImageEditor ? '图片与背景' : '图片与背景'));
+    $('.skin-editor-tab[data-skin-tab="content"]').toggle(canContent);
+    $('.skin-editor-tab[data-skin-tab="typography"]').toggle(canTypography);
+    $('.skin-editor-tabs').css('grid-template-columns','repeat(' + ([canContent, canBackground, canTypography].filter(Boolean).length) + ',1fr)');
     $('.skin-editor-tab').toggleClass('is-active',false).filter('[data-skin-tab="' + state.skinEditorTab + '"]').toggleClass('is-active',true);
-    $('#skinBackgroundPane').prop('hidden',state.skinEditorTab!=='background');
+    if (textOnly && state.skinEditorTab==='background') state.skinEditorTab='typography';
+    $('#skinContentPane').prop('hidden',state.skinEditorTab!=='content');
+    $('#skinBackgroundPane').prop('hidden',state.skinEditorTab!=='background' || textOnly);
     $('#skinTypographyPane').prop('hidden',state.skinEditorTab!=='typography');
-    $('#skinAiPanel').prop('hidden',state.skinEditorTab!=='ai');
-    $('#skinSingleAssetEditor').prop('hidden',productImageEditor || carouselEditor);
+    $('#skinAiPanel').prop('hidden',!productImageEditor || !state.skinAiExpanded || !aiEditor);
+    $('#skinAiOpenBtn').toggle(!textOnly && aiEditor && !productImageEditor);
+    $('#skinAiOpenBtn').html('<i class="fa fa-magic"></i> AI 设计背景');
+    $('#skinSingleAssetEditor').prop('hidden',productImageEditor || carouselEditor || textOnly);
     $('#skinCarouselAssetEditor').prop('hidden',!carouselEditor);
     $('#skinProductImageEditor').prop('hidden',!productImageEditor);
     $('#skinAssetFileInput').prop('multiple',carouselEditor);
+    if (component.contentFields) renderSkinContentEditor(component);
     if (productImageEditor) renderSkinProductImageEditor();
     else if (carouselEditor) renderSkinBannerEditor();
-    else renderSkinAssetEditor(component);
+    else if (!textOnly) renderSkinAssetEditor(component);
     if (component.textRoles.length) renderTypographyEditor(component);
     if (aiEditor) renderAiEditor(component);
     applySkinEditorPermissions();
+}
+
+function renderSkinContentEditor(component) {
+    var host=$('#skinContentFields').empty();
+    if (component.key==='homeBanner') {
+        var bannerContent=state.config.content.homeBanner;
+        host.append('<div id="skinBannerVisibleRow" class="toggle-line"><strong>Banner 叠加文字</strong><label><input id="skinBannerTextVisible" type="checkbox"> 显示</label></div>');
+        host.append('<div class="field-row"><label for="skinBannerTitle">主标题</label><input id="skinBannerTitle" type="text" class="form-control" maxlength="40"></div>');
+        host.append('<div class="field-row" style="margin-top:10px"><label for="skinBannerSubtitle">副标题</label><input id="skinBannerSubtitle" type="text" class="form-control" maxlength="60"></div>');
+        $('#skinBannerTextVisible').prop('checked',bannerContent.visible);
+        $('#skinBannerTitle').val(bannerContent.title); $('#skinBannerSubtitle').val(bannerContent.subtitle);
+    }
 }
 
 function renderAiEditor(component) {
@@ -879,12 +908,11 @@ function renderAiEditor(component) {
 }
 
 function applyAiCapabilities(capabilities) {
-    var select=$('#skinAiType').empty(), labels={BACKGROUND:'组件换肤（保留原构图）'};
+    var select=$('#skinAiType').empty(), labels={BACKGROUND:'图片风格改写（保留原构图）'};
     var modes=asArray(capabilities && capabilities.generationModes);
     if (!modes.length || modes.indexOf('BACKGROUND')<0 || !capabilities.slotSpec) {
         select.prop('disabled',true); $('#skinAiGenerateBtn').prop('disabled',true);
         $('#skinAiDynamicFields').empty();
-        $('#skinAiTextFields,#skinAiEmbeddedFields').prop('hidden',true);
         $('#skinAiSizeNotice').empty().prop('hidden',true);
         $('#skinAiStatus').text('组件 AI 能力未配置，请先执行组件 AI 配置迁移');
         return;
@@ -914,15 +942,63 @@ function renderAiDynamicFields(capabilities) {
     } else {
         host.append('<div class="field-row"><label for="skinAiReference">参考皮肤</label><select id="skinAiReference" class="form-control" disabled><option value="__initial__">当前小程序初始皮肤（固定）</option></select><p class="skin-ai-reference-note">只提取当前组件的材质、色彩和装饰语言，保留原组件构图、主体位置和画布尺寸。</p></div>');
     }
-    if (component && component.key==='sectionBanner') {
-        host.append('<div class="field-row"><label for="skinAiReferenceText">图片中文字</label><input id="skinAiReferenceText" class="form-control" maxlength="20" placeholder="例如：欢迎光临、今日推荐"><p class="skin-ai-reference-note">填写后文字会直接生成在欢迎牌图片中，使用大号、高对比、清晰可读的样式。</p></div>');
-    }
 }
 
 function toggleAiFields() {
     $('#skinAiType').val('BACKGROUND');
-    $('#skinAiTextFields,#skinAiEmbeddedFields').prop('hidden',true);
     $('#skinAiPromptRow').prop('hidden',false);
+}
+
+function openVisualStudio() {
+    if (!state.theme || !state.draft || !hasPermission('ASSET_MANAGE') || !hasPermission('THEME_EDIT')) return;
+    var component=activeSkinComponent(), capabilities=state.aiCapabilities[component.key] || {}, slot=capabilities.slotSpec;
+    if (!slot) return showEditorError('当前组件的 AI 背景能力尚未配置，请先执行最新数据库迁移');
+    var assetValue=component.key==='homeBanner' ? skinBannerValues()[0] : state.config.assets && state.config.assets[component.key];
+    var currentAsset=state.assets.find(function(item){return String(item.id)===String(assetValue);});
+    var hasInitialReference=['homeBanner','actionCard','sectionBanner','aboutImage','productCard','specPanel','emptyCart','cartPanel','checkoutBar','memberCard','tabBar'].indexOf(component.key)>=0;
+    clearAiStateForContext(aiContextKey(component));
+    DecoratorVisualStudio.open({
+        merchantId:state.merchantId,
+        themeId:state.theme.id,
+        slotKey:component.key,
+        componentName:component.name,
+        slotSpecVersion:slot.specVersion || 1,
+        logicalWidth:slot.logicalWidth || component.width,
+        logicalHeight:slot.logicalHeight || component.height,
+        outputWidth:slot.outputWidth,
+        outputHeight:slot.outputHeight,
+        renderMode:slot.renderMode,
+        canRestyle:!!currentAsset || hasInitialReference,
+        referenceAssetId:currentAsset && currentAsset.id
+    });
+}
+
+function startVisualStudioTask(request) {
+    if (!state.theme || !state.draft || request.slotKey!==activeSkinComponent().key
+            || !hasPermission('ASSET_MANAGE') || !hasPermission('THEME_EDIT')) {
+        DecoratorVisualStudio.setBusy(false);
+        return DecoratorVisualStudio.setStatus('当前装修方案不可编辑。',true);
+    }
+    var contextKey=aiContextKey(activeSkinComponent()), storeId=$('#storeSelect').val();
+    clearAiStateForContext(contextKey);
+    if (storeId && storeId!=='master') request.storeId=Number(storeId);
+    $('#skinAiResults').empty(); $('#skinAiStatus').text('正在创建任务...');
+    api('POST','/ai/tasks',request).done(function(task){
+        if (!task || !task.id) {
+            DecoratorVisualStudio.setBusy(false);
+            DecoratorVisualStudio.setStatus('AI 任务创建失败：服务端未返回任务编号',true);
+            return;
+        }
+        if (state.aiContextKey!==contextKey || currentAiContextKey()!==contextKey) return;
+        state.aiTaskId=task.id;
+        pollAiTask(task.id,contextKey);
+    }).fail(function(error){
+        var message='AI 任务创建失败：'+requestErrorMessage(error);
+        $('#skinAiStatus').text(message);
+        DecoratorVisualStudio.setBusy(false);
+        DecoratorVisualStudio.setStatus(message,true);
+        showFailure(error);
+    });
 }
 
 function startAiTask() {
@@ -936,13 +1012,7 @@ function startAiTask() {
         $('#skinAiStatus').text('组件 AI 能力未加载，暂不能生成');
         return;
     }
-    var embeddedText=$('#skinAiReferenceText').length ? $('#skinAiReferenceText').val().trim() : '';
-    if (component.key==='sectionBanner' && !embeddedText) {
-        $('#skinAiStatus').text('请填写欢迎牌图片中的文字');
-        return;
-    }
-    var embedded=component.key==='sectionBanner' && !!embeddedText;
-    var request={slotKey:productImageEditor?'productCard':component.key,generationType:productImageEditor?'PRODUCT_IMAGE':(embedded?'BACKGROUND_WITH_TEXT':'BACKGROUND'),candidateCount:Number($('#skinAiCount').val()),stylePreset:$('#skinAiBackgroundStyle').val(),primaryColor:$('#skinAiPrimaryColor').val(),textMode:productImageEditor?'NO_TEXT':(embedded?'EMBEDDED_TEXT':'NO_TEXT'),referenceMode:productImageEditor?null:'INITIAL_SKIN',prompt:$('#skinAiPrompt').val()};
+    var request={slotKey:productImageEditor?'productCard':component.key,generationType:productImageEditor?'PRODUCT_IMAGE':'BACKGROUND',candidateCount:Number($('#skinAiCount').val()),stylePreset:$('#skinAiBackgroundStyle').val(),primaryColor:$('#skinAiPrimaryColor').val(),textMode:'NO_TEXT',referenceMode:productImageEditor?null:'INITIAL_SKIN',prompt:$('#skinAiPrompt').val()};
     var storeId=$('#storeSelect').val(); if (storeId && storeId!=='master') request.storeId=Number(storeId);
     request.placementPreset='CENTER';
     if (productImageEditor) {
@@ -957,7 +1027,6 @@ function startAiTask() {
         request.productDescription=selectedProduct.description || selectedProduct.remark || '';
         request.referenceImageUrl=originalUrl; request.targetWidth=targetWidth; request.targetHeight=targetHeight;
     }
-    if (embedded) { request.textContent=embeddedText; request.sizePreset='LARGE'; }
     $('#skinAiGenerateBtn').prop('disabled',true); $('#skinAiResults').empty(); $('#skinAiStatus').text('正在创建任务...');
     api('POST','/ai/tasks',request).done(function(task){
         if (!task || !task.id) {
@@ -981,10 +1050,21 @@ function pollAiTask(taskId,contextKey) {
         state.aiTask=task;
         var labels={PENDING:'等待中',RUNNING:'生成中',SUCCEEDED:'已完成',FAILED:'生成失败'};
         $('#skinAiStatus').text(labels[task.status] || task.status);
+        if (DecoratorVisualStudio.isOpen()) DecoratorVisualStudio.setStatus((labels[task.status] || task.status)+'，正在生成无文字背景...');
         if (task.status==='SUCCEEDED') return loadAiResults(taskId,contextKey);
-        if (task.status==='FAILED') return showEditorError(task.errorMessage || 'AI 生成失败');
+        if (task.status==='FAILED') {
+            DecoratorVisualStudio.setBusy(false);
+            if (DecoratorVisualStudio.isOpen()) DecoratorVisualStudio.setStatus(task.errorMessage || 'AI 生成失败',true);
+            return showEditorError(task.errorMessage || 'AI 生成失败');
+        }
         state.aiPollTimer=window.setTimeout(function(){pollAiTask(taskId,contextKey);},1500);
-    }).fail(function(error){ if (state.aiContextKey!==contextKey || currentAiContextKey()!==contextKey) return; $('#skinAiStatus').text('AI 任务查询失败：' + requestErrorMessage(error)); showFailure(error); });
+    }).fail(function(error){
+        if (state.aiContextKey!==contextKey || currentAiContextKey()!==contextKey) return;
+        var message='AI 任务查询失败：'+requestErrorMessage(error);
+        $('#skinAiStatus').text(message); DecoratorVisualStudio.setBusy(false);
+        if (DecoratorVisualStudio.isOpen()) DecoratorVisualStudio.setStatus(message,true);
+        showFailure(error);
+    });
 }
 
 function loadAiResults(taskId,contextKey) {
@@ -1005,6 +1085,7 @@ function loadAiResults(taskId,contextKey) {
             item.find('.ai-apply').on('click',function(){ applyAiResult(result.id); }); list.append(item);
         });
         applySkinEditorPermissions(); updateAiBatchSelection();
+        if (DecoratorVisualStudio.isOpen()) DecoratorVisualStudio.setResults(asArray(results));
     }).fail(showFailure);
 }
 
@@ -1036,7 +1117,10 @@ function applySelectedAiResults() {
 }
 
 function previewAiResult(result) {
-    if (!isCurrentAiTask() || !state.config || !state.h5Ready || !h5PreviewOrigin) return showEditorError('H5 预览尚未就绪');
+    if (!isCurrentAiTask() || !state.config || !state.h5Ready || !h5PreviewOrigin) {
+        if (DecoratorVisualStudio.isOpen()) DecoratorVisualStudio.setStatus('H5 预览尚未就绪。',true);
+        return showEditorError('H5 预览尚未就绪');
+    }
     var preview=clone(state.config), urls=assetUrlMap(), component=state.aiTask.slotKey;
     if (state.aiTask.generationType==='ART_TEXT') {
         var temporaryId=2147483647; if (!preview.decorations) preview.decorations={};
@@ -1046,11 +1130,13 @@ function previewAiResult(result) {
     else preview.assets[component]=result.url;
     document.getElementById('miniProgramPreview').contentWindow.postMessage({type:'SKIN_CONFIG_UPDATE',payload:preview,assetUrls:urls,fontResources:fontResourceMap()},h5PreviewOrigin);
     $('#skinAiStatus').text('正在预览候选 ' + result.candidateNo + '，未写入草稿');
+    if (DecoratorVisualStudio.isOpen()) DecoratorVisualStudio.setStatus('正在页面中预览方案 '+result.candidateNo+'，未写入草稿。');
 }
 
 function acceptAiResult(resultId) {
-    api('POST','/ai/results/' + resultId + '/accept',{}).done(function(asset){
+    return api('POST','/ai/results/' + resultId + '/accept',{}).done(function(asset){
         state.assets.unshift(asset); renderAssets(); showEditorSuccess('候选已加入素材库');
+        if (DecoratorVisualStudio.isOpen()) DecoratorVisualStudio.setStatus('方案已保存到素材库，装修草稿未改变。');
     }).fail(showFailure);
 }
 
@@ -1058,11 +1144,12 @@ function applyAiResult(resultId) {
     if (!state.theme || !state.draft || !isCurrentAiTask()) return showEditorError('请先在当前组件生成或选择 AI 候选');
     var applyRequest={themeId:Number(state.theme.id),revision:state.draft.revision};
     if (state.aiTask && state.aiTask.generationType==='PRODUCT_IMAGE') applyRequest.productId=Number(state.aiTask.productId || state.activeProductAiId);
-    api('POST','/ai/results/' + resultId + '/apply',applyRequest).done(function(draft){
+    return api('POST','/ai/results/' + resultId + '/apply',applyRequest).done(function(draft){
         state.draft=draft; state.draftRevision=draft.revision; state.config=toSkinConfig(JSON.parse(draft.configJson));
         state.savedConfig=clone(state.config); state.draftConfig=state.config; state.dirty=false;
         api('GET','/assets').done(function(assets){state.assets=asArray(assets); fillEditor(); renderPreview(); updateState();});
         showEditorSuccess('AI 素材已应用到草稿');
+        if (DecoratorVisualStudio.isOpen()) DecoratorVisualStudio.setStatus('方案已应用到当前组件草稿，发布前仍可继续调整。');
     }).fail(showFailure);
 }
 
@@ -1073,7 +1160,7 @@ function applySkinEditorPermissions() {
     $('#skinAssetApplyBtn').prop('disabled',!editable || !$('#skinComponentAsset').val());
     $('.skin-product-image-use').each(function(){ $(this).prop('disabled',!editable || !$(this).closest('.skin-product-image-row').find('.skin-product-image-select').val()); });
     $('#skinAssetUploadBtn,#skinAssetName,.skin-product-image-upload,.skin-product-image-ai,#skinBannerAddBtn,.skin-banner-upload-replace').prop('disabled',!assetManage || !editable);
-    $('#skinAiPanel input,#skinAiPanel textarea,#skinAiPanel select,#skinAiGenerateBtn').prop('disabled',!assetManage || !editable);
+    $('#skinAiPanel input,#skinAiPanel textarea,#skinAiPanel select,#skinAiGenerateBtn,#skinAiOpenBtn').prop('disabled',!assetManage || !editable);
     var bannerCount=skinBannerValues().length;
     $('#skinBannerAddBtn').prop('disabled',!editable || !assetManage || bannerCount>=10);
     $('#skinBannerLibraryAdd').prop('disabled',!editable || bannerCount>=10);
@@ -1183,7 +1270,8 @@ function renderSkinAssetEditor(component) {
 }
 
 function skinComponentSlot(key) {
-    key=skinComponentBackgroundSlots[key] || key;
+    if (key==='actionCard' && state.activeEntryCardTarget==='shop') key='shopCard';
+    else key=skinComponentBackgroundSlots[key] || key;
     if (!state.config.slots) state.config.slots={};
     if (!state.config.slots[key]) state.config.slots[key]=clone(DEFAULT_SKIN_CONFIG.slots[key] || {backgroundType:'color',backgroundColor:'#FFFFFF',background:{type:'solid',color:'#FFFFFF'}});
     return state.config.slots[key];
@@ -1204,6 +1292,15 @@ function renderSkinComponentBackgroundEditor(component) {
     host.find('[data-field="solidColor"]').val(slot.backgroundColor || (background.color || '#FFFFFF'));
     host.find('[data-field="start"]').val(start); host.find('[data-field="end"]').val(end); host.find('[data-field="direction"]').val(direction);
     host.find('.skin-component-gradient-fields').toggle(type==='gradient'); host.find('.skin-component-solid-field').toggle(type==='solid');
+    if (component.entryCard) {
+        var mode=state.config.components && state.config.components.actionCard && state.config.components.actionCard.styleMode || 'unified';
+        var modeField=$('<div class="field-row" style="margin-bottom:10px"><label for="skinEntryCardMode">入口卡片样式</label><select id="skinEntryCardMode" class="form-control skin-entry-style-mode"><option value="unified">两个入口统一样式</option><option value="separate">分别设置</option></select></div>');
+        modeField.find('select').val(mode); host.prepend(modeField);
+        if (mode==='separate') {
+            var targetField=$('<div class="field-row" style="margin-bottom:10px"><label for="skinEntryCardTarget">正在编辑</label><select id="skinEntryCardTarget" class="form-control skin-entry-style-target"><option value="order">点单入口</option><option value="shop">商店入口</option></select><p class="skin-ai-note">背景颜色和卡片视觉可分别设置；图片素材暂共用一份。</p></div>');
+            targetField.find('select').val(state.activeEntryCardTarget); host.find('#skinEntryCardMode').closest('.field-row').after(targetField);
+        }
+    }
     host.find('input[type=color]').each(function(){ var target=$(this).data('color-target'); var value=host.find('#'+target).val(); $(this).val(/^#[0-9a-fA-F]{6}$/.test(value) ? value : '#FFFFFF'); });
     host.find('.skin-component-background-input,.skin-component-background-type').prop('disabled',!hasPermission('THEME_EDIT'));
 }
@@ -1216,11 +1313,14 @@ function updateSkinComponentBackground() {
     var start=String($('#skinBackgroundFields [data-field="start"]').val() || '#7B5138').toUpperCase();
     var end=String($('#skinBackgroundFields [data-field="end"]').val() || '#E4C3A2').toUpperCase();
     var direction=Math.max(0,Math.min(360,Number($('#skinBackgroundFields [data-field="direction"]').val()) || 145));
-    if (type==='gradient') {
-        slot.background={type:'gradient',gradient:{type:'linear',direction:direction,colors:[{color:start,position:0},{color:end,position:100}]}};
-        slot.backgroundType='color'; slot.backgroundColor=start;
-    } else {
-        slot.background={type:'solid',color:solid}; slot.backgroundType='color'; slot.backgroundColor=solid;
+    var nextBackground=type==='gradient'
+        ? {type:'gradient',gradient:{type:'linear',direction:direction,colors:[{color:start,position:0},{color:end,position:100}]}}
+        : {type:'solid',color:solid};
+    slot.background=nextBackground; slot.backgroundType='color'; slot.backgroundColor=type==='gradient' ? start : solid;
+    var actionMode=component.entryCard && state.config.components && state.config.components.actionCard && state.config.components.actionCard.styleMode || 'separate';
+    if (component.entryCard && actionMode==='unified') {
+        var other=slot===state.config.slots.orderCard ? state.config.slots.shopCard : state.config.slots.orderCard;
+        if (other) { other.background=clone(nextBackground); other.backgroundType='color'; other.backgroundColor=slot.backgroundColor; }
     }
     // Selecting a color mode intentionally replaces the current image asset.
     if (state.config.assets) state.config.assets[component.key]=null;
@@ -1234,7 +1334,7 @@ function renderSkinProductImageEditor() {
         var productId=String(product.productId || product.id || ''), current=mappings[productId], asset=state.assets.find(function(item){return String(item.id)===String(current);});
         var currentUrl=asset && asset.url ? asset.url : (typeof current==='string' && !/^\d+$/.test(current) ? current : '');
         var originalUrl=product.imageUrl || product.productImage || '';
-         var row=$('<div class="skin-product-image-row"><img class="skin-product-image-thumb" alt=""><div class="skin-product-image-copy"><strong></strong><small></small><select class="form-control skin-product-image-select"></select><div class="skin-product-image-actions"><button type="button" class="btn btn-primary btn-xs skin-product-image-use"><i class="fa fa-check"></i> 使用所选图片</button><button type="button" class="btn btn-primary btn-xs skin-product-image-ai"><i class="fa fa-magic"></i> AI 生成</button><button type="button" class="btn btn-default btn-xs skin-product-image-upload"><i class="fa fa-upload"></i> 上传替换</button><button type="button" class="btn btn-default btn-xs skin-product-image-restore"><i class="fa fa-undo"></i> 恢复原图</button></div></div></div>');
+         var row=$('<div class="skin-product-image-row"><img class="skin-product-image-thumb" alt=""><div class="skin-product-image-copy"><strong></strong><small></small><select class="form-control skin-product-image-select"></select><div class="skin-product-image-actions"><button type="button" class="btn btn-primary btn-xs skin-product-image-use"><i class="fa fa-check"></i> 使用所选图片</button><button type="button" class="btn btn-primary btn-xs skin-product-image-ai"><i class="fa fa-magic"></i> AI 改图</button><button type="button" class="btn btn-default btn-xs skin-product-image-upload"><i class="fa fa-upload"></i> 上传替换</button><button type="button" class="btn btn-default btn-xs skin-product-image-restore"><i class="fa fa-undo"></i> 恢复原图</button></div></div></div>');
         row.attr('data-product-id',productId);
         row.find('strong').text(product.productName || ('商品 ' + productId));
         row.find('small').text(currentUrl ? '当前使用装修图片' : '当前使用商品原图');
@@ -1249,13 +1349,6 @@ function renderSkinProductImageEditor() {
 }
 
 function renderTypographyEditor(component) {
-    var bannerContent=state.config.content.homeBanner;
-    $('#skinContentFields').prop('hidden',component.key!=='homeBanner');
-    $('#skinBannerTextVisible').prop('checked',bannerContent.visible);
-    $('#skinBannerTitle').closest('.field-row').find('label').text('主标题');
-    $('#skinBannerSubtitle').closest('.field-row').find('label').text('副标题');
-    $('#skinBannerTitle').val(bannerContent.title);
-    $('#skinBannerSubtitle').val(bannerContent.subtitle);
     var select=$('#skinTextRole').empty();
     component.textRoles.forEach(function(role){select.append($('<option>').val(role).text(typographyLabels[role] || role));});
     select.val(state.activeTextRole);
@@ -1378,7 +1471,7 @@ function bindEvents() {
         if (!state.config || !hasPermission('THEME_EDIT')) return;
         var component=$(this).data('component');
         if (!backgroundSlots[component]) return;
-        showEditorError('该旧版背景入口已停用，请在左侧组件导航中编辑背景素材');
+    showEditorError('该旧版背景入口已停用，请在左侧页面模块中编辑图片与背景');
     });
     $('#homeBannerAsset').on('change', function() {
         if (!state.config || !hasPermission('THEME_EDIT')) return;
@@ -1413,9 +1506,13 @@ function bindEvents() {
         state.activeSkinPage=$(this).data('page'); renderSkinNavigation(); postH5Navigation(state.activeSkinPage);
     });
     $(document).on('click','.skin-component-option',function(){
-        state.activeSkinComponent=$(this).data('component'); state.activeTextRole=activeSkinComponent().textRoles[0]; renderSkinNavigation();
+        state.activeSkinComponent=$(this).data('component'); state.activeTextRole=activeSkinComponent().textRoles[0]; state.skinAiExpanded=false; state.skinEditorTab=activeSkinComponent().kind==='text' ? 'typography' : (activeSkinComponent().contentFields ? 'content' : 'background'); renderSkinNavigation();
     });
     $(document).on('click','.skin-editor-tab',function(){ state.skinEditorTab=$(this).data('skin-tab'); renderSkinComponentEditor(); });
+    $('#skinAiOpenBtn').on('click',function(){
+        openVisualStudio();
+    });
+    $('#skinAiCloseBtn').on('click',function(){ state.skinAiExpanded=false; renderSkinComponentEditor(); });
     $('#skinAiType').on('change',toggleAiFields);
     $('#skinAiGenerateBtn').on('click',startAiTask);
     $('#skinAiSelectAll').on('change',function(){
@@ -1430,6 +1527,22 @@ function bindEvents() {
     });
     $(document).on('change', '.skin-component-background-type', function(){ updateSkinComponentBackground(); });
     $(document).on('input change', '.skin-component-background-input', function(){ updateSkinComponentBackground(); });
+    $(document).on('change', '.skin-entry-style-mode', function(){
+        if (!state.config || !hasPermission('THEME_EDIT')) return;
+        if (!state.config.components) state.config.components={};
+        if (!state.config.components.actionCard) state.config.components.actionCard={variant:'standard'};
+        state.config.components.actionCard.styleMode=this.value==='separate' ? 'separate' : 'unified';
+        if (state.config.components.actionCard.styleMode==='unified' && state.config.slots && state.config.slots.orderCard && state.config.slots.shopCard) {
+            state.config.slots.shopCard.background=clone(state.config.slots.orderCard.background);
+            state.config.slots.shopCard.backgroundType=state.config.slots.orderCard.backgroundType;
+            state.config.slots.shopCard.backgroundColor=state.config.slots.orderCard.backgroundColor;
+        }
+        markDirty(); renderSkinComponentBackgroundEditor(activeSkinComponent()); renderPreview(); scheduleAutoSave();
+    });
+    $(document).on('change', '.skin-entry-style-target', function(){
+        state.activeEntryCardTarget=this.value==='shop' ? 'shop' : 'order';
+        renderSkinComponentBackgroundEditor(activeSkinComponent()); applySkinEditorPermissions();
+    });
     $('#skinAssetApplyBtn').on('click',function(){
         if (!state.config || !hasPermission('THEME_EDIT')) return;
         applyAssetToActiveSkinComponent($('#skinComponentAsset').val());
@@ -1518,7 +1631,7 @@ function bindEvents() {
     $(document).on('click','.skin-product-image-ai',function(){
         if (!hasPermission('ASSET_MANAGE') || !hasPermission('THEME_EDIT')) return;
         state.activeProductAiId=String($(this).closest('.skin-product-image-row').data('product-id'));
-        state.skinEditorTab='ai'; renderSkinComponentEditor();
+        state.skinEditorTab='background'; state.skinAiExpanded=true; renderSkinComponentEditor();
     });
     $(document).on('click','.skin-product-image-restore',function(){
         if (!state.config || !hasPermission('THEME_EDIT')) return;
@@ -1529,12 +1642,12 @@ function bindEvents() {
     $('#skinProductImageFileInput').on('change',function(){ if (this.files && this.files[0] && state.activeProductUploadId) uploadProductSkinAsset(state.activeProductUploadId,this.files[0]); });
     $('#skinTextRole').on('change',function(){ state.activeTextRole=this.value; renderTypographyEditor(activeSkinComponent()); });
     $('#skinTypographySaveBtn').on('click',function(){ saveDraft(); });
-    $('#skinBannerTextVisible').on('change',function(){
+    $(document).on('change','#skinBannerTextVisible',function(){
         if (!state.config || !hasPermission('THEME_EDIT')) return;
         state.config.content.homeBanner.visible=this.checked;
         markDirty(); renderPreview(); scheduleAutoSave();
     });
-    $('#skinBannerTitle,#skinBannerSubtitle').on('input',function(){
+    $(document).on('input','#skinBannerTitle,#skinBannerSubtitle',function(){
         if (!state.config || !hasPermission('THEME_EDIT')) return;
         var field=this.id==='skinBannerTitle' ? 'title' : 'subtitle';
         state.config.content.homeBanner[field]=this.value;

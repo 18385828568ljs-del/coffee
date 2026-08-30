@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "postinstall": "node scripts/patch-uni-template-loader.js",
+    "test:tabbar": "node scripts/test-tab-bar.js",
     "dev:h5": "cross-env NODE_ENV=development UNI_PLATFORM=h5 UNI_INPUT_DIR=. UNI_CLI_CONTEXT=. vue-cli-service uni-serve --port 18081",
     "build:h5": "cross-env NODE_ENV=production UNI_PLATFORM=h5 UNI_INPUT_DIR=. UNI_CLI_CONTEXT=. vue-cli-service uni-build"
   },

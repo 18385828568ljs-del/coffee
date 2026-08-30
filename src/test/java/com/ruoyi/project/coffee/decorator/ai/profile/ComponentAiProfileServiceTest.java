@@ -21,7 +21,7 @@ import com.ruoyi.project.coffee.decorator.mapper.ComponentAiProfileMapper;
 
 class ComponentAiProfileServiceTest
 {
-    private static final List<String> KEYS = Arrays.asList("homeBanner","actionCard","sectionBanner","aboutImage","productCard","specPanel","emptyCart","cartPanel","checkoutBar","memberCard","tabBar");
+    private static final List<String> KEYS = Arrays.asList("homeBanner","actionCard","sectionBanner","aboutImage","productCard","specPanel","emptyCart","cartPanel","checkoutBar","meProfileHeader","memberCard","meOrderCenter","meAddressCard","tabBar");
     private ComponentAiProfileService service;
     private ComponentAiProfileMapper mapper;
     private BackgroundSlotService slotService;
@@ -38,7 +38,7 @@ class ComponentAiProfileServiceTest
     }
 
     @Test
-    void exposesAllElevenRegisteredProfiles()
+    void exposesAllRegisteredBackgroundProfiles()
     {
         List<ComponentAiProfile> profiles = new ArrayList<ComponentAiProfile>();
         for (String key : KEYS)
@@ -49,7 +49,7 @@ class ComponentAiProfileServiceTest
             when(slotService.require(key)).thenReturn(slot);
         }
         when(mapper.selectActiveList()).thenReturn(profiles);
-        assertEquals(11, service.capabilities().size());
+        assertEquals(KEYS.size(), service.capabilities().size());
     }
 
     @Test

@@ -28,9 +28,16 @@ public class ImageApiDecoratorProvider implements DecoratorAssetGenerationProvid
         {
             try
             {
-                byte[] reference = downloader.download(referenceUrl);
-                String mimeType = detectMimeType(reference);
-                source = "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(reference);
+                if (referenceUrl.startsWith("data:image/"))
+                {
+                    source = referenceUrl;
+                }
+                else
+                {
+                    byte[] reference = downloader.download(referenceUrl);
+                    String mimeType = detectMimeType(reference);
+                    source = "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(reference);
+                }
             }
             catch (Exception e)
             {

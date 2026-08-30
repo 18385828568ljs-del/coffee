@@ -68,4 +68,26 @@ class DecoratorPromptBuilderProfileTest
         assertTrue(prompt.contains("large, crisp, high-contrast"));
         assertFalse(prompt.contains("Do not copy or invent the reference image's characters"));
     }
+
+    @Test
+    void sketchPromptTreatsReferenceAsWireframe()
+    {
+        ComponentAiProfileService profiles = mock(ComponentAiProfileService.class);
+        ComponentAiProfile profile = new ComponentAiProfile(); profile.setForbiddenElementsJson("[\"price\",\"button\"]");
+        when(profiles.require("homeBanner")).thenReturn(profile);
+        when(profiles.values(profile.getForbiddenElementsJson())).thenReturn(java.util.Arrays.asList("price", "button"));
+        DecoratorPromptBuilder builder = new DecoratorPromptBuilder(); ReflectionTestUtils.setField(builder, "profileService", profiles);
+        BackgroundSlotSpec slot = new BackgroundSlotSpec(); slot.setComponentKey("homeBanner"); slot.setOutputWidth(1500); slot.setOutputHeight(720); slot.setRenderMode("COVER");
+        DecoratorAiTask task = new DecoratorAiTask(); task.setStylePreset("WARM_HANDMADE"); task.setTextMode("NO_TEXT");
+        task.setPromptText("soft morning light");
+        task.setVisualIntentJson("{\"compositionPreset\":\"LEFT_COPY_RIGHT_SUBJECT\"}");
+
+        String prompt = builder.background(task, slot);
+
+        assertTrue(prompt.contains("wireframe layout guide"));
+        assertTrue(prompt.contains("Do not render guide boxes"));
+        assertTrue(prompt.contains("text-safe area visually quiet"));
+        assertTrue(prompt.contains("LEFT_COPY_RIGHT_SUBJECT"));
+        assertFalse(prompt.contains("style transfer for one UI component"));
+    }
 }

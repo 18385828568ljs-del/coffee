@@ -1,5 +1,7 @@
 package com.ruoyi.project.coffee.decorator.api;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 public class DecoratorAiTaskRequest
 {
     private String slotKey;
@@ -27,6 +29,8 @@ public class DecoratorAiTaskRequest
     private String referenceImageUrl;
     private Integer targetWidth;
     private Integer targetHeight;
+    private JsonNode visualIntent;
+    private String guideImageDataUrl;
 
     public String getSlotKey() { return slotKey; }
     public void setSlotKey(String slotKey) { this.slotKey = slotKey; }
@@ -76,4 +80,8 @@ public class DecoratorAiTaskRequest
     public void setTargetWidth(Integer targetWidth) { this.targetWidth = targetWidth; }
     public Integer getTargetHeight() { return targetHeight; }
     public void setTargetHeight(Integer targetHeight) { this.targetHeight = targetHeight; }
+    public JsonNode getVisualIntent() { return visualIntent; }
+    public void setVisualIntent(JsonNode visualIntent) { this.visualIntent = visualIntent; }
+    public String getGuideImageDataUrl() { return guideImageDataUrl; }
+    public void setGuideImageDataUrl(String guideImageDataUrl) { this.guideImageDataUrl = guideImageDataUrl; }
 }

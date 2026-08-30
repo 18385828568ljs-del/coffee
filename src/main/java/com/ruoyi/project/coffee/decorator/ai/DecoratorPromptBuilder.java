@@ -9,7 +9,7 @@ import com.ruoyi.project.coffee.decorator.ai.profile.ComponentAiProfileService;
 @Component
 public class DecoratorPromptBuilder
 {
-    public static final String PROMPT_VERSION = "decorator-v2";
+    public static final String PROMPT_VERSION = "decorator-v3";
 
     @org.springframework.beans.factory.annotation.Autowired
     private ComponentAiProfileService profileService;
@@ -19,6 +19,10 @@ public class DecoratorPromptBuilder
         ComponentAiProfile profile = profileService == null ? null : profileService.require(slot.getComponentKey());
         String forbidden = profile == null ? "QR codes, prices, buttons, navigation, or unrelated UI structure"
                 : String.join(", ", profileService.values(profile.getForbiddenElementsJson()));
+        if (task.getVisualIntentJson() != null && !task.getVisualIntentJson().trim().isEmpty())
+        {
+            return sketchBackground(task, slot, forbidden);
+        }
         String composition = "aboutImage".equals(slot.getComponentKey())
                 ? "For this aboutImage component, preserve the full-height story poster composition, the existing cafe scene and main subject(s), major silhouettes, framed text areas, and their relative positions. "
                 : "Preserve the reference component's existing subjects, major shapes, text-block areas, relative scale, and spatial positions. ";
@@ -34,6 +38,19 @@ public class DecoratorPromptBuilder
                 + (task.getTextMode() == null ? "NO_TEXT" : task.getTextMode())
                 + ("EMBEDDED_TEXT".equals(task.getTextMode()) ? embeddedTextInstruction(task, slot) : "")
                 + ". Real business UI outside the supplied reference image is rendered by the application. Merchant direction: " + task.getPromptText();
+    }
+
+    private String sketchBackground(DecoratorAiTask task, BackgroundSlotSpec slot, String forbidden)
+    {
+        return "Generate a premium coffee shop " + slot.getComponentKey() + " component background in "
+                + task.getStylePreset() + " style. Use the supplied image only as a wireframe layout guide, not as finished artwork. "
+                + "Follow its subject regions, relative scale, quiet text-safe areas, avoid areas, and spatial relationships. "
+                + "Do not render guide boxes, labels, arrows, note pins, outlines, handles, or annotation marks in the final image. "
+                + "Create a coherent commercial image at exactly " + slot.getOutputWidth() + "x" + slot.getOutputHeight()
+                + " pixels with render mode " + slot.getRenderMode() + ". Keep every text-safe area visually quiet, low-detail, and free of subjects. "
+                + "Do not generate business text, random text, logos, QR codes, prices, buttons, navigation, or unrelated UI. "
+                + "Do not generate " + forbidden + ". Structured visual intent JSON: " + task.getVisualIntentJson()
+                + ". Merchant direction: " + task.getPromptText();
     }
 
     public String productImage(DecoratorAiTask task, BackgroundSlotSpec slot)

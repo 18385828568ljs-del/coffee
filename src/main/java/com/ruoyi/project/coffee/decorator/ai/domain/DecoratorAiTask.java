@@ -29,6 +29,7 @@ public class DecoratorAiTask
     private Long productId;
     private Integer targetWidth;
     private Integer targetHeight;
+    private String visualIntentJson;
     private Date createdAt;
     private Date updatedAt;
 
@@ -82,6 +83,8 @@ public class DecoratorAiTask
     public void setTargetWidth(Integer targetWidth) { this.targetWidth = targetWidth; }
     public Integer getTargetHeight() { return targetHeight; }
     public void setTargetHeight(Integer targetHeight) { this.targetHeight = targetHeight; }
+    public String getVisualIntentJson() { return visualIntentJson; }
+    public void setVisualIntentJson(String visualIntentJson) { this.visualIntentJson = visualIntentJson; }
     public Date getCreatedAt() { return createdAt; }
     public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
     public Date getUpdatedAt() { return updatedAt; }

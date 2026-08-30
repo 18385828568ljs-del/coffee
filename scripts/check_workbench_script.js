@@ -2,7 +2,12 @@ const fs = require('fs')
 const path = require('path')
 
 const file = path.resolve(__dirname, '../src/main/resources/templates/coffee/decorator/workbench.html')
-const html = fs.readFileSync(file, 'utf8')
+const html = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n')
+
+if (/@\{\/coffee\/decorator\/[^}]+\.(?:css|js)\}/.test(html)) {
+    throw new Error('Decorator static assets must not use the tenant-intercepted /coffee/decorator namespace')
+}
+
 const marker = '<script th:inline="javascript">'
 const start = html.indexOf(marker)
 const end = html.indexOf('</script>', start)

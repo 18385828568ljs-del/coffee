@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.Base64;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -83,6 +84,65 @@ class DecoratorAiServiceTest
 
         assertEquals("openai-images", task.getProvider());
         verify(aiMapper).insertTask(task);
+    }
+
+    @Test
+    void storesValidatedHomeBannerVisualIntent() throws Exception
+    {
+        BackgroundSlotSpec slot = new BackgroundSlotSpec();
+        slot.setId(10L); slot.setComponentKey("homeBanner"); slot.setSpecVersion(1); slot.setAiEnabled(true);
+        when(slotService.require("homeBanner")).thenReturn(slot);
+        when(promptBuilder.background(any(DecoratorAiTask.class), eq(slot))).thenReturn("generated prompt");
+        DecoratorAiTaskRequest request = request(null);
+        request.setVisualIntent(new ObjectMapper().readTree("{\"schemaVersion\":1,\"slotKey\":\"homeBanner\","
+                + "\"compositionPreset\":\"LEFT_COPY_RIGHT_SUBJECT\",\"subjects\":[{\"box\":{\"x\":0.55,\"y\":0.1,\"width\":0.35,\"height\":0.8}}],"
+                + "\"textSafeAreas\":[{\"x\":0.05,\"y\":0.15,\"width\":0.4,\"height\":0.65}]}"));
+        byte[] pngHeader = new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
+        request.setGuideImageDataUrl("data:image/png;base64," + Base64.getEncoder().encodeToString(pngHeader));
+
+        DecoratorAiTask task = service.createBackground(context, request);
+
+        Assertions.assertTrue(task.getVisualIntentJson().contains("LEFT_COPY_RIGHT_SUBJECT"));
+        verify(aiMapper).insertTask(task);
+    }
+
+    @Test
+    void storesValidatedVisualIntentForAnyEnabledBackgroundComponent() throws Exception
+    {
+        BackgroundSlotSpec slot = new BackgroundSlotSpec();
+        slot.setId(11L); slot.setComponentKey("meOrderCenter"); slot.setSpecVersion(1); slot.setAiEnabled(true);
+        when(slotService.require("meOrderCenter")).thenReturn(slot);
+        when(promptBuilder.background(any(DecoratorAiTask.class), eq(slot))).thenReturn("generated prompt");
+        DecoratorAiTaskRequest request = request(null);
+        request.setSlotKey("meOrderCenter");
+        request.setVisualIntent(new ObjectMapper().readTree("{\"schemaVersion\":1,\"slotKey\":\"meOrderCenter\","
+                + "\"compositionPreset\":\"SCENE_MOOD\",\"subjects\":[],\"scene\":{\"type\":\"CAFE\"},"
+                + "\"textSafeAreas\":[{\"x\":0.05,\"y\":0.1,\"width\":0.4,\"height\":0.7}]}"));
+        byte[] pngHeader = new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
+        request.setGuideImageDataUrl("data:image/png;base64," + Base64.getEncoder().encodeToString(pngHeader));
+
+        DecoratorAiTask task = service.createBackground(context, request);
+
+        assertEquals("meOrderCenter", task.getSlotKey());
+        Assertions.assertTrue(task.getVisualIntentJson().contains("meOrderCenter"));
+        verify(aiMapper).insertTask(task);
+    }
+
+    @Test
+    void rejectsVisualIntentWithoutGuideImage() throws Exception
+    {
+        BackgroundSlotSpec slot = new BackgroundSlotSpec();
+        slot.setId(10L); slot.setComponentKey("homeBanner"); slot.setSpecVersion(1); slot.setAiEnabled(true);
+        when(slotService.require("homeBanner")).thenReturn(slot);
+        DecoratorAiTaskRequest request = request(null);
+        request.setVisualIntent(new ObjectMapper().readTree("{\"schemaVersion\":1,\"slotKey\":\"homeBanner\","
+                + "\"compositionPreset\":\"SCENE_MOOD\",\"subjects\":[],\"scene\":{\"type\":\"CAFE\"},"
+                + "\"textSafeAreas\":[{\"x\":0.05,\"y\":0.1,\"width\":0.4,\"height\":0.7}]}"));
+
+        ServiceException error = assertThrows(ServiceException.class, () -> service.createBackground(context, request));
+
+        Assertions.assertTrue(error.getMessage().contains("PNG"));
+        verify(aiMapper, never()).insertTask(any(DecoratorAiTask.class));
     }
 
     @Test

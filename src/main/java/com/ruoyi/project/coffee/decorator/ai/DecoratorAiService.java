@@ -5,7 +5,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashSet;
@@ -55,6 +57,8 @@ public class DecoratorAiService
     private static final String PRODUCT_IMAGE = "PRODUCT_IMAGE";
     private static final Pattern ART_TEXT_PATTERN = Pattern.compile("^[\\p{L}\\p{N}\\p{Zs}\\p{P}&+]+$");
     private static final String INITIAL_SKIN_REFERENCE = "INITIAL_SKIN";
+    private static final int MAX_VISUAL_INTENT_BYTES = 16 * 1024;
+    private static final int MAX_GUIDE_IMAGE_BYTES = 3 * 1024 * 1024;
 
     @Autowired private DecoratorAiMapper aiMapper;
     @Autowired private DecoratorAssetMapper assetMapper;
@@ -215,12 +219,15 @@ public class DecoratorAiService
             if (reference == null || !"ACTIVE".equals(reference.getStatus())) throw new ServiceException("参考素材不存在或无权使用");
             if (reference.getSourceStoreId() != null) contextService.requireStore(context, reference.getSourceStoreId());
         }
+        String visualIntentJson = normalizeVisualIntent(request, slot, generationType);
+        String guideImageDataUrl = validateGuideImage(request, visualIntentJson);
         DecoratorAiTask task = new DecoratorAiTask();
         task.setMerchantId(context.getMerchantId()); task.setStoreId(request.getStoreId());
         task.setSlotId(slot.getId()); task.setSlotKey(slot.getComponentKey()); task.setSlotSpecVersion(slot.getSpecVersion());
         task.setReferenceAssetId(request.getReferenceAssetId()); task.setGenerationType(generationType);
         task.setProductId(request.getProductId());
         task.setTargetWidth(request.getTargetWidth()); task.setTargetHeight(request.getTargetHeight());
+        task.setVisualIntentJson(visualIntentJson);
         task.setPromptText(merchantDirection(request)); task.setPromptVersion(DecoratorPromptBuilder.PROMPT_VERSION);
         task.setTextContent(request.getTextContent()); task.setStylePreset(request.getStylePreset());
         ComponentAiProfile profile = profileService == null ? null : profileService.require(slot.getComponentKey());
@@ -234,11 +241,82 @@ public class DecoratorAiService
                 : ((BACKGROUND.equals(generationType) || BACKGROUND_WITH_TEXT.equals(generationType))
                 ? promptBuilder.background(task, slot) : promptBuilder.artText(task, slot)));
         aiMapper.insertTask(task);
-        final String referenceUrl = reference == null
+        final String referenceUrl = guideImageDataUrl != null ? guideImageDataUrl : (reference == null
                 ? (PRODUCT_IMAGE.equals(generationType) ? request.getReferenceImageUrl() : initialSkinReferenceUrl(request, slot, generationType))
-                : reference.getUrl();
+                : reference.getUrl());
         executor.execute(() -> generate(task, slot, referenceUrl));
         return task;
+    }
+
+    private String normalizeVisualIntent(DecoratorAiTaskRequest request, BackgroundSlotSpec slot, String generationType)
+    {
+        JsonNode intent = request.getVisualIntent();
+        if (intent == null || intent.isNull()) return null;
+        if (!BACKGROUND.equals(generationType))
+            throw new ServiceException("视觉草图仅支持组件背景生成");
+        if (!intent.isObject() || intent.path("schemaVersion").asInt() != 1)
+            throw new ServiceException("视觉意图版本非法");
+        if (!slot.getComponentKey().equals(intent.path("slotKey").asText()))
+            throw new ServiceException("视觉意图与当前模块不匹配");
+        if (!isOneOf(intent.path("compositionPreset").asText(), "LEFT_COPY_RIGHT_SUBJECT",
+                "RIGHT_COPY_LEFT_SUBJECT", "CENTER_SUBJECT", "TOP_COPY_BOTTOM_SUBJECT", "SCENE_MOOD"))
+            throw new ServiceException("草图构图模板非法");
+        JsonNode subjects = intent.path("subjects");
+        JsonNode scene = intent.path("scene");
+        if ((!subjects.isArray() || subjects.isEmpty()) && (!scene.isObject() || scene.path("type").asText().trim().isEmpty()))
+            throw new ServiceException("草图必须包含主体或场景");
+        if (subjects.isArray() && subjects.size() > 1) throw new ServiceException("草图首版最多支持一个主体");
+        if (subjects.isArray()) for (JsonNode subject : subjects) validateNormalizedBox(subject.path("box"), "主体位置");
+        JsonNode safeAreas = intent.path("textSafeAreas");
+        if (!safeAreas.isArray() || safeAreas.isEmpty() || safeAreas.size() > 2)
+            throw new ServiceException("草图必须包含一个或两个文字安全区");
+        for (JsonNode safeArea : safeAreas) validateNormalizedBox(safeArea, "文字安全区");
+        JsonNode annotations = intent.path("annotations");
+        if (annotations.isArray())
+        {
+            if (annotations.size() > 10) throw new ServiceException("区域备注最多 10 条");
+            for (JsonNode annotation : annotations)
+                if (annotation.path("text").asText().codePointCount(0, annotation.path("text").asText().length()) > 200)
+                    throw new ServiceException("单条区域备注不能超过 200 个字符");
+        }
+        try
+        {
+            String normalized = objectMapper.writeValueAsString(intent);
+            if (normalized.getBytes(StandardCharsets.UTF_8).length > MAX_VISUAL_INTENT_BYTES)
+                throw new ServiceException("视觉意图不能超过 16 KB");
+            return normalized;
+        }
+        catch (ServiceException e) { throw e; }
+        catch (Exception e) { throw new ServiceException("视觉意图不是合法 JSON"); }
+    }
+
+    private void validateNormalizedBox(JsonNode box, String label)
+    {
+        if (box == null || !box.isObject()) throw new ServiceException(label + "不能为空");
+        double x = box.path("x").asDouble(-1); double y = box.path("y").asDouble(-1);
+        double width = box.path("width").asDouble(-1); double height = box.path("height").asDouble(-1);
+        if (x < 0 || y < 0 || width <= 0 || height <= 0 || x + width > 1.0001 || y + height > 1.0001)
+            throw new ServiceException(label + "必须位于模块画布内");
+    }
+
+    private String validateGuideImage(DecoratorAiTaskRequest request, String visualIntentJson)
+    {
+        String value = request.getGuideImageDataUrl() == null ? "" : request.getGuideImageDataUrl().trim();
+        if (visualIntentJson == null)
+        {
+            if (!value.isEmpty()) throw new ServiceException("草图引导图缺少视觉意图");
+            return null;
+        }
+        if (!value.startsWith("data:image/png;base64,")) throw new ServiceException("草图引导图必须是 PNG");
+        try
+        {
+            byte[] bytes = Base64.getDecoder().decode(value.substring("data:image/png;base64,".length()));
+            if (bytes.length < 8 || bytes.length > MAX_GUIDE_IMAGE_BYTES
+                    || (bytes[0] & 0xff) != 0x89 || bytes[1] != 0x50 || bytes[2] != 0x4e || bytes[3] != 0x47)
+                throw new ServiceException("草图引导图内容非法或超过 3 MB");
+            return value;
+        }
+        catch (IllegalArgumentException e) { throw new ServiceException("草图引导图 Base64 非法"); }
     }
 
     private String initialSkinReferenceUrl(DecoratorAiTaskRequest request, BackgroundSlotSpec slot, String generationType)

@@ -14,6 +14,7 @@
         <result property="provider" column="provider" /><result property="status" column="status" />
         <result property="requestedBy" column="requested_by" /><result property="errorMessage" column="error_message" />
         <result property="productId" column="product_id" /><result property="targetWidth" column="target_width" /><result property="targetHeight" column="target_height" />
+        <result property="visualIntentJson" column="visual_intent_json" />
         <result property="createdAt" column="created_at" /><result property="updatedAt" column="updated_at" />
     </resultMap>
     <resultMap id="GenerationResult" type="com.ruoyi.project.coffee.decorator.ai.domain.DecoratorAiResult">
@@ -34,11 +35,11 @@
         insert into ai_generation_tasks (merchant_id, store_id, slot_id, slot_key, slot_spec_version,
             reference_asset_id, generation_type, ai_profile_version, prompt_text, prompt_version, text_content, text_mode, style_preset,
             placement_preset, size_preset, candidate_count, transparent_background, provider, status, product_id, target_width, target_height,
-            requested_by, created_at, updated_at)
+            visual_intent_json, requested_by, created_at, updated_at)
         values (#{merchantId}, #{storeId}, #{slotId}, #{slotKey}, #{slotSpecVersion}, #{referenceAssetId},
             #{generationType}, #{aiProfileVersion}, #{promptText}, #{promptVersion}, #{textContent}, #{textMode}, #{stylePreset},
             #{placementPreset}, #{sizePreset}, #{candidateCount}, #{transparentBackground}, #{provider},
-            #{status}, #{productId}, #{targetWidth}, #{targetHeight}, #{requestedBy}, now(), now())
+            #{status}, #{productId}, #{targetWidth}, #{targetHeight}, #{visualIntentJson}, #{requestedBy}, now(), now())
     </insert>
     <update id="updateTaskStatus">update ai_generation_tasks set status=#{status}, error_message=#{errorMessage}, updated_at=now() where id=#{taskId}</update>
     <select id="selectTask" resultMap="TaskResult">select * from ai_generation_tasks where merchant_id=#{merchantId} and id=#{taskId}</select>

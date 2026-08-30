@@ -28,6 +28,12 @@ function resolveAsset(value, assetUrls, baseUrl) {
 	return `${baseUrl}/${String(mapped).replace(/^\.?\//, '')}`
 }
 
+function currentRoute() {
+	const pages = getCurrentPages()
+	const route = pages.length && pages[pages.length - 1].route
+	return route ? `/${String(route).replace(/^\/+/, '')}` : ''
+}
+
 Component({
 	data: {
 		tabs: TABS,
@@ -37,19 +43,26 @@ Component({
 		backgroundColor: '#ffffff',
 		textColor: '#777777',
 		activeTextColor: '#44352C',
-		activeBackgroundColor: 'transparent'
+		activeBackgroundColor: 'transparent',
+		switching: false
 	},
-	attached() { this.loadTheme() },
+	attached() {
+		this.syncCurrent()
+		this.loadTheme()
+	},
 	pageLifetimes: {
 		show() {
-			const pages = getCurrentPages()
-			const route = pages.length ? `/${pages[pages.length - 1].route}` : ''
-			const index = TABS.findIndex((item) => item.url === route)
-			if (index >= 0) this.setData({ current: index })
+			this.syncCurrent()
 			this.loadTheme()
 		}
 	},
 	methods: {
+		syncCurrent() {
+			const index = TABS.findIndex((item) => item.url === currentRoute())
+			if (index >= 0 && index !== this.data.current) {
+				this.setData({ current: index })
+			}
+		},
 		loadTheme() {
 			const baseUrl = apiBaseUrl()
 			const storeId = wx.getStorageSync('skin_store_code') || wx.getStorageSync('storeId') || 1
@@ -82,9 +95,21 @@ Component({
 		selectTab(event) {
 			const index = Number(event.currentTarget.dataset.index)
 			const tab = TABS[index]
-			if (!tab || index === this.data.current) return
-			this.setData({ current: index })
-			wx.switchTab({ url: tab.url })
+			if (!tab) return
+			if (tab.url === currentRoute()) {
+				this.syncCurrent()
+				return
+			}
+			if (this.data.switching) return
+
+			this.setData({ switching: true })
+			wx.switchTab({
+				url: tab.url,
+				complete: () => {
+					this.setData({ switching: false })
+					this.syncCurrent()
+				}
+			})
 		}
 	}
 })

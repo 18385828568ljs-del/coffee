@@ -86,7 +86,7 @@
 				</view>
 
 				<view class="about-section" :style="aboutSectionStyle">
-					<view class="about-section-head">
+					<view class="about-section-head" data-skin-component="aboutTitle">
 						<text class="about-section-title" data-text-role="sectionTitle">关于我们</text>
 					</view>
 					<image class="about-image" data-skin-component="aboutImage" :src="aboutImage" mode="widthFix"></image>
