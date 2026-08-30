@@ -440,7 +440,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 INSERT IGNORE INTO `sys_job` VALUES (100, '商城订单超时取消',  'DEFAULT', 'orderTimeoutTask.cancelTimeoutOrders',     '0 0/5 * * * ?', '3', '1', '0', 'admin', sysdate(), '', NULL, '商城订单 30 分钟未支付自动取消并回滚库存');
 INSERT IGNORE INTO `sys_job` VALUES (101, '扫码点单订单超时取消','DEFAULT', 'scanOrderTimeoutTask.cancelTimeoutOrders', '0 0/5 * * * ?', '3', '1', '0', 'admin', sysdate(), '', NULL, '扫码点单 30 分钟未支付自动取消');
 INSERT IGNORE INTO `sys_job` VALUES (102, '用户画像增量刷新',    'DEFAULT', 'userProfileTask.refreshIncrementalProfiles', '0 0/10 * * * ?', '3', '1', '0', 'admin', sysdate(), '', NULL, '每 10 分钟刷新发生过新行为或交易变化的顾客画像');
-INSERT IGNORE INTO `sys_job` VALUES (103, '用户画像全量校准',    'DEFAULT', 'userProfileTask.refreshAllProfiles',         '0 0 3 * * ?'  , '3', '1', '0', 'admin', sysdate(), '', NULL, '每天凌晨 03:00 校准全部画像并清理超过 180 天的行为');
+INSERT IGNORE INTO `sys_job` VALUES (103, '用户画像全量校准',    'DEFAULT', 'userProfileTask.refreshAllProfiles',         '0 0 3 * * ?'  , '3', '1', '0', 'admin', sysdate(), '', NULL, '每天凌晨 03:00 使用全部有效历史证据校准画像');
 -- =============================================================================
 -- 第二部分: 扫码点单业务（7个表）
 -- =============================================================================

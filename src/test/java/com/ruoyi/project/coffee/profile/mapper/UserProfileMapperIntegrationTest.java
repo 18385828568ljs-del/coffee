@@ -79,10 +79,10 @@ class UserProfileMapperIntegrationTest
     @Test
     void queriesOnlyEffectiveOrdersAndPositiveRecommendationEvidence()
     {
-        List<ProfileEvidence> purchases = mapper.selectPurchaseEvidence(7L, dateDaysAgo(180));
-        List<ProfileEvidence> behaviors = mapper.selectBehaviorEvidence(7L, dateDaysAgo(180));
+        List<ProfileEvidence> purchases = mapper.selectPurchaseEvidence(7L);
+        List<ProfileEvidence> behaviors = mapper.selectBehaviorEvidence(7L);
 
-        assertEquals(2, purchases.size());
+        assertEquals(3, purchases.size());
         assertEquals(1, behaviors.size());
         assertEquals("PRODUCT_VIEW", behaviors.get(0).getEvidenceType());
         assertEquals(7L, mapper.selectChangedUserIds().get(0));
@@ -106,15 +106,13 @@ class UserProfileMapperIntegrationTest
     }
 
     @Test
-    void cleanupDeletesOnlyBehaviorOlderThanRetentionWindow()
+    void historicalBehaviorRemainsRecommendationEvidence()
     {
         jdbcTemplate.update("insert into t_user_behavior_event(user_id, event_type, scene, product_id, "
                 + "category_id, dedup_key, event_time) "
-                + "values (7, 'CART_REMOVE', 'MALL', 101, 11, 'old-remove', ?)", dateDaysAgo(181));
+                + "values (7, 'PRODUCT_VIEW', 'MALL', 101, 11, 'old-view', ?)", dateDaysAgo(365));
 
-        assertEquals(1, mapper.deleteExpiredBehavior(dateDaysAgo(180)));
-        assertEquals(2, jdbcTemplate.queryForObject(
-            "select count(*) from t_user_behavior_event", Integer.class));
+        assertEquals(2, mapper.selectBehaviorEvidence(7L).size());
     }
 
     @Test
@@ -144,13 +142,13 @@ class UserProfileMapperIntegrationTest
         jdbcTemplate.update("insert into t_category(category_id, category_name) values (12, '新品类')");
         jdbcTemplate.update("update t_product set category_id = 12 where product_id = 101");
 
-        ProfileEvidence behavior = mapper.selectBehaviorEvidence(7L, dateDaysAgo(180)).get(0);
+        ProfileEvidence behavior = mapper.selectBehaviorEvidence(7L).get(0);
         assertEquals(11L, behavior.getCategoryId());
         assertEquals("奶咖", behavior.getCategoryName());
 
         jdbcTemplate.update("delete from t_product where product_id = 101");
-        List<ProfileEvidence> purchases = mapper.selectPurchaseEvidence(7L, dateDaysAgo(180));
-        assertEquals(2, purchases.size());
+        List<ProfileEvidence> purchases = mapper.selectPurchaseEvidence(7L);
+        assertEquals(3, purchases.size());
         assertEquals("拿铁", purchases.get(1).getProductName());
         assertEquals(new BigDecimal("25.00"), purchases.get(1).getPrice());
     }

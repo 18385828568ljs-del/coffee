@@ -15,12 +15,16 @@ import com.ruoyi.framework.web.domain.AjaxResult;
 import com.ruoyi.project.coffee.auth.WxUserTokenService;
 import com.ruoyi.project.coffee.behavior.service.UserBehaviorEventService;
 import com.ruoyi.project.coffee.scanOrder.domain.ScanCategory;
+import com.ruoyi.project.coffee.scanOrder.domain.ScanCart;
 import com.ruoyi.project.coffee.scanOrder.domain.ScanProduct;
 import com.ruoyi.project.coffee.scanOrder.domain.ScanTableQrcode;
 import com.ruoyi.project.coffee.scanOrder.service.IScanCategoryService;
+import com.ruoyi.project.coffee.scanOrder.service.IScanCartService;
 import com.ruoyi.project.coffee.scanOrder.service.IScanProductService;
 import com.ruoyi.project.coffee.scanOrder.service.IScanTableQrcodeService;
 import com.ruoyi.project.coffee.profile.service.ProductRecommendationService;
+import com.ruoyi.project.coffee.profile.domain.RecommendationIntent;
+import com.ruoyi.project.coffee.profile.service.ProfileTagUtils;
 
 /**
  * 小程序扫码点单菜单接口
@@ -34,6 +38,9 @@ public class ScanMenuApiController extends BaseController
 
     @Autowired
     private IScanProductService scanProductService;
+
+    @Autowired
+    private IScanCartService scanCartService;
 
     @Autowired
     private IScanTableQrcodeService scanTableQrcodeService;
@@ -68,8 +75,69 @@ public class ScanMenuApiController extends BaseController
         }
         query.setStatus(1);
         List<ScanProduct> list = scanProductService.selectScanProductList(query);
-        list = productRecommendationService.recommendScan(wxUserTokenService.resolveUserId(request), list);
+        Long userId = wxUserTokenService.resolveUserId(request);
+        RecommendationIntent intent = buildIntent(userId, request);
+        list = intent.hasSignals()
+            ? productRecommendationService.recommendScan(userId, intent, list)
+            : productRecommendationService.recommendScan(userId, list);
         return AjaxResult.success(list);
+    }
+
+    private RecommendationIntent buildIntent(Long userId, HttpServletRequest request)
+    {
+        RecommendationIntent intent = new RecommendationIntent();
+        addRequestProduct(intent, request, "currentProductId", true);
+        if (userId == null || scanCartService == null)
+        {
+            return intent;
+        }
+        try
+        {
+            ScanCart query = new ScanCart();
+            query.setUserId(userId);
+            query.setTableNo(request == null ? null : request.getParameter("tableNo"));
+            query.setStatus(1);
+            List<ScanCart> cartItems = scanCartService.selectScanCartList(query);
+            if (cartItems != null)
+            {
+                for (ScanCart item : cartItems)
+                {
+                    if (item != null)
+                    {
+                        intent.addCartProduct(item.getProductId());
+                        ProfileTagUtils.selectedScanSpecs(item.getSpecJson())
+                            .forEach(tag -> intent.addTag(tag.getKey(), 6D));
+                    }
+                }
+            }
+        }
+        catch (RuntimeException ignored) { }
+        return intent;
+    }
+
+    private void addRequestProduct(RecommendationIntent intent, HttpServletRequest request,
+        String parameter, boolean current)
+    {
+        Long productId = parseLongParameter(request, parameter);
+        if (productId != null)
+        {
+            if (current) intent.addCurrentProduct(productId);
+            else intent.addProduct(productId, 1D);
+        }
+    }
+
+    private Long parseLongParameter(HttpServletRequest request, String parameter)
+    {
+        if (request == null || request.getParameter(parameter) == null) return null;
+        try
+        {
+            Long value = Long.valueOf(request.getParameter(parameter));
+            return value > 0 ? value : null;
+        }
+        catch (NumberFormatException ignored)
+        {
+            return null;
+        }
     }
 
     @GetMapping("/products/{productId}")

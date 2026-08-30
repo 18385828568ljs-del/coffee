@@ -8,6 +8,8 @@ Vue.mixin(share)
 
 const LOGIN_LANDING_URL = '/pages/me/me'
 const AUTH_REQUIRED_PATTERNS = [
+	'/api/product/',
+	'/api/scanMenu/',
 	'/api/cart/',
 	'/api/order/',
 	'/api/address/',

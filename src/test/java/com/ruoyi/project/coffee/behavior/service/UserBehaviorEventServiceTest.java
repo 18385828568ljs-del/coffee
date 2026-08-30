@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import com.ruoyi.project.coffee.behavior.domain.UserBehaviorEvent;
 import com.ruoyi.project.coffee.behavior.mapper.UserBehaviorEventMapper;
+import com.ruoyi.project.coffee.profile.service.UserProfileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -23,6 +24,9 @@ class UserBehaviorEventServiceTest
     @Mock
     private UserBehaviorEventMapper userBehaviorEventMapper;
 
+    @Mock
+    private UserProfileService userProfileService;
+
     private UserBehaviorEventService service;
 
     @BeforeEach
@@ -31,6 +35,18 @@ class UserBehaviorEventServiceTest
         MockitoAnnotations.openMocks(this);
         service = new UserBehaviorEventService();
         ReflectionTestUtils.setField(service, "userBehaviorEventMapper", userBehaviorEventMapper);
+        ReflectionTestUtils.setField(service, "userProfileService", userProfileService);
+    }
+
+    @Test
+    void successfulCartAddTriggersProfileRefresh()
+    {
+        when(userBehaviorEventMapper.insertUserBehaviorEvent(any(UserBehaviorEvent.class))).thenReturn(1);
+
+        assertTrue(service.recordFirstCartAdd(7L, UserBehaviorEventService.SCENE_MALL,
+            100L, 3L, 55L));
+
+        verify(userProfileService).recalculateAsync(7L);
     }
 
     @Test

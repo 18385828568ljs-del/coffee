@@ -25,6 +25,7 @@ import com.ruoyi.project.coffee.member.service.MemberService;
 import com.ruoyi.project.coffee.scanOrder.domain.ScanOrder;
 import com.ruoyi.project.coffee.scanOrder.domain.ScanOrderStatus;
 import com.ruoyi.project.coffee.scanOrder.service.IScanOrderService;
+import com.ruoyi.project.coffee.profile.service.UserProfileService;
 
 /**
  * 小程序扫码点单订单接口
@@ -45,6 +46,9 @@ public class ScanOrderApiController extends BaseController
 
     @Autowired
     private MemberService memberService;
+
+    @Autowired(required = false)
+    private UserProfileService userProfileService;
 
     @Value("${wx.miniapp.subscribe.pickup-template-id:}")
     private String pickupTemplateId;
@@ -258,6 +262,10 @@ public class ScanOrderApiController extends BaseController
         if (paidOrder != null && paidOrder.getPayAmount() != null)
         {
             memberService.addSpending(userId, paidOrder.getPayAmount());
+        }
+        if (userProfileService != null)
+        {
+            userProfileService.recalculateAsync(userId);
         }
         Map<String, Object> data = new HashMap<String, Object>();
         data.put("orderId", orderId);

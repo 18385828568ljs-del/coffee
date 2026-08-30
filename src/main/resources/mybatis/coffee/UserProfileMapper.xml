@@ -111,7 +111,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         left join t_scan_product sp on e.scene = 'SCAN' and sp.product_id = e.product_id
         left join t_scan_category sc on sc.category_id = coalesce(e.category_id, sp.category_id)
         where e.user_id = #{userId}
-          and e.event_time &gt;= #{cutoffTime}
           and e.event_type in ('PRODUCT_VIEW', 'CART_ADD')
         order by e.event_time desc, e.event_id desc
     </select>
@@ -144,7 +143,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             where o.user_id = #{userId}
               and o.status in (1, 2, 3)
               and coalesce(o.refund_status, 0) &lt;&gt; 2
-              and coalesce(o.pay_time, o.finish_time, o.create_time) &gt;= #{cutoffTime}
               and (i.spec is null or i.spec not like '赠品%')
 
             union all
@@ -170,7 +168,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             where o.user_id = #{userId}
               and o.status in (2, 3, 4)
               and coalesce(o.refund_status, 0) &lt;&gt; 2
-              and coalesce(o.pay_time, o.finish_time, o.create_time) &gt;= #{cutoffTime}
         ) purchase
         order by purchase.evidence_time desc, purchase.product_id
     </select>
@@ -191,10 +188,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             calculate_time = values(calculate_time),
             update_time = values(update_time)
     </insert>
-
-    <delete id="deleteExpiredBehavior">
-        delete from t_user_behavior_event where event_time &lt; #{cutoffTime}
-    </delete>
 
     <delete id="deleteBehaviorByUserIds">
         delete from t_user_behavior_event where user_id in

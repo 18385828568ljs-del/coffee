@@ -10,6 +10,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import com.ruoyi.project.coffee.behavior.domain.UserBehaviorEvent;
 import com.ruoyi.project.coffee.behavior.mapper.UserBehaviorEventMapper;
+import com.ruoyi.project.coffee.profile.service.UserProfileService;
 
 /**
  * 用户非交易行为证据记录服务。
@@ -30,6 +31,9 @@ public class UserBehaviorEventService
 
     @Autowired
     private UserBehaviorEventMapper userBehaviorEventMapper;
+
+    @Autowired(required = false)
+    private UserProfileService userProfileService;
 
     /** 记录商品详情查看，同一用户、场景、商品每天只形成一次证据。 */
     public boolean recordProductView(Long userId, String scene, Long productId, Long categoryId)
@@ -108,7 +112,12 @@ public class UserBehaviorEventService
 
         try
         {
-            return userBehaviorEventMapper.insertUserBehaviorEvent(event) > 0;
+            boolean inserted = userBehaviorEventMapper.insertUserBehaviorEvent(event) > 0;
+            if (inserted && EVENT_CART_ADD.equals(eventType) && userProfileService != null)
+            {
+                userProfileService.recalculateAsync(userId);
+            }
+            return inserted;
         }
         catch (DuplicateKeyException e)
         {

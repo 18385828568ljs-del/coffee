@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import com.ruoyi.project.coffee.profile.service.UserProfileService;
 
-/** 用户画像增量刷新、全量校准与过期行为清理任务。 */
+/** 用户画像增量刷新与全量校准任务。 */
 @Component("userProfileTask")
 public class UserProfileTask
 {
@@ -22,18 +22,9 @@ public class UserProfileTask
         refresh("增量刷新", userProfileService.selectChangedUserIds());
     }
 
-    /** 每天凌晨全量校准画像，并清理超过 180 天的行为明细。 */
+    /** 每天凌晨全量校准画像。 */
     public synchronized void refreshAllProfiles()
     {
-        try
-        {
-            int deleted = userProfileService.deleteExpiredBehavior();
-            log.info("用户画像全量校准已清理 {} 条过期行为", deleted);
-        }
-        catch (Exception e)
-        {
-            log.error("用户画像过期行为清理失败，继续执行全量校准", e);
-        }
         refresh("全量校准", userProfileService.selectAllUserIds());
     }
 

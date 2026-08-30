@@ -471,11 +471,6 @@ export default {
 				pageNum: 1,
 				pageSize: 1000
 			}
-			const userId = getLocalUserId()
-			if (userId) {
-				requestData.userId = userId
-			}
-
 			try {
 				const res = await requestPromise({
 					url: productApi.list,

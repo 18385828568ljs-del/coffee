@@ -16,6 +16,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.project.coffee.product.domain.TProduct;
 import com.ruoyi.project.coffee.profile.domain.ProfileTag;
+import com.ruoyi.project.coffee.profile.domain.RecommendationIntent;
 import com.ruoyi.project.coffee.profile.domain.UserProfile;
 import com.ruoyi.project.coffee.profile.mapper.UserProfileMapper;
 import com.ruoyi.project.coffee.scanOrder.domain.ScanProduct;
@@ -24,13 +25,16 @@ import com.ruoyi.project.coffee.scanOrder.domain.ScanProductSpecOption;
 import com.ruoyi.project.coffee.scanOrder.mapper.ScanProductSpecMapper;
 import com.ruoyi.project.coffee.scanOrder.mapper.ScanProductSpecOptionMapper;
 
-/** Sorts candidates by their match with the user's scene-specific tag profile. */
+/** Ranks candidates by long-term scene preferences and current request intent. */
 @Service
 public class ProductRecommendationService
 {
     private static final Logger log = LoggerFactory.getLogger(ProductRecommendationService.class);
     private static final String SCENE_MALL = "MALL";
     private static final String SCENE_SCAN = "SCAN";
+    private static final double INTENT_WEIGHT = 0.5D;
+    private static final double TAG_WEIGHT = 0.3D;
+    private static final double PRICE_WEIGHT = 0.2D;
 
     @Autowired
     private UserProfileMapper userProfileMapper;
@@ -43,20 +47,26 @@ public class ProductRecommendationService
 
     public List<TProduct> recommendMall(Long userId, List<TProduct> products)
     {
+        return recommendMall(userId, null, products);
+    }
+
+    public List<TProduct> recommendMall(Long userId, RecommendationIntent intent, List<TProduct> products)
+    {
         List<TProduct> original = safeList(products);
-        RecommendationContext context = loadContext(userId, SCENE_MALL);
+        RecommendationContext context = loadContext(userId, SCENE_MALL, intent);
         if (context == null) return original;
         try
         {
             List<ScoredItem<TProduct>> scored = new ArrayList<>();
-            for (TProduct product : original)
+            for (int i = 0; i < original.size(); i++)
             {
+                TProduct product = original.get(i);
                 if (product != null && product.getStock() != null && product.getStock() > 0)
                 {
-                    scored.add(score(product, ProfileTagUtils.mall(product), context));
+                    scored.add(score(product, ProfileTagUtils.mall(product), context, i));
                 }
             }
-            if (!context.hasPriceTag() && !hasPositiveScore(scored)) return original;
+            if (!hasPositiveScore(scored)) return original;
             scored.sort(scoreComparator());
             List<TProduct> result = values(scored);
             return result;
@@ -70,14 +80,20 @@ public class ProductRecommendationService
 
     public List<ScanProduct> recommendScan(Long userId, List<ScanProduct> products)
     {
+        return recommendScan(userId, null, products);
+    }
+
+    public List<ScanProduct> recommendScan(Long userId, RecommendationIntent intent, List<ScanProduct> products)
+    {
         List<ScanProduct> original = safeList(products);
-        RecommendationContext context = loadContext(userId, SCENE_SCAN);
+        RecommendationContext context = loadContext(userId, SCENE_SCAN, intent);
         if (context == null) return original;
         try
         {
             List<ScoredItem<ScanProduct>> scored = new ArrayList<>();
-            for (ScanProduct product : original)
+            for (int i = 0; i < original.size(); i++)
             {
+                ScanProduct product = original.get(i);
                 if (product == null) continue;
                 List<ScanProductSpec> specs = product.getSpecs();
                 if (specs == null && product.getProductId() != null
@@ -87,9 +103,9 @@ public class ProductRecommendationService
                 }
                 List<ProfileTag> tags = new ArrayList<>(ProfileTagUtils.scanBase(product));
                 tags.addAll(ProfileTagUtils.scanSpecs(specs));
-                scored.add(score(product, tags, context));
+                scored.add(score(product, tags, context, i));
             }
-            if (!context.hasPriceTag() && !hasPositiveScore(scored)) return original;
+            if (!hasPositiveScore(scored)) return original;
             scored.sort(scoreComparator());
             return values(scored);
         }
@@ -100,14 +116,14 @@ public class ProductRecommendationService
         }
     }
 
-    private RecommendationContext loadContext(Long userId, String scene)
+    private RecommendationContext loadContext(Long userId, String scene, RecommendationIntent intent)
     {
         if (userId == null) return null;
         try
         {
             UserProfile profile = userProfileMapper.selectUserProfileByUserId(userId);
             return profile == null || !"READY".equalsIgnoreCase(profile.getProfileStatus())
-                ? null : parseContext(profile, scene);
+                ? null : parseContext(profile, scene, intent);
         }
         catch (RuntimeException e)
         {
@@ -116,7 +132,7 @@ public class ProductRecommendationService
         }
     }
 
-    private RecommendationContext parseContext(UserProfile profile, String scene)
+    private RecommendationContext parseContext(UserProfile profile, String scene, RecommendationIntent intent)
     {
         RecommendationContext context = new RecommendationContext();
         if (profile.getProfileData() != null && !profile.getProfileData().trim().isEmpty())
@@ -137,20 +153,29 @@ public class ProductRecommendationService
                         BigDecimal score = tag.getBigDecimal("score");
                         if ("price".equals(dimension) && score != null && score.signum() > 0)
                         {
-                            context.priceTagMin = tag.getDouble("min");
-                            context.priceTagMax = tag.getDouble("max");
+                            Double min = tag.getDouble("min");
+                            Double max = tag.getDouble("max");
+                            if (min != null && max != null && min <= max)
+                            {
+                                context.pricePreferences.add(new PricePreference(min, max, score.doubleValue()));
+                            }
                             continue;
                         }
                         if (key != null && dimension != null && score != null && score.signum() > 0)
                         {
                             context.scores.put(key, score.doubleValue());
+                            context.preferenceTotal += score.doubleValue();
                         }
                     }
                 }
             }
             catch (RuntimeException ignored) { }
         }
-        return context.scores.isEmpty() && !context.hasPriceTag() ? null : context;
+        if (intent != null)
+        {
+            context.intent = intent;
+        }
+        return context.hasAnySignal() ? context : null;
     }
 
     private List<ScanProductSpec> loadSpecs(Long productId)
@@ -176,42 +201,72 @@ public class ProductRecommendationService
         return specs;
     }
 
-    private <T> ScoredItem<T> score(T value, List<ProfileTag> tags, RecommendationContext context)
+    private <T> ScoredItem<T> score(T value, List<ProfileTag> tags, RecommendationContext context, int originalIndex)
     {
-        double match = 0D;
+        double preferenceMatch = 0D;
+        double intentMatch = 0D;
         for (ProfileTag tag : tags)
         {
             Double current = context.scores.get(tag.getKey());
             if (current != null && current > 0D)
             {
-                match += current;
+                preferenceMatch += current;
             }
+            if (context.intent != null)
+            {
+                Double intentScore = context.intent.getTagScores().get(tag.getKey());
+                if (intentScore != null && intentScore > 0D)
+                {
+                    intentMatch += intentScore;
+                }
+            }
+        }
+        Long productId = value instanceof TProduct ? ((TProduct) value).getProductId()
+            : value instanceof ScanProduct ? ((ScanProduct) value).getProductId() : null;
+        if (context.intent != null && productId != null)
+        {
+            intentMatch += context.intent.getProductScores().getOrDefault(productId, 0D);
         }
         BigDecimal price = value instanceof TProduct ? ((TProduct) value).getPrice()
             : value instanceof ScanProduct ? ((ScanProduct) value).getPrice() : null;
-        return new ScoredItem<>(value, match, priceDistance(price, context));
+        double tagPreferenceScore = context.preferenceTotal <= 0D ? 0D : preferenceMatch / context.preferenceTotal;
+        double intentScore = context.intent == null || context.intent.totalScore() <= 0D
+            ? 0D : Math.min(1D, intentMatch / context.intent.totalScore());
+        double pricePreferenceScore = priceFit(price, context);
+        double longTermPreferenceScore = tagPreferenceScore * (TAG_WEIGHT / (TAG_WEIGHT + PRICE_WEIGHT))
+            + pricePreferenceScore * (PRICE_WEIGHT / (TAG_WEIGHT + PRICE_WEIGHT));
+        double recommendationScore = context.hasIntent()
+            ? intentScore * INTENT_WEIGHT + tagPreferenceScore * TAG_WEIGHT + pricePreferenceScore * PRICE_WEIGHT
+            : longTermPreferenceScore;
+        return new ScoredItem<>(value, recommendationScore, originalIndex);
     }
 
-    private double priceDistance(BigDecimal price, RecommendationContext context)
+    private double priceFit(BigDecimal price, RecommendationContext context)
     {
-        if (!context.hasPriceTag()) return 0D;
-        if (price == null) return Double.MAX_VALUE;
-        double value = price.doubleValue();
-        if (value < context.priceTagMin) return context.priceTagMin - value;
-        if (value > context.priceTagMax) return value - context.priceTagMax;
-        return 0D;
+        if (!context.hasPriceTag() || price == null) return 0D;
+        double fit = 0D;
+        double total = 0D;
+        for (PricePreference preference : context.pricePreferences)
+        {
+            fit += preference.score / (1D + preference.distance(price.doubleValue()) / 10D);
+            total += preference.score;
+        }
+        return total <= 0D ? 0D : fit / total;
     }
 
     private boolean hasPositiveScore(List<? extends ScoredItem<?>> values)
     {
-        for (ScoredItem<?> item : values) if (item.score > 0D) return true;
+        for (ScoredItem<?> item : values)
+        {
+            if (item.score > 0D) return true;
+        }
         return false;
     }
 
     private <T> Comparator<ScoredItem<T>> scoreComparator()
     {
-        return Comparator.comparingDouble((ScoredItem<T> item) -> item.priceDistance)
-            .thenComparing((left, right) -> Double.compare(right.score, left.score));
+        return Comparator.comparingDouble((ScoredItem<T> item) -> -item.score)
+            .thenComparingInt(item -> item.originalIndex);
     }
 
     private <T> List<T> values(List<ScoredItem<T>> scored)
@@ -229,12 +284,44 @@ public class ProductRecommendationService
     private static class RecommendationContext
     {
         private final Map<String, Double> scores = new HashMap<>();
-        private Double priceTagMin;
-        private Double priceTagMax;
+        private final List<PricePreference> pricePreferences = new ArrayList<>();
+        private double preferenceTotal;
+        private RecommendationIntent intent;
 
         private boolean hasPriceTag()
         {
-            return priceTagMin != null && priceTagMax != null && priceTagMin <= priceTagMax;
+            return !pricePreferences.isEmpty();
+        }
+
+        private boolean hasIntent()
+        {
+            return intent != null && intent.hasSignals();
+        }
+
+        private boolean hasAnySignal()
+        {
+            return preferenceTotal > 0D || hasPriceTag() || hasIntent();
+        }
+    }
+
+    private static class PricePreference
+    {
+        private final double min;
+        private final double max;
+        private final double score;
+
+        PricePreference(double min, double max, double score)
+        {
+            this.min = min;
+            this.max = max;
+            this.score = score;
+        }
+
+        private double distance(double price)
+        {
+            if (price < min) return min - price;
+            if (price > max) return price - max;
+            return 0D;
         }
     }
 
@@ -242,13 +329,13 @@ public class ProductRecommendationService
     {
         private final T value;
         private final double score;
-        private final double priceDistance;
+        private final int originalIndex;
 
-        ScoredItem(T value, double score, double priceDistance)
+        ScoredItem(T value, double score, int originalIndex)
         {
             this.value = value;
             this.score = score;
-            this.priceDistance = priceDistance;
+            this.originalIndex = originalIndex;
         }
     }
 }

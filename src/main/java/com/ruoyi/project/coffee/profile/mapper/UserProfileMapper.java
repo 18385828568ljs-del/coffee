@@ -1,6 +1,5 @@
 package com.ruoyi.project.coffee.profile.mapper;
 
-import java.util.Date;
 import java.util.List;
 import org.apache.ibatis.annotations.Param;
 import com.ruoyi.project.coffee.profile.domain.ProfileEvidence;
@@ -15,15 +14,11 @@ public interface UserProfileMapper
 
     List<Long> selectChangedUserIds();
 
-    List<ProfileEvidence> selectBehaviorEvidence(
-        @Param("userId") Long userId, @Param("cutoffTime") Date cutoffTime);
+    List<ProfileEvidence> selectBehaviorEvidence(@Param("userId") Long userId);
 
-    List<ProfileEvidence> selectPurchaseEvidence(
-        @Param("userId") Long userId, @Param("cutoffTime") Date cutoffTime);
+    List<ProfileEvidence> selectPurchaseEvidence(@Param("userId") Long userId);
 
     int upsertUserProfile(UserProfile profile);
-
-    int deleteExpiredBehavior(Date cutoffTime);
 
     int deleteBehaviorByUserIds(String[] userIds);
 

@@ -17,6 +17,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.project.coffee.product.domain.TProduct;
 import com.ruoyi.project.coffee.profile.domain.UserProfile;
+import com.ruoyi.project.coffee.profile.domain.RecommendationIntent;
 import com.ruoyi.project.coffee.profile.mapper.UserProfileMapper;
 import com.ruoyi.project.coffee.scanOrder.domain.ScanProduct;
 import com.ruoyi.project.coffee.scanOrder.domain.ScanProductSpec;
@@ -100,6 +101,20 @@ class ProductRecommendationServiceTest
             product(102L, 12L, "巴西"));
 
         assertSame(products, service.recommendMall(8L, products));
+    }
+
+    @Test
+    void currentIntentCanReorderCandidatesWithoutPriceTag()
+    {
+        when(userProfileMapper.selectUserProfileByUserId(12L)).thenReturn(profile("READY",
+            profileData("MALL", "origin:肯尼亚", "origin", 8)));
+        TProduct intentProduct = product(121L, 11L, "巴西");
+        TProduct other = product(122L, 12L, "埃塞俄比亚");
+        RecommendationIntent intent = new RecommendationIntent();
+        intent.addCurrentProduct(intentProduct.getProductId());
+
+        assertEquals(Arrays.asList(intentProduct, other),
+            service.recommendMall(12L, intent, Arrays.asList(other, intentProduct)));
     }
 
     @Test
