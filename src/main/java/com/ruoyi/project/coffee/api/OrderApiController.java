@@ -45,6 +45,7 @@ import com.ruoyi.project.coffee.member.service.MemberService;
 import com.ruoyi.project.coffee.payment.service.PaymentLogService;
 import com.ruoyi.project.coffee.common.util.AuthorizationUtils;
 import com.ruoyi.project.coffee.common.util.OrderStatusValidator;
+import com.ruoyi.project.coffee.profile.service.UserProfileService;
 
 /**
  * 小程序订单接口
@@ -84,6 +85,9 @@ public class OrderApiController extends BaseController
 
     @Autowired
     private PaymentLogService paymentLogService;
+
+    @Autowired(required = false)
+    private UserProfileService userProfileService;
 
     @GetMapping("/list")
     public TableDataInfo getOrderList(@RequestParam(required = false) String status)
@@ -348,6 +352,10 @@ public class OrderApiController extends BaseController
         // 支付成功后增加对应消费金额
         memberService.addSpending(userId, order.getPayAmount());
         paymentLogService.recordBalancePaid("MALL_ORDER", order.getOrderNo(), userId, order.getPayAmount());
+        if (userProfileService != null)
+        {
+            userProfileService.recalculateAsync(userId);
+        }
 
         return AjaxResult.success("支付成功");
     }

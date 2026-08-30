@@ -30,6 +30,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         spec_id asc
     </select>
 
+    <insert id="insertSpec" parameterType="ScanProductSpec" useGeneratedKeys="true" keyProperty="specId">
+        insert into t_scan_product_spec
+        (product_id, spec_name, spec_type, required, sort_order, create_time)
+        values
+        (#{productId}, #{specName}, #{specType}, #{required}, #{sortOrder}, #{createTime})
+    </insert>
+
     <delete id="deleteSpecByProductIds" parameterType="String">
         delete from t_scan_product_spec where product_id in
         <foreach collection="array" item="productId" open="(" separator="," close=")">

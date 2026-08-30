@@ -10,6 +10,8 @@ public interface ScanProductSpecOptionMapper
 {
     List<ScanProductSpecOption> selectOptionListByProductId(Long productId);
 
+    int insertOption(ScanProductSpecOption option);
+
     List<ScanProductSpecOption> selectOptionListBySpecId(Long specId);
 
     List<ScanProductSpecOption> selectOptionListByIds(List<Long> optionIds);

@@ -151,6 +151,7 @@ CREATE TABLE IF NOT EXISTS `t_user_behavior_event` (
   `category_id` BIGINT DEFAULT NULL COMMENT '采集时商品分类ID',
   `source_id` BIGINT DEFAULT NULL COMMENT '来源记录ID,加购时为购物车行ID',
   `source` VARCHAR(32) DEFAULT NULL COMMENT '行为来源(DEFAULT_LIST/PERSONALIZED_LIST/CATEGORY)',
+  `spec_json` TEXT DEFAULT NULL COMMENT '点单实际选择规格JSON',
   `dedup_key` VARCHAR(128) DEFAULT NULL COMMENT '行为幂等键',
   `event_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '行为发生时间',
   PRIMARY KEY (`event_id`),
@@ -257,14 +258,6 @@ CREATE TABLE IF NOT EXISTS `t_wxuser` (
 
 CREATE TABLE IF NOT EXISTS `t_user_profile` (
   `user_id` BIGINT NOT NULL COMMENT '微信用户ID',
-  `order_count` INT NOT NULL DEFAULT 0 COMMENT '有效订单数',
-  `total_amount` DECIMAL(12,2) NOT NULL DEFAULT 0.00 COMMENT '累计消费金额',
-  `avg_order_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00 COMMENT '平均客单价',
-  `preferred_price_min` DECIMAL(10,2) DEFAULT NULL COMMENT '常见消费价格下限',
-  `preferred_price_max` DECIMAL(10,2) DEFAULT NULL COMMENT '常见消费价格上限',
-  `last_order_time` DATETIME DEFAULT NULL COMMENT '最近有效消费时间',
-  `last_active_time` DATETIME DEFAULT NULL COMMENT '最近有效行为时间',
-  `evidence_count` INT NOT NULL DEFAULT 0 COMMENT '当前兴趣证据数',
   `profile_status` VARCHAR(16) NOT NULL DEFAULT 'EMPTY' COMMENT '画像状态(EMPTY/LEARNING/READY)',
   `profile_data` JSON DEFAULT NULL COMMENT '商城与扫码场景兴趣画像',
   `calculate_time` DATETIME DEFAULT NULL COMMENT '最近成功计算时间',
@@ -453,7 +446,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 INSERT IGNORE INTO `sys_job` VALUES (100, '商城订单超时取消',  'DEFAULT', 'orderTimeoutTask.cancelTimeoutOrders',     '0 0/5 * * * ?', '3', '1', '0', 'admin', sysdate(), '', NULL, '商城订单 30 分钟未支付自动取消并回滚库存');
 INSERT IGNORE INTO `sys_job` VALUES (101, '扫码点单订单超时取消','DEFAULT', 'scanOrderTimeoutTask.cancelTimeoutOrders', '0 0/5 * * * ?', '3', '1', '0', 'admin', sysdate(), '', NULL, '扫码点单 30 分钟未支付自动取消');
 INSERT IGNORE INTO `sys_job` VALUES (102, '用户画像增量刷新',    'DEFAULT', 'userProfileTask.refreshIncrementalProfiles', '0 0/10 * * * ?', '3', '1', '0', 'admin', sysdate(), '', NULL, '每 10 分钟刷新发生过新行为或交易变化的顾客画像');
-INSERT IGNORE INTO `sys_job` VALUES (103, '用户画像全量校准',    'DEFAULT', 'userProfileTask.refreshAllProfiles',         '0 0 3 * * ?'  , '3', '1', '0', 'admin', sysdate(), '', NULL, '每天凌晨 03:00 校准全部画像并清理超过 180 天的行为');
+INSERT IGNORE INTO `sys_job` VALUES (103, '用户画像全量校准',    'DEFAULT', 'userProfileTask.refreshAllProfiles',         '0 0 3 * * ?'  , '3', '1', '0', 'admin', sysdate(), '', NULL, '每天凌晨 03:00 使用全部有效历史证据校准画像');
 -- =============================================================================
 -- 第二部分: 扫码点单业务（7个表）
 -- =============================================================================
@@ -494,8 +487,10 @@ CREATE TABLE IF NOT EXISTS `t_scan_category` (
 CREATE TABLE IF NOT EXISTS `t_scan_product` (
   `product_id`   BIGINT         NOT NULL AUTO_INCREMENT COMMENT '商品ID',
   `category_id`  BIGINT         NOT NULL                COMMENT '所属分类ID',
+  `product_type` VARCHAR(20)    NOT NULL DEFAULT 'DRINK' COMMENT '商品类型(COFFEE-咖啡,DRINK-普通饮料,FOOD-小食)',
   `product_name` VARCHAR(200)   NOT NULL                COMMENT '商品名称',
   `sub_title`    VARCHAR(200)   DEFAULT NULL            COMMENT '商品副标题/描述',
+  `description`  TEXT           DEFAULT NULL            COMMENT '商品详细描述',
   `image_url`    VARCHAR(500)   DEFAULT NULL            COMMENT '商品主图',
   `video_url`    VARCHAR(500)   DEFAULT NULL            COMMENT '商品讲解视频地址',
   `price`        DECIMAL(10, 2) NOT NULL                COMMENT '基础价格',
@@ -547,12 +542,10 @@ CREATE TABLE IF NOT EXISTS `t_scan_product_spec_option` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='扫码点单-规格选项';
 
 -- -----------------------------------------------------------------------------
--- 5. 桌台/门店二维码
+-- 5. 桌台二维码
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `t_scan_table_qrcode` (
   `table_id`     BIGINT        NOT NULL AUTO_INCREMENT COMMENT '桌台ID',
-  `shop_id`      BIGINT        NOT NULL DEFAULT 1      COMMENT '门店ID',
-  `shop_name`    VARCHAR(200)  DEFAULT NULL            COMMENT '门店名称',
   `table_no`     VARCHAR(50)   NOT NULL                COMMENT '桌号',
   `scene`        VARCHAR(50)   DEFAULT 'dine_in'       COMMENT '场景(dine_in-堂食,take_out-外带)',
   `qr_url`       VARCHAR(500)  DEFAULT NULL            COMMENT '二维码直链',
@@ -563,7 +556,7 @@ CREATE TABLE IF NOT EXISTS `t_scan_table_qrcode` (
   `update_time`  DATETIME      DEFAULT NULL            COMMENT '更新时间',
   `remark`       VARCHAR(500)  DEFAULT NULL            COMMENT '备注',
   PRIMARY KEY (`table_id`),
-  UNIQUE KEY `uk_shop_table` (`shop_id`, `table_no`)
+  UNIQUE KEY `uk_table_no` (`table_no`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='扫码点单-桌台二维码';
 
 -- -----------------------------------------------------------------------------
@@ -574,8 +567,6 @@ CREATE TABLE IF NOT EXISTS `t_scan_order` (
   `order_no`         VARCHAR(64)    NOT NULL                COMMENT '订单号',
   `user_id`          BIGINT         NOT NULL                COMMENT '下单用户ID',
   `openid`           VARCHAR(100)   DEFAULT NULL            COMMENT '微信openid',
-  `shop_id`          BIGINT         DEFAULT 1               COMMENT '门店ID',
-  `shop_name`        VARCHAR(200)   DEFAULT NULL            COMMENT '门店名称',
   `table_no`         VARCHAR(50)    DEFAULT NULL            COMMENT '桌号',
   `scene`            VARCHAR(50)    DEFAULT 'dine_in'       COMMENT '场景',
   `total_amount`     DECIMAL(10, 2) NOT NULL                COMMENT '订单总金额(原价)',
@@ -608,9 +599,9 @@ CREATE TABLE IF NOT EXISTS `t_scan_order` (
   `update_time`      DATETIME       DEFAULT NULL            COMMENT '更新时间',
   PRIMARY KEY (`order_id`),
   UNIQUE KEY `uk_order_no` (`order_no`),
-  KEY `idx_pickup_day` (`shop_id`, `pay_time`, `pickup_no`),
+  KEY `idx_pickup_day` (`pay_time`, `pickup_no`),
   KEY `idx_user_id` (`user_id`),
-  KEY `idx_shop_table` (`shop_id`, `table_no`),
+  KEY `idx_table_no` (`table_no`),
   KEY `idx_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='扫码点单-订单';
 
@@ -624,6 +615,7 @@ CREATE TABLE IF NOT EXISTS `t_scan_order_item` (
   `product_name`   VARCHAR(200)   NOT NULL                COMMENT '商品名称',
   `product_image`  VARCHAR(500)   DEFAULT NULL            COMMENT '商品图片(快照)',
   `spec`           VARCHAR(500)   DEFAULT NULL            COMMENT '规格字符串(如: 热/正常糖/中杯)',
+  `spec_json`      TEXT          DEFAULT NULL            COMMENT '点单实际选择规格JSON',
   `price`          DECIMAL(10, 2) NOT NULL                COMMENT '下单时单价',
   `quantity`       INT            NOT NULL DEFAULT 1      COMMENT '数量',
   `total_price`    DECIMAL(10, 2) NOT NULL                COMMENT '小计金额',
@@ -642,7 +634,7 @@ SET FOREIGN_KEY_CHECKS = 1;
    请在扫码点单主建表脚本之后执行(依赖 t_scan_product 作为商品来源)。
  设计原则:
    1. 扫码点单购物车与商城购物车物理隔离,不改动原有 t_cart 表。
-   2. 扫码点单仅服务堂食/外带场景,带 shop_id 与 table_no,便于按桌台清理。
+   2. 扫码点单仅服务堂食/外带场景,保留 table_no 便于按桌台清理。
    3. product_id 指向 t_scan_product.product_id,但不设硬外键,保持与其它 coffee_* 表风格一致。
    4. 本脚本可重复执行:已有购物车表和数据不会被删除。
 */
@@ -654,7 +646,6 @@ CREATE TABLE IF NOT EXISTS `t_scan_cart` (
   `id`            BIGINT        NOT NULL AUTO_INCREMENT COMMENT '购物车ID',
   `user_id`       BIGINT        DEFAULT NULL            COMMENT '用户ID(登录后写入,匿名下单可为空)',
   `openid`        VARCHAR(100)  DEFAULT NULL            COMMENT '微信openid(未绑定userId时的用户标识)',
-  `shop_id`       BIGINT        DEFAULT 1               COMMENT '门店ID(对应 t_scan_table_qrcode.shop_id)',
   `table_no`      VARCHAR(50)   DEFAULT NULL            COMMENT '桌号(对应 t_scan_table_qrcode.table_no)',
   `product_id`    BIGINT        NOT NULL                COMMENT '扫码点单商品ID(对应 t_scan_product.product_id)',
   `product_name`  VARCHAR(200)  NOT NULL                COMMENT '商品名称(加购时快照,避免商品改名后错乱)',
@@ -671,7 +662,6 @@ CREATE TABLE IF NOT EXISTS `t_scan_cart` (
   PRIMARY KEY (`id`),
   KEY `idx_user_id`    (`user_id`),
   KEY `idx_openid`     (`openid`),
-  KEY `idx_shop_id`    (`shop_id`),
   KEY `idx_table_no`   (`table_no`),
   KEY `idx_product_id` (`product_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='扫码点单-购物车(与商城 t_cart 物理隔离)';

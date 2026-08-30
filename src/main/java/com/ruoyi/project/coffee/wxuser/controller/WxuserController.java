@@ -5,7 +5,6 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -17,8 +16,6 @@ import com.ruoyi.framework.web.controller.BaseController;
 import com.ruoyi.framework.web.domain.AjaxResult;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.framework.web.page.TableDataInfo;
-import com.ruoyi.project.coffee.profile.domain.UserProfileView;
-import com.ruoyi.project.coffee.profile.service.UserProfileViewService;
 
 /**
  * 微信用户Controller
@@ -34,9 +31,6 @@ public class WxuserController extends BaseController
 
     @Autowired
     private IAbucoderWxuserService abucoderWxuserService;
-
-    @Autowired
-    private UserProfileViewService userProfileViewService;
 
     @RequiresPermissions("coffee:wxuser:view")
     @GetMapping()
@@ -56,16 +50,6 @@ public class WxuserController extends BaseController
         startPage();
         List<AbucoderWxuser> list = abucoderWxuserService.selectAbucoderWxuserList(abucoderWxuser);
         return getDataTable(list);
-    }
-
-    /** Read-only profile snapshot for merchant support and operations. */
-    @RequiresPermissions("coffee:wxuser:query")
-    @GetMapping("/profile/{userId}")
-    @ResponseBody
-    public AjaxResult profile(@PathVariable Long userId)
-    {
-        UserProfileView view = userProfileViewService.getProfileView(userId);
-        return AjaxResult.success(view);
     }
 
     /**

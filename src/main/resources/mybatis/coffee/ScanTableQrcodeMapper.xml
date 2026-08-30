@@ -6,8 +6,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <resultMap type="ScanTableQrcode" id="ScanTableQrcodeResult">
         <result property="tableId"    column="table_id"    />
-        <result property="shopId"     column="shop_id"     />
-        <result property="shopName"   column="shop_name"   />
         <result property="tableNo"    column="table_no"    />
         <result property="scene"      column="scene"       />
         <result property="qrUrl"      column="qr_url"      />
@@ -20,17 +18,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectScanTableQrcodeVo">
-        select table_id, shop_id, shop_name, table_no, scene, qr_url, status,
+        select table_id, table_no, scene, qr_url, status,
                create_by, create_time, update_by, update_time, remark
         from t_scan_table_qrcode
     </sql>
 
-    <select id="selectByShopAndTable" parameterType="ScanTableQrcode" resultMap="ScanTableQrcodeResult">
+    <select id="selectByTableNo" parameterType="String" resultMap="ScanTableQrcodeResult">
         <include refid="selectScanTableQrcodeVo"/>
-        <where>
-            <if test="shopId != null">  and shop_id = #{shopId}</if>
-            <if test="tableNo != null and tableNo != ''"> and table_no = #{tableNo}</if>
-        </where>
+        where table_no = #{tableNo}
         limit 1
     </select>
 
@@ -42,19 +37,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectList" parameterType="ScanTableQrcode" resultMap="ScanTableQrcodeResult">
         <include refid="selectScanTableQrcodeVo"/>
         <where>
-            <if test="shopId != null"> and shop_id = #{shopId}</if>
             <if test="tableNo != null and tableNo != ''"> and table_no like concat('%', #{tableNo}, '%')</if>
             <if test="status != null"> and status = #{status}</if>
             <if test="scene != null and scene != ''"> and scene = #{scene}</if>
         </where>
-        order by shop_id asc, table_no asc, table_id asc
+        order by table_no asc, table_id asc
     </select>
 
     <insert id="insert" parameterType="ScanTableQrcode" useGeneratedKeys="true" keyProperty="tableId">
         insert into t_scan_table_qrcode
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            shop_id,
-            <if test="shopName != null">shop_name,</if>
             table_no,
             <if test="scene != null and scene != ''">scene,</if>
             <if test="qrUrl != null">qr_url,</if>
@@ -66,8 +58,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="remark != null">remark,</if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
-            #{shopId},
-            <if test="shopName != null">#{shopName},</if>
             #{tableNo},
             <if test="scene != null and scene != ''">#{scene},</if>
             <if test="qrUrl != null">#{qrUrl},</if>
@@ -83,8 +73,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <update id="update" parameterType="ScanTableQrcode">
         update t_scan_table_qrcode
         <trim prefix="SET" suffixOverrides=",">
-            <if test="shopId != null">shop_id = #{shopId},</if>
-            <if test="shopName != null">shop_name = #{shopName},</if>
             <if test="tableNo != null and tableNo != ''">table_no = #{tableNo},</if>
             <if test="scene != null and scene != ''">scene = #{scene},</if>
             <if test="qrUrl != null">qr_url = #{qrUrl},</if>

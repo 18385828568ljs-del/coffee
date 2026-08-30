@@ -93,6 +93,7 @@ CREATE TABLE t_user_behavior_event (
     category_id BIGINT,
     source_id BIGINT,
     source VARCHAR(32),
+    spec_json TEXT,
     dedup_key VARCHAR(128),
     event_time TIMESTAMP NOT NULL,
     CONSTRAINT uk_behavior_dedup_key UNIQUE (dedup_key)
@@ -128,8 +129,10 @@ CREATE TABLE t_scan_category (
 CREATE TABLE t_scan_product (
     product_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     category_id BIGINT,
+    product_type VARCHAR(20) NOT NULL DEFAULT 'DRINK',
     product_name VARCHAR(255),
     sub_title VARCHAR(255),
+    description VARCHAR(1000),
     image_url VARCHAR(500),
     video_url VARCHAR(500),
     price DECIMAL(10, 2),
@@ -170,7 +173,6 @@ CREATE TABLE t_scan_cart (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT,
     openid VARCHAR(128),
-    shop_id BIGINT,
     table_no VARCHAR(64),
     product_id BIGINT,
     product_name VARCHAR(255),
@@ -188,8 +190,6 @@ CREATE TABLE t_scan_cart (
 
 CREATE TABLE t_scan_table_qrcode (
     table_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    shop_id BIGINT,
-    shop_name VARCHAR(255),
     table_no VARCHAR(64),
     scene VARCHAR(32),
     qr_url VARCHAR(500),
@@ -206,8 +206,6 @@ CREATE TABLE t_scan_order (
     order_no VARCHAR(64),
     user_id BIGINT,
     openid VARCHAR(128),
-    shop_id BIGINT,
-    shop_name VARCHAR(255),
     table_no VARCHAR(64),
     scene VARCHAR(32),
     total_amount DECIMAL(10, 2),
@@ -247,6 +245,7 @@ CREATE TABLE t_scan_order_item (
     product_name VARCHAR(255),
     product_image VARCHAR(500),
     spec VARCHAR(255),
+    spec_json TEXT,
     price DECIMAL(10, 2),
     quantity INT,
     total_price DECIMAL(10, 2),
@@ -408,14 +407,6 @@ CREATE TABLE t_wxuser (
 
 CREATE TABLE t_user_profile (
     user_id BIGINT PRIMARY KEY,
-    order_count INT NOT NULL DEFAULT 0,
-    total_amount DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
-    avg_order_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
-    preferred_price_min DECIMAL(10, 2),
-    preferred_price_max DECIMAL(10, 2),
-    last_order_time TIMESTAMP NULL,
-    last_active_time TIMESTAMP NULL,
-    evidence_count INT NOT NULL DEFAULT 0,
     profile_status VARCHAR(16) NOT NULL DEFAULT 'EMPTY',
     profile_data CLOB,
     calculate_time TIMESTAMP NULL,

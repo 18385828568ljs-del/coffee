@@ -79,8 +79,8 @@
 					</view>
 				</view>
 
-				<view v-if="orderType === 'scan' && (order.shopName || order.tableNo)" class="summary-extra">
-					<text class="summary-text">{{ order.shopName || '咖啡门店' }}{{ order.tableNo ? ' · ' + order.tableNo + '桌' : '' }}</text>
+				<view v-if="orderType === 'scan' && order.tableNo" class="summary-extra">
+					<text class="summary-text">{{ order.tableNo }}桌</text>
 				</view>
 				<view v-if="orderType === 'scan' && (order.pickupNo || order.estimatedWaitMinutes)" class="summary-extra scan-progress-extra">
 					<text v-if="order.pickupNo" class="summary-text">取餐号 {{ order.pickupNo }}</text>

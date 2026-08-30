@@ -15,14 +15,6 @@ public class ScanTableQrcode extends BaseEntity
     /** 桌台ID */
     private Long tableId;
 
-    /** 门店ID */
-    @Excel(name = "门店ID")
-    private Long shopId;
-
-    /** 门店名称 */
-    @Excel(name = "门店名称")
-    private String shopName;
-
     /** 桌号 */
     @Excel(name = "桌号")
     private String tableNo;
@@ -40,12 +32,6 @@ public class ScanTableQrcode extends BaseEntity
     public Long getTableId() { return tableId; }
     public void setTableId(Long tableId) { this.tableId = tableId; }
 
-    public Long getShopId() { return shopId; }
-    public void setShopId(Long shopId) { this.shopId = shopId; }
-
-    public String getShopName() { return shopName; }
-    public void setShopName(String shopName) { this.shopName = shopName; }
-
     public String getTableNo() { return tableNo; }
     public void setTableNo(String tableNo) { this.tableNo = tableNo; }
 
@@ -62,8 +48,6 @@ public class ScanTableQrcode extends BaseEntity
     public String toString() {
         return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
             .append("tableId", tableId)
-            .append("shopId", shopId)
-            .append("shopName", shopName)
             .append("tableNo", tableNo)
             .append("scene", scene)
             .append("status", status)

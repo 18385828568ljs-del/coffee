@@ -12,6 +12,12 @@ public class ProfileEvidence
     private String productName;
     private Long categoryId;
     private String categoryName;
+    private String productType;
+    private String origin;
+    private String processingMethod;
+    private String roastLevel;
+    private String flavorNotes;
+    private String specJson;
     private BigDecimal price;
     private Date evidenceTime;
 
@@ -27,6 +33,18 @@ public class ProfileEvidence
     public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
     public String getCategoryName() { return categoryName; }
     public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
+    public String getProductType() { return productType; }
+    public void setProductType(String productType) { this.productType = productType; }
+    public String getOrigin() { return origin; }
+    public void setOrigin(String origin) { this.origin = origin; }
+    public String getProcessingMethod() { return processingMethod; }
+    public void setProcessingMethod(String processingMethod) { this.processingMethod = processingMethod; }
+    public String getRoastLevel() { return roastLevel; }
+    public void setRoastLevel(String roastLevel) { this.roastLevel = roastLevel; }
+    public String getFlavorNotes() { return flavorNotes; }
+    public void setFlavorNotes(String flavorNotes) { this.flavorNotes = flavorNotes; }
+    public String getSpecJson() { return specJson; }
+    public void setSpecJson(String specJson) { this.specJson = specJson; }
     public BigDecimal getPrice() { return price; }
     public void setPrice(BigDecimal price) { this.price = price; }
     public Date getEvidenceTime() { return evidenceTime; }

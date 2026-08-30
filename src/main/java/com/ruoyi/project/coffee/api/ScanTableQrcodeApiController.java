@@ -32,7 +32,7 @@ import com.ruoyi.project.coffee.scanOrder.service.IScanTableQrcodeService;
  * 桌台小程序码管理接口
  *
  * 生成的是微信官方【无限量小程序码】(getwxacodeunlimit),
- * 扫码后打开 pages/scan/menu,携带 scene=shopId=X&tableNo=Y。
+ * 扫码后打开 pages/scan/menu,携带 scene=tableNo=Y。
  */
 @RestController
 @RequestMapping("/api/scanTableQrcode")
@@ -49,8 +49,6 @@ public class ScanTableQrcodeApiController extends BaseController
         {
             return AjaxResult.error("请求参数不能为空");
         }
-        Long shopId = toLong(body.get("shopId"));
-        String shopName = toStr(body.get("shopName"));
         String tableNo = toStr(body.get("tableNo"));
         String scene = toStr(body.get("scene"));
         if (StringUtils.isEmpty(tableNo))
@@ -59,7 +57,7 @@ public class ScanTableQrcodeApiController extends BaseController
         }
         try
         {
-            ScanTableQrcode record = scanTableQrcodeService.generateOne(shopId, shopName, tableNo, scene);
+            ScanTableQrcode record = scanTableQrcodeService.generateOne(tableNo, scene);
             return AjaxResult.success("生成成功", record);
         }
         catch (ServiceException e)
@@ -71,7 +69,7 @@ public class ScanTableQrcodeApiController extends BaseController
     /**
      * 批量生成,传入 tableNos 数组。
      * 也兼容 prefix + start + end 的区间生成:
-     *   { "shopId":1, "prefix":"A", "start":1, "end":10, "digits":2 }
+     *   { "prefix":"A", "start":1, "end":10, "digits":2 }
      * -> A01, A02, ..., A10
      */
     @PostMapping("/batchGenerate")
@@ -81,8 +79,6 @@ public class ScanTableQrcodeApiController extends BaseController
         {
             return AjaxResult.error("请求参数不能为空");
         }
-        Long shopId = toLong(body.get("shopId"));
-        String shopName = toStr(body.get("shopName"));
         String scene = toStr(body.get("scene"));
 
         List<String> tableNos = new ArrayList<String>();
@@ -121,7 +117,7 @@ public class ScanTableQrcodeApiController extends BaseController
 
         try
         {
-            List<ScanTableQrcode> list = scanTableQrcodeService.batchGenerate(shopId, shopName, tableNos, scene);
+            List<ScanTableQrcode> list = scanTableQrcodeService.batchGenerate(tableNos, scene);
             return AjaxResult.success("批量生成完成", list);
         }
         catch (ServiceException e)
@@ -132,12 +128,10 @@ public class ScanTableQrcodeApiController extends BaseController
 
     @GetMapping("/list")
     public AjaxResult list(
-        @RequestParam(value = "shopId", required = false) Long shopId,
         @RequestParam(value = "tableNo", required = false) String tableNo,
         @RequestParam(value = "status", required = false) Integer status)
     {
         ScanTableQrcode query = new ScanTableQrcode();
-        query.setShopId(shopId);
         query.setTableNo(StringUtils.isEmpty(tableNo) ? null : tableNo);
         query.setStatus(status);
         return AjaxResult.success(scanTableQrcodeService.selectList(query));
@@ -177,7 +171,7 @@ public class ScanTableQrcodeApiController extends BaseController
             return;
         }
 
-        String downloadName = "qrcode_shop" + record.getShopId() + "_" + record.getTableNo() + ".jpg";
+        String downloadName = "qrcode_" + record.getTableNo() + ".jpg";
         response.setContentType("image/jpeg");
         response.setHeader("Content-Disposition",
             "attachment; filename=\"" + URLEncoder.encode(downloadName, "UTF-8") + "\"");
@@ -207,15 +201,6 @@ public class ScanTableQrcodeApiController extends BaseController
     private String toStr(Object v)
     {
         return v == null ? null : v.toString();
-    }
-
-    private Long toLong(Object v)
-    {
-        if (v == null) return null;
-        if (v instanceof Number) return ((Number) v).longValue();
-        String s = v.toString().trim();
-        if (s.isEmpty()) return null;
-        try { return Long.valueOf(s); } catch (NumberFormatException e) { return null; }
     }
 
     private Integer toInt(Object v)

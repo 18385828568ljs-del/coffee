@@ -16,9 +16,9 @@ public interface ScanOrderMapper
 
     List<ScanOrder> selectScanOrderList(ScanOrder query);
 
-    Integer selectMaxPickupNoToday(@Param("shopId") Long shopId);
+    Integer selectMaxPickupNoToday();
 
-    int countUnfinishedPaidOrders(@Param("shopId") Long shopId);
+    int countUnfinishedPaidOrders();
 
     int insertScanOrder(ScanOrder scanOrder);
 

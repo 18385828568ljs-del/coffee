@@ -43,7 +43,6 @@
     <th:block th:include="include :: footer" />
     <script th:inline="javascript">
         var removeFlag = [[${@permission.hasPermi('coffee:wxuser:remove')}]];
-        var profilePermitted = [[${@permission.isPermitted('coffee:wxuser:query')}]];
         var prefix = ctx + "coffee/wxuser";
 
         $(function() {
@@ -100,9 +99,6 @@
                     align: 'center',
                     formatter: function(value, row, index) {
                         var actions = [];
-                        if (profilePermitted) {
-                            actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="viewProfile(\'' + row.id + '\')"><i class="fa fa-user"></i> 查看画像</a> ');
-                        }
                         actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.id + '\')"><i class="fa fa-remove"></i>删除</a>');
                         return actions.join('');
                     }
@@ -111,65 +107,6 @@
             $.table.init(options);
         });
 
-        function escapeProfileHtml(value) {
-            return $('<div>').text(value == null ? '-' : value).html();
-        }
-
-        function profilePreferenceHtml(items) {
-            if (!items || !items.length) {
-                return '<span class="text-muted">暂无数据</span>';
-            }
-            return items.map(function(item) {
-                var name = escapeProfileHtml(item.name || item.id);
-                var score = item.score == null ? '-' : Number(item.score).toFixed(2);
-                return '<span class="label label-default" style="display:inline-block;margin:0 4px 4px 0;">' + name + ' (' + score + ')</span>';
-            }).join('');
-        }
-
-        function recommendationHtml(items, status) {
-            if (!items || !items.length) {
-                if (status === 'EMPTY' || status === 'LEARNING') {
-                    return '<div class="text-muted">画像学习中，当前使用原有排序</div>';
-                }
-                return '<div class="text-muted">暂无可解释的个性化推荐</div>';
-            }
-            var html = '<table class="table table-bordered table-hover"><thead><tr><th>商品</th><th>价格</th><th>得分</th><th>主要原因</th></tr></thead><tbody>';
-            items.forEach(function(item) {
-                html += '<tr><td>' + escapeProfileHtml(item.productName || item.productId) + '</td>'
-                    + '<td>' + (item.price == null ? '-' : Number(item.price).toFixed(2)) + '</td>'
-                    + '<td>' + (item.score == null ? '-' : Number(item.score).toFixed(4)) + '</td>'
-                    + '<td>' + escapeProfileHtml(item.reason) + '</td></tr>';
-            });
-            return html + '</tbody></table>';
-        }
-
-        function viewProfile(userId) {
-            $.get(prefix + '/profile/' + encodeURIComponent(userId), function(res) {
-                if (!res || res.code !== 0 || !res.data) {
-                    $.modal.alertError((res && res.msg) || '画像读取失败');
-                    return;
-                }
-                var profile = res.data;
-                var price = profile.preferredPriceMin == null || profile.preferredPriceMax == null
-                    ? '-' : Number(profile.preferredPriceMin).toFixed(2) + ' - ' + Number(profile.preferredPriceMax).toFixed(2);
-                var html = '<div style="padding:20px;line-height:1.8;">'
-                    + '<div class="row"><div class="col-sm-4"><b>状态：</b>' + escapeProfileHtml(profile.profileStatus) + '</div>'
-                    + '<div class="col-sm-4"><b>订单数：</b>' + (profile.orderCount || 0) + '</div>'
-                    + '<div class="col-sm-4"><b>证据数：</b>' + (profile.evidenceCount || 0) + '</div></div>'
-                    + '<div class="row"><div class="col-sm-4"><b>累计消费：</b>' + (profile.totalAmount == null ? '-' : Number(profile.totalAmount).toFixed(2)) + '</div>'
-                    + '<div class="col-sm-4"><b>客单价：</b>' + (profile.avgOrderAmount == null ? '-' : Number(profile.avgOrderAmount).toFixed(2)) + '</div>'
-                    + '<div class="col-sm-4"><b>常见价格：</b>' + price + '</div></div>'
-                    + '<div class="row"><div class="col-sm-6"><b>最近订单：</b>' + escapeProfileHtml(profile.lastOrderTime) + '</div>'
-                    + '<div class="col-sm-6"><b>最近活跃：</b>' + escapeProfileHtml(profile.lastActiveTime) + '</div></div>'
-                    + '<hr><p><b>偏好分类（Top 3）</b></p><p>' + profilePreferenceHtml(profile.mallCategories) + '</p>'
-                    + '<p><b>偏好商品（Top 3）</b></p><p>' + profilePreferenceHtml(profile.mallProducts) + '</p>'
-                    + '<hr><p><b>当前推荐（Top 5）</b></p>' + recommendationHtml(profile.recommendations, profile.profileStatus)
-                    + '<p class="text-muted">计算时间：' + escapeProfileHtml(profile.calculateTime) + '</p></div>';
-                layer.open({ type: 1, title: '用户画像', area: ['780px', '650px'], content: html });
-            }).fail(function() {
-                $.modal.alertError('画像读取失败');
-            });
-        }
     </script>
 </body>
 </html>

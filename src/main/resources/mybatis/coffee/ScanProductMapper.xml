@@ -7,8 +7,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <resultMap type="ScanProduct" id="ScanProductResult">
         <result property="productId"   column="product_id"   />
         <result property="categoryId"  column="category_id"  />
+        <result property="productType"  column="product_type"  />
         <result property="productName" column="product_name" />
         <result property="subTitle"    column="sub_title"    />
+        <result property="description" column="description"  />
         <result property="imageUrl"    column="image_url"    />
         <result property="videoUrl"    column="video_url"    />
         <result property="price"       column="price"        />
@@ -24,7 +26,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectScanProductVo">
-        select product_id, category_id, product_name, sub_title, image_url, video_url, price,
+        select product_id, category_id, product_type, product_name, sub_title, description,
+               image_url, video_url, price,
                month_sales, tag, status, sort_order,
                create_by, create_time, update_by, update_time, remark
         from t_scan_product
@@ -63,8 +66,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         insert into t_scan_product
         <trim prefix="(" suffix=")" suffixOverrides=",">
             category_id,
+            product_type,
             product_name,
             <if test="subTitle != null">sub_title,</if>
+            <if test="description != null">description,</if>
             <if test="imageUrl != null">image_url,</if>
             <if test="videoUrl != null">video_url,</if>
             price,
@@ -80,8 +85,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{categoryId},
+            #{productType},
             #{productName},
             <if test="subTitle != null">#{subTitle},</if>
+            <if test="description != null">#{description},</if>
             <if test="imageUrl != null">#{imageUrl},</if>
             <if test="videoUrl != null">#{videoUrl},</if>
             #{price},
@@ -101,8 +108,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         update t_scan_product
         <trim prefix="SET" suffixOverrides=",">
             <if test="categoryId != null">category_id = #{categoryId},</if>
+            <if test="productType != null">product_type = #{productType},</if>
             <if test="productName != null and productName != ''">product_name = #{productName},</if>
             <if test="subTitle != null">sub_title = #{subTitle},</if>
+            <if test="description != null">description = #{description},</if>
             <if test="imageUrl != null">image_url = #{imageUrl},</if>
             <if test="videoUrl != null">video_url = #{videoUrl},</if>
             <if test="price != null">price = #{price},</if>

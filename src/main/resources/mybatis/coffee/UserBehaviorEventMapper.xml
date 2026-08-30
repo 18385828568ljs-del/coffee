@@ -14,6 +14,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             product_id,
             <if test="categoryId != null">category_id,</if>
             <if test="sourceId != null">source_id,</if>
+            <if test="specJson != null and specJson != ''">spec_json,</if>
             <if test="source != null and source != ''">source,</if>
             <if test="dedupKey != null and dedupKey != ''">dedup_key,</if>
             event_time
@@ -25,6 +26,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{productId},
             <if test="categoryId != null">#{categoryId},</if>
             <if test="sourceId != null">#{sourceId},</if>
+            <if test="specJson != null and specJson != ''">#{specJson},</if>
             <if test="source != null and source != ''">#{source},</if>
             <if test="dedupKey != null and dedupKey != ''">#{dedupKey},</if>
             #{eventTime}

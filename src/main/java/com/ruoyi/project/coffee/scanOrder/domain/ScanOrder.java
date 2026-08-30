@@ -33,13 +33,6 @@ public class ScanOrder extends BaseEntity
     /** WeChat openid */
     private String openid;
 
-    /** 门店ID */
-    @Excel(name = "门店ID")
-    private Long shopId;
-
-    /** 门店名称 */
-    private String shopName;
-
     /** 桌号 */
     @Excel(name = "桌号")
     private String tableNo;
@@ -135,12 +128,6 @@ public class ScanOrder extends BaseEntity
 
     public String getOpenid() { return openid; }
     public void setOpenid(String openid) { this.openid = openid; }
-
-    public Long getShopId() { return shopId; }
-    public void setShopId(Long shopId) { this.shopId = shopId; }
-
-    public String getShopName() { return shopName; }
-    public void setShopName(String shopName) { this.shopName = shopName; }
 
     public String getTableNo() { return tableNo; }
     public void setTableNo(String tableNo) { this.tableNo = tableNo; }
@@ -240,7 +227,6 @@ public class ScanOrder extends BaseEntity
             .append("orderNo", orderNo)
             .append("userId", userId)
             .append("openid", openid)
-            .append("shopId", shopId)
             .append("tableNo", tableNo)
             .append("totalAmount", totalAmount)
             .append("payAmount", payAmount)

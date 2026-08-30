@@ -133,8 +133,7 @@ import { loginByWxAuth } from '@/utils/wx-login.js'
 import { getLocalUserInfo } from '@/utils/session.js'
 import { themeRuntime } from '@/theme/runtime.js'
 
-const DEFAULT_SHOP_ID = 1
-const DEFAULT_STORE_CODE = String(DEFAULT_SHOP_ID)
+const DEFAULT_STORE_CODE = '1'
 const DEFAULT_SHOP_NAME = 'XX 咖啡'
 const SCAN_MENU_CONTEXT_KEY = 'scanMenuEntryContext'
 const WX_LOGIN_DISMISSED_KEY = 'wxLoginDismissed'
@@ -167,7 +166,6 @@ function parseScene(scene) {
 export default {
 	data() {
 		return {
-			shopId: DEFAULT_SHOP_ID,
 			shopName: DEFAULT_SHOP_NAME,
 			storeCode: '',
 			tableNo: '',
@@ -305,13 +303,11 @@ export default {
 		},
 		resolveEntryContext(options = {}) {
 			const sceneData = parseScene(options.scene)
-			const shopId = options.shopId || sceneData.shopId
 			const tableNo = options.tableNo || sceneData.tableNo
 			const shopName = options.shopName || sceneData.shopName
 			const storeCode = options.storeCode || sceneData.storeCode
 			this.previewToken = options.previewToken || sceneData.previewToken || ''
 
-			this.shopId = Number(shopId || DEFAULT_SHOP_ID) || DEFAULT_SHOP_ID
 			this.tableNo = tableNo ? String(tableNo).trim() : ''
 			this.shopName = shopName ? decodeValue(shopName) : DEFAULT_SHOP_NAME
 			// 开发者工具直接打开首页时没有 scene/storeCode，仍需加载默认门店的线上皮肤。
@@ -403,9 +399,7 @@ export default {
 		},
 
 		buildScanMenuContext(category) {
-			const context = {
-				shopId: this.shopId
-			}
+			const context = {}
 			if (this.storeCode) context.storeCode = this.storeCode
 			if (this.shopName) {
 				context.shopName = this.shopName

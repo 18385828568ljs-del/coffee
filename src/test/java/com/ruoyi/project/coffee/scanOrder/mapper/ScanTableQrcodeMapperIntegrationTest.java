@@ -33,7 +33,7 @@ class ScanTableQrcodeMapperIntegrationTest
     @Test
     void insertAndSelectByIdShouldPersistCoreFields()
     {
-        ScanTableQrcode qrcode = qrcode(1L, "A01", "dine_in", 1);
+        ScanTableQrcode qrcode = qrcode("A01", "dine_in", 1);
         qrcode.setCreateTime(new Date());
         qrcode.setRemark("靠窗桌");
 
@@ -41,7 +41,6 @@ class ScanTableQrcodeMapperIntegrationTest
         assertNotNull(qrcode.getTableId());
 
         ScanTableQrcode saved = scanTableQrcodeMapper.selectById(qrcode.getTableId());
-        assertEquals("阿布咖啡", saved.getShopName());
         assertEquals("A01", saved.getTableNo());
         assertEquals("dine_in", saved.getScene());
         assertEquals("https://qrcode.example.com/A01.jpg", saved.getQrUrl());
@@ -50,33 +49,26 @@ class ScanTableQrcodeMapperIntegrationTest
     }
 
     @Test
-    void selectByShopAndTableShouldMatchExactShopAndTable()
+    void selectByTableNoShouldMatchExactTable()
     {
-        scanTableQrcodeMapper.insert(qrcode(1L, "A01", "dine_in", 1));
-        scanTableQrcodeMapper.insert(qrcode(2L, "A01", "dine_in", 1));
-        scanTableQrcodeMapper.insert(qrcode(1L, "B02", "take_out", 1));
+        scanTableQrcodeMapper.insert(qrcode("A01", "dine_in", 1));
+        scanTableQrcodeMapper.insert(qrcode("B02", "take_out", 1));
 
-        ScanTableQrcode query = new ScanTableQrcode();
-        query.setShopId(1L);
-        query.setTableNo("A01");
-
-        ScanTableQrcode result = scanTableQrcodeMapper.selectByShopAndTable(query);
+        ScanTableQrcode result = scanTableQrcodeMapper.selectByTableNo("A01");
 
         assertNotNull(result);
-        assertEquals(Long.valueOf(1L), result.getShopId());
         assertEquals("A01", result.getTableNo());
     }
 
     @Test
-    void selectListShouldFilterByShopTableStatusAndSceneThenOrderByShopTableId()
+    void selectListShouldFilterByTableStatusAndSceneThenOrderByTableId()
     {
-        scanTableQrcodeMapper.insert(qrcode(2L, "B02", "take_out", 1));
-        scanTableQrcodeMapper.insert(qrcode(1L, "A02", "dine_in", 0));
-        scanTableQrcodeMapper.insert(qrcode(1L, "A01", "dine_in", 1));
-        scanTableQrcodeMapper.insert(qrcode(1L, "A03", "dine_in", 1));
+        scanTableQrcodeMapper.insert(qrcode("B02", "take_out", 1));
+        scanTableQrcodeMapper.insert(qrcode("A02", "dine_in", 0));
+        scanTableQrcodeMapper.insert(qrcode("A01", "dine_in", 1));
+        scanTableQrcodeMapper.insert(qrcode("A03", "dine_in", 1));
 
         ScanTableQrcode query = new ScanTableQrcode();
-        query.setShopId(1L);
         query.setTableNo("A");
         query.setStatus(1);
         query.setScene("dine_in");
@@ -91,12 +83,11 @@ class ScanTableQrcodeMapperIntegrationTest
     @Test
     void updateShouldOnlyChangeProvidedFields()
     {
-        ScanTableQrcode qrcode = qrcode(1L, "A01", "dine_in", 1);
+        ScanTableQrcode qrcode = qrcode("A01", "dine_in", 1);
         scanTableQrcodeMapper.insert(qrcode);
 
         ScanTableQrcode update = new ScanTableQrcode();
         update.setTableId(qrcode.getTableId());
-        update.setShopName("新门店");
         update.setQrUrl("https://qrcode.example.com/new.jpg");
         update.setStatus(0);
         update.setUpdateTime(new Date());
@@ -104,8 +95,6 @@ class ScanTableQrcodeMapperIntegrationTest
         assertEquals(1, scanTableQrcodeMapper.update(update));
 
         ScanTableQrcode saved = scanTableQrcodeMapper.selectById(qrcode.getTableId());
-        assertEquals(Long.valueOf(1L), saved.getShopId());
-        assertEquals("新门店", saved.getShopName());
         assertEquals("A01", saved.getTableNo());
         assertEquals("dine_in", saved.getScene());
         assertEquals("https://qrcode.example.com/new.jpg", saved.getQrUrl());
@@ -116,8 +105,8 @@ class ScanTableQrcodeMapperIntegrationTest
     @Test
     void deleteByIdShouldRemoveOnlyTargetRecord()
     {
-        ScanTableQrcode first = qrcode(1L, "A01", "dine_in", 1);
-        ScanTableQrcode second = qrcode(1L, "A02", "dine_in", 1);
+        ScanTableQrcode first = qrcode("A01", "dine_in", 1);
+        ScanTableQrcode second = qrcode("A02", "dine_in", 1);
         scanTableQrcodeMapper.insert(first);
         scanTableQrcodeMapper.insert(second);
 
@@ -127,11 +116,9 @@ class ScanTableQrcodeMapperIntegrationTest
         assertNotNull(scanTableQrcodeMapper.selectById(second.getTableId()));
     }
 
-    private static ScanTableQrcode qrcode(Long shopId, String tableNo, String scene, Integer status)
+    private static ScanTableQrcode qrcode(String tableNo, String scene, Integer status)
     {
         ScanTableQrcode qrcode = new ScanTableQrcode();
-        qrcode.setShopId(shopId);
-        qrcode.setShopName("阿布咖啡");
         qrcode.setTableNo(tableNo);
         qrcode.setScene(scene);
         qrcode.setQrUrl("https://qrcode.example.com/" + tableNo + ".jpg");

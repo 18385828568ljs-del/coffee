@@ -60,16 +60,16 @@ class ScanOrderApiControllerTest
         verify(scanOrderService, never()).createOrderFromCart(
             org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
             org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
-            org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+            org.mockito.ArgumentMatchers.any());
     }
 
     @Test
-    void createOrderUsesCurrentUserAndDefaultShop()
+    void createOrderUsesCurrentUserAndTable()
     {
         bindUser(11L, "openid-11");
         ScanOrder order = new ScanOrder();
         order.setOrderId(21L);
-        when(scanOrderService.createOrderFromCart(11L, "openid-11", 1L, "A01", "少冰", "balance")).thenReturn(order);
+        when(scanOrderService.createOrderFromCart(11L, "openid-11", "A01", "少冰", "balance")).thenReturn(order);
         Map<String, Object> body = new HashMap<String, Object>();
         body.put("tableNo", " A01 ");
         body.put("remark", "少冰");
@@ -91,9 +91,9 @@ class ScanOrderApiControllerTest
         preview.setDiscountAmount(new BigDecimal("4.00"));
         preview.setMemberDiscount(new BigDecimal("2.00"));
         preview.setActivitySummary("满减活动");
-        when(scanOrderService.previewOrderFromCart(11L, "openid-11", 1L, "A01")).thenReturn(preview);
+        when(scanOrderService.previewOrderFromCart(11L, "openid-11", "A01")).thenReturn(preview);
 
-        AjaxResult result = controller.previewOrder(null, "A01", null);
+        AjaxResult result = controller.previewOrder("A01", null);
 
         Map<?, ?> data = (Map<?, ?>) result.get(AjaxResult.DATA_TAG);
         assertEquals(new BigDecimal("30.00"), data.get("totalAmount"));

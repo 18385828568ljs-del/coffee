@@ -8,9 +8,7 @@ import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.time.Clock;
 import java.time.Instant;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -68,7 +66,6 @@ class ProductRecommendationConcurrencyAcceptanceTest
 
     private ProductRecommendationService service;
     private AtomicInteger profileQueries;
-    private AtomicInteger popularityQueries;
     private List<TProduct> candidates;
 
     @BeforeEach
@@ -76,12 +73,10 @@ class ProductRecommendationConcurrencyAcceptanceTest
     {
         insertRepresentativeData();
         profileQueries = new AtomicInteger();
-        popularityQueries = new AtomicInteger();
         UserProfileMapper countingMapper = countingMapper(delegateMapper);
 
         service = new ProductRecommendationService();
         ReflectionTestUtils.setField(service, "userProfileMapper", countingMapper);
-        ReflectionTestUtils.setField(service, "clock", Clock.fixed(NOW, ZoneId.of("Asia/Shanghai")));
         candidates = representativeProducts();
     }
 
@@ -94,7 +89,6 @@ class ProductRecommendationConcurrencyAcceptanceTest
             service.recommendMall(7L, copyProducts(candidates));
         }
         profileQueries.set(0);
-        popularityQueries.set(0);
 
         ExecutorService executor = Executors.newFixedThreadPool(CONCURRENCY);
         CountDownLatch start = new CountDownLatch(1);
@@ -110,7 +104,6 @@ class ProductRecommendationConcurrencyAcceptanceTest
                     List<TProduct> result = service.recommendMall(7L, requestProducts);
                     long duration = System.nanoTime() - started;
                     if (result.size() != PRODUCT_COUNT
-                        || !allPersonalized(result)
                         || !expectedProductIds.equals(productIds(result)))
                     {
                         throw new IllegalStateException("Concurrent recommendation result was unstable");
@@ -137,7 +130,6 @@ class ProductRecommendationConcurrencyAcceptanceTest
                 elapsedSeconds * 1000D, p95Millis, throughput);
 
             assertEquals(REQUEST_COUNT, profileQueries.get(), "profile query count");
-            assertEquals(REQUEST_COUNT, popularityQueries.get(), "popularity query count");
             assertTrue(p95Millis <= MAX_P95_MILLIS,
                 "P95 recommendation latency exceeded " + MAX_P95_MILLIS + " ms: " + p95Millis);
             assertTrue(throughput >= MIN_THROUGHPUT,
@@ -159,10 +151,6 @@ class ProductRecommendationConcurrencyAcceptanceTest
                 {
                     profileQueries.incrementAndGet();
                 }
-                else if ("selectRecentProductPopularity".equals(method.getName()))
-                {
-                    popularityQueries.incrementAndGet();
-                }
                 try
                 {
                     return method.invoke(delegate, args);
@@ -178,10 +166,8 @@ class ProductRecommendationConcurrencyAcceptanceTest
     {
         Date orderTime = Date.from(NOW.minusSeconds(10L * 24L * 60L * 60L));
         jdbcTemplate.update("insert into t_wxuser(id, openid, nickname) values (7, 'perf-user', 'Perf user')");
-        jdbcTemplate.update("insert into t_user_profile(user_id, order_count, total_amount, avg_order_amount, "
-                + "preferred_price_min, preferred_price_max, evidence_count, profile_status, profile_data, "
-                + "calculate_time, create_time, update_time) values (7, 10000, 500000.00, 50.00, "
-                + "30.00, 59.99, 100, 'READY', ?, ?, ?, ?)",
+        jdbcTemplate.update("insert into t_user_profile(user_id, profile_status, profile_data, "
+                + "calculate_time, create_time, update_time) values (7, 'READY', ?, ?, ?, ?)",
             profileData(), Date.from(NOW), Date.from(NOW), Date.from(NOW));
 
         jdbcTemplate.batchUpdate("insert into t_order(order_id, order_no, user_id, total_amount, pay_amount, "
@@ -230,24 +216,24 @@ class ProductRecommendationConcurrencyAcceptanceTest
     {
         JSONObject root = new JSONObject(true);
         JSONObject mall = new JSONObject(true);
-        JSONArray products = new JSONArray();
+        JSONArray tags = new JSONArray();
         for (long id = 1; id <= 20; id++)
         {
             JSONObject item = new JSONObject(true);
-            item.put("id", id);
+            item.put("key", "product:" + id);
+            item.put("dimension", "product");
             item.put("score", 21L - id);
-            products.add(item);
+            tags.add(item);
         }
-        JSONArray categories = new JSONArray();
         for (long id = 1; id <= 10; id++)
         {
             JSONObject item = new JSONObject(true);
-            item.put("id", id);
+            item.put("key", "category:" + id);
+            item.put("dimension", "category");
             item.put("score", 11L - id);
-            categories.add(item);
+            tags.add(item);
         }
-        mall.put("products", products);
-        mall.put("categories", categories);
+        mall.put("tags", tags);
         root.put("MALL", mall);
         root.put("SCAN", new JSONObject(true));
         return root.toJSONString();
@@ -298,15 +284,4 @@ class ProductRecommendationConcurrencyAcceptanceTest
         return ids;
     }
 
-    private boolean allPersonalized(List<TProduct> products)
-    {
-        for (TProduct product : products)
-        {
-            if (!Boolean.TRUE.equals(product.getRecommendationApplied()))
-            {
-                return false;
-            }
-        }
-        return true;
-    }
 }

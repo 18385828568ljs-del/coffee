@@ -44,27 +44,24 @@ class ScanTableQrcodeServiceImplTest
     }
 
     @Test
-    void selectByShopAndTableShouldTrimTableNoAndDelegate()
+    void selectByTableNoShouldTrimTableNoAndDelegate()
     {
         ScanTableQrcode qrcode = qrcode(1L, "A01", "dine_in");
-        when(scanTableQrcodeMapper.selectByShopAndTable(any(ScanTableQrcode.class))).thenReturn(qrcode);
+        when(scanTableQrcodeMapper.selectByTableNo("A01")).thenReturn(qrcode);
 
-        ScanTableQrcode result = service.selectByShopAndTable(2L, "  A01  ");
+        ScanTableQrcode result = service.selectByTableNo("  A01  ");
 
         assertSame(qrcode, result);
-        ArgumentCaptor<ScanTableQrcode> captor = ArgumentCaptor.forClass(ScanTableQrcode.class);
-        verify(scanTableQrcodeMapper).selectByShopAndTable(captor.capture());
-        assertEquals(2L, captor.getValue().getShopId());
-        assertEquals("A01", captor.getValue().getTableNo());
+        verify(scanTableQrcodeMapper).selectByTableNo("A01");
     }
 
     @Test
-    void selectByShopAndTableShouldReturnNullWhenTableNoIsBlank()
+    void selectByTableNoShouldReturnNullWhenTableNoIsBlank()
     {
-        ScanTableQrcode result = service.selectByShopAndTable(2L, "  ");
+        ScanTableQrcode result = service.selectByTableNo("  ");
 
         assertEquals(null, result);
-        verify(scanTableQrcodeMapper, never()).selectByShopAndTable(any(ScanTableQrcode.class));
+        verify(scanTableQrcodeMapper, never()).selectByTableNo(any());
     }
 
     @Test
@@ -93,13 +90,12 @@ class ScanTableQrcodeServiceImplTest
         qrcode.setStatus(null);
         when(wxaCodeService.generateWxaCode(eq("pages/scan/menu"), any(String.class), any(String.class)))
                 .thenReturn("https://qr.example.com/a01");
-        when(scanTableQrcodeMapper.selectByShopAndTable(any(ScanTableQrcode.class))).thenReturn(null);
+        when(scanTableQrcodeMapper.selectByTableNo("A01")).thenReturn(null);
         when(scanTableQrcodeMapper.insert(qrcode)).thenReturn(1);
 
         int rows = service.insertScanTableQrcode(qrcode);
 
         assertEquals(1, rows);
-        assertEquals(1L, qrcode.getShopId());
         assertEquals("A01", qrcode.getTableNo());
         assertEquals("dine_in", qrcode.getScene());
         assertEquals(1, qrcode.getStatus());
@@ -118,7 +114,6 @@ class ScanTableQrcodeServiceImplTest
         int rows = service.updateScanTableQrcode(qrcode);
 
         assertEquals(1, rows);
-        assertEquals(1L, qrcode.getShopId());
         assertEquals("A02", qrcode.getTableNo());
         assertEquals("dine_in", qrcode.getScene());
         assertEquals(1, qrcode.getStatus());
@@ -144,7 +139,7 @@ class ScanTableQrcodeServiceImplTest
     {
         when(wxaCodeService.generateWxaCode(eq("pages/scan/menu"), any(String.class), any(String.class)))
                 .thenReturn("https://qr.example.com/a01");
-        when(scanTableQrcodeMapper.selectByShopAndTable(any(ScanTableQrcode.class))).thenReturn(null);
+        when(scanTableQrcodeMapper.selectByTableNo("A01")).thenReturn(null);
         ScanTableQrcode saved = qrcode(100L, "A01", "dine_in");
         when(scanTableQrcodeMapper.selectById(100L)).thenReturn(saved);
         when(scanTableQrcodeMapper.insert(any(ScanTableQrcode.class))).thenAnswer(invocation -> {
@@ -153,12 +148,11 @@ class ScanTableQrcodeServiceImplTest
             return 1;
         });
 
-        ScanTableQrcode result = service.generateOne(2L, "门店A", " A01 ", " ");
+        ScanTableQrcode result = service.generateOne(" A01 ", " ");
 
         assertSame(saved, result);
         ArgumentCaptor<ScanTableQrcode> captor = ArgumentCaptor.forClass(ScanTableQrcode.class);
         verify(scanTableQrcodeMapper).insert(captor.capture());
-        assertEquals(2L, captor.getValue().getShopId());
         assertEquals("A01", captor.getValue().getTableNo());
         assertEquals("dine_in", captor.getValue().getScene());
         assertEquals("https://qr.example.com/a01", captor.getValue().getQrUrl());
@@ -171,17 +165,16 @@ class ScanTableQrcodeServiceImplTest
         ScanTableQrcode existing = qrcode(100L, "A01", "dine_in");
         when(wxaCodeService.generateWxaCode(eq("pages/scan/menu"), any(String.class), any(String.class)))
                 .thenReturn("https://qr.example.com/a01");
-        when(scanTableQrcodeMapper.selectByShopAndTable(any(ScanTableQrcode.class))).thenReturn(existing);
+        when(scanTableQrcodeMapper.selectByTableNo("A01")).thenReturn(existing);
         when(scanTableQrcodeMapper.selectById(100L)).thenReturn(existing);
         when(scanTableQrcodeMapper.update(any(ScanTableQrcode.class))).thenReturn(1);
 
-        ScanTableQrcode result = service.generateOne(2L, "新门店", "A01", "takeout");
+        ScanTableQrcode result = service.generateOne("A01", "takeout");
 
         assertSame(existing, result);
         ArgumentCaptor<ScanTableQrcode> captor = ArgumentCaptor.forClass(ScanTableQrcode.class);
         verify(scanTableQrcodeMapper).update(captor.capture());
         assertEquals(100L, captor.getValue().getTableId());
-        assertEquals("新门店", captor.getValue().getShopName());
         assertEquals("takeout", captor.getValue().getScene());
         assertEquals("https://qr.example.com/a01", captor.getValue().getQrUrl());
         assertEquals(1, captor.getValue().getStatus());
@@ -191,7 +184,7 @@ class ScanTableQrcodeServiceImplTest
     void generateOneShouldRejectBlankTableNo()
     {
         ServiceException exception = org.junit.jupiter.api.Assertions.assertThrows(ServiceException.class,
-                () -> service.generateOne(2L, "门店A", "  ", "dine_in"));
+                () -> service.generateOne("  ", "dine_in"));
 
         assertEquals("桌号不能为空", exception.getMessage());
         verify(wxaCodeService, never()).generateWxaCode(any(), any(), any());
@@ -204,7 +197,7 @@ class ScanTableQrcodeServiceImplTest
         ScanTableQrcode second = qrcode(102L, "A02", "dine_in");
         when(wxaCodeService.generateWxaCode(eq("pages/scan/menu"), any(String.class), any(String.class)))
                 .thenReturn("https://qr.example.com/a01", "https://qr.example.com/a02");
-        when(scanTableQrcodeMapper.selectByShopAndTable(any(ScanTableQrcode.class))).thenReturn(null);
+        when(scanTableQrcodeMapper.selectByTableNo(any())).thenReturn(null);
         when(scanTableQrcodeMapper.insert(any(ScanTableQrcode.class))).thenAnswer(invocation -> {
             ScanTableQrcode arg = invocation.getArgument(0);
             if ("A01".equals(arg.getTableNo()))
@@ -220,7 +213,7 @@ class ScanTableQrcodeServiceImplTest
         when(scanTableQrcodeMapper.selectById(101L)).thenReturn(first);
         when(scanTableQrcodeMapper.selectById(102L)).thenReturn(second);
 
-        List<ScanTableQrcode> results = service.batchGenerate(2L, "门店A", Arrays.asList("A01", "A02", "A01"), " ");
+        List<ScanTableQrcode> results = service.batchGenerate(Arrays.asList("A01", "A02", "A01"), " ");
 
         assertEquals(2, results.size());
         assertSame(first, results.get(0));
@@ -235,10 +228,9 @@ class ScanTableQrcodeServiceImplTest
         when(wxaCodeService.generateWxaCode(eq("pages/scan/menu"), any(String.class), any(String.class)))
                 .thenThrow(new RuntimeException("boom"));
 
-        List<ScanTableQrcode> results = service.batchGenerate(2L, "门店A", Collections.singletonList("A01"), " ");
+        List<ScanTableQrcode> results = service.batchGenerate(Collections.singletonList("A01"), " ");
 
         assertEquals(1, results.size());
-        assertEquals(2L, results.get(0).getShopId());
         assertEquals("A01", results.get(0).getTableNo());
         assertEquals("生成失败: boom", results.get(0).getRemark());
     }
@@ -254,8 +246,6 @@ class ScanTableQrcodeServiceImplTest
     {
         ScanTableQrcode qrcode = new ScanTableQrcode();
         qrcode.setTableId(tableId);
-        qrcode.setShopId(1L);
-        qrcode.setShopName("门店A");
         qrcode.setTableNo(tableNo);
         qrcode.setScene(scene);
         return qrcode;

@@ -38,7 +38,6 @@
 					<product-card-back
 						v-if="backMounted"
 						:product="product"
-						:shop-id="shopId"
 						:table-no="tableNo"
 						:image-override="imageOverride"
 						:active="flipped"
@@ -70,7 +69,6 @@ export default {
 		fillHeight: { type: Boolean, default: false },
 		themeVariant: { type: String, default: 'vertical' },
 		activeCard: { type: Boolean, default: false },
-		shopId: { type: [Number, String], default: 1 },
 		tableNo: { type: String, default: '' },
 		imageOverride: { type: String, default: '' }
 	},

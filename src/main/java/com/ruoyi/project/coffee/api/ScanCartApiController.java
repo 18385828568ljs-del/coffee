@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.framework.web.controller.BaseController;
 import com.ruoyi.framework.web.domain.AjaxResult;
@@ -37,8 +39,6 @@ import com.ruoyi.project.coffee.scanOrder.service.IScanProductSpecOptionService;
 @RequestMapping("/api/scanCart")
 public class ScanCartApiController extends BaseController
 {
-    private static final long DEFAULT_SHOP_ID = 1L;
-
     @Autowired
     private IScanCartService scanCartService;
 
@@ -81,67 +81,138 @@ public class ScanCartApiController extends BaseController
         // 用户标识:强制从鉴权上下文获取,不信任前端传入
         cart.setUserId(WxUserAuthContext.getCurrentUserId());
         normalizeOwner(cart);
-        if (cart.getShopId() == null)
-        {
-            cart.setShopId(DEFAULT_SHOP_ID);
-        }
         // 名称/图片以服务端商品为准,避免客户端篡改
         cart.setProductName(product.getProductName());
         cart.setProductImage(product.getImageUrl());
 
-        // 价格计算:基础价 + 规格加价,服务端重算防止前端篡改
-        BigDecimal basePrice = product.getPrice() == null ? BigDecimal.ZERO : product.getPrice();
-        BigDecimal extraPrice = BigDecimal.ZERO;
-
-        if (StringUtils.isNotEmpty(cart.getSpecJson()))
+        try
         {
-            try
+            // 规格为空时按商品配置补齐默认规格,快捷加购也必须走同一套计价规则
+            if (StringUtils.isEmpty(cart.getSpecJson()))
             {
-                // 解析前端传入的规格选项ID数组
-                List<Long> optionIds = JSON.parseArray(cart.getSpecJson(), Long.class);
-                if (optionIds != null && !optionIds.isEmpty())
+                String defaultSpecJson = scanProductService.buildDefaultSpecJson(cart.getProductId());
+                if (defaultSpecJson != null && !defaultSpecJson.trim().isEmpty())
                 {
-                    List<ScanProductSpecOption> options =
-                        scanProductSpecOptionService.selectOptionListByIds(optionIds);
-                    for (ScanProductSpecOption option : options)
+                    cart.setSpecJson(defaultSpecJson);
+                }
+            }
+
+            // 价格计算:基础价 + 规格加价,服务端重算防止前端篡改
+            BigDecimal calculatedPrice = scanProductService.calculatePriceBySpecJson(
+                cart.getProductId(), cart.getSpecJson());
+            if (calculatedPrice != null)
+            {
+                cart.setPrice(calculatedPrice);
+                String specText = scanProductService.buildSpecText(cart.getProductId(), cart.getSpecJson());
+                if (specText != null)
+                {
+                    cart.setSpecText(specText);
+                }
+            }
+            else
+            {
+                // 兼容现有单元测试替身及旧实现;生产环境由商品服务统一计价。
+                BigDecimal basePrice = product.getPrice() == null ? BigDecimal.ZERO : product.getPrice();
+                BigDecimal extraPrice = BigDecimal.ZERO;
+                if (StringUtils.isNotEmpty(cart.getSpecJson()))
+                {
+                    List<Long> optionIds;
+                    try
                     {
-                        if (option.getExtraPrice() != null)
+                        optionIds = parseOptionIds(cart.getSpecJson());
+                    }
+                    catch (Exception e)
+                    {
+                        logger.warn("解析规格JSON失败: " + cart.getSpecJson(), e);
+                        return AjaxResult.error("规格参数无效");
+                    }
+
+                    if (!optionIds.isEmpty())
+                    {
+                        List<ScanProductSpecOption> options =
+                            scanProductSpecOptionService.selectOptionListByIds(optionIds);
+                        if (options == null || options.size() != optionIds.size())
                         {
-                            extraPrice = extraPrice.add(option.getExtraPrice());
+                            return AjaxResult.error("规格选项不存在");
+                        }
+                        for (ScanProductSpecOption option : options)
+                        {
+                            if (!cart.getProductId().equals(option.getProductId()))
+                            {
+                                return AjaxResult.error("规格选项不属于当前商品");
+                            }
+                            if (option.getExtraPrice() != null)
+                            {
+                                extraPrice = extraPrice.add(option.getExtraPrice());
+                            }
                         }
                     }
                 }
-            }
-            catch (Exception e)
-            {
-                // specJson 格式错误,忽略规格加价
-                logger.warn("解析规格JSON失败: " + cart.getSpecJson(), e);
+                cart.setPrice(basePrice.add(extraPrice));
             }
         }
-
-        cart.setPrice(basePrice.add(extraPrice));
+        catch (IllegalArgumentException e)
+        {
+            return AjaxResult.error(e.getMessage());
+        }
 
         ScanCart saved = scanCartService.addOrIncrease(cart);
         if (saved != null)
         {
             userBehaviorEventService.recordFirstCartAdd(cart.getUserId(),
                 UserBehaviorEventService.SCENE_SCAN, cart.getProductId(), product.getCategoryId(), saved.getId(),
-                UserBehaviorEventService.SOURCE_CATEGORY);
+                UserBehaviorEventService.SOURCE_CATEGORY, cart.getSpecJson());
         }
         return AjaxResult.success("已加入点单购物车", saved);
+    }
+
+    private List<Long> parseOptionIds(String specJson)
+    {
+        JSONArray specs = JSON.parseArray(specJson);
+        if (specs == null)
+        {
+            throw new IllegalArgumentException("规格不能为空");
+        }
+        List<Long> optionIds = new ArrayList<Long>();
+        for (int i = 0; i < specs.size(); i++)
+        {
+            Object value = specs.get(i);
+            if (!(value instanceof JSONObject))
+            {
+                throw new IllegalArgumentException("规格格式错误");
+            }
+            JSONObject spec = (JSONObject) value;
+            Long specId = spec.getLong("specId");
+            JSONArray ids = spec.getJSONArray("optionIds");
+            if (specId == null || specId <= 0 || ids == null || ids.isEmpty())
+            {
+                throw new IllegalArgumentException("规格选项不能为空");
+            }
+            for (int j = 0; j < ids.size(); j++)
+            {
+                Long optionId = ids.getLong(j);
+                if (optionId == null || optionId <= 0)
+                {
+                    throw new IllegalArgumentException("规格选项格式错误");
+                }
+                if (!optionIds.contains(optionId))
+                {
+                    optionIds.add(optionId);
+                }
+            }
+        }
+        return optionIds;
     }
 
     @GetMapping("/list")
     public AjaxResult getCartList(
         @RequestParam(value = "openid", required = false) String openid,
-        @RequestParam(value = "shopId", required = false) Long shopId,
         @RequestParam(value = "tableNo", required = false) String tableNo)
     {
         ScanCart query = new ScanCart();
         // 强制使用当前登录用户,不接受前端传入的userId参数
         query.setUserId(WxUserAuthContext.getCurrentUserId());
         query.setOpenid(trimToNull(openid));
-        query.setShopId(shopId == null ? DEFAULT_SHOP_ID : shopId);
         query.setTableNo(trimToNull(tableNo));
         query.setStatus(1);
 
@@ -221,14 +292,12 @@ public class ScanCartApiController extends BaseController
     @DeleteMapping("/clear")
     public AjaxResult clearCart(
         @RequestParam(value = "openid", required = false) String openid,
-        @RequestParam(value = "shopId", required = false) Long shopId,
         @RequestParam(value = "tableNo", required = false) String tableNo)
     {
         ScanCart query = new ScanCart();
         // 强制使用当前登录用户,不接受前端传入的userId参数
         query.setUserId(WxUserAuthContext.getCurrentUserId());
         query.setOpenid(trimToNull(openid));
-        query.setShopId(shopId == null ? DEFAULT_SHOP_ID : shopId);
         query.setTableNo(trimToNull(tableNo));
 
         boolean ownerMissing = query.getUserId() == null

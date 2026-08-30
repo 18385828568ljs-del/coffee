@@ -140,6 +140,22 @@ class ProductApiControllerTest
         assertSame(second, result.getRows().get(0));
     }
 
+    @Test
+    void productListExcludesOutOfStockProductsBeforeRecommendation()
+    {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        TProduct available = product(1L);
+        TProduct unavailable = product(2L);
+        unavailable.setStock(0L);
+        when(productService.selectTProductList(any(TProduct.class)))
+            .thenReturn(Arrays.asList(available, unavailable));
+
+        TableDataInfo result = controller.getProductList(new TProduct(), request);
+
+        assertEquals(1L, result.getTotal());
+        assertSame(available, result.getRows().get(0));
+    }
+
     private TProduct product(Long productId)
     {
         TProduct product = new TProduct();

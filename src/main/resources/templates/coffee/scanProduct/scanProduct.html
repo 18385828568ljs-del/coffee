@@ -75,6 +75,59 @@
             grid-column: 1 / -1;
         }
 
+        .scan-product-spec-editor {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px 20px;
+            padding: 10px 12px;
+            border: 1px solid #e5e9f0;
+            border-radius: 4px;
+            background: #fff;
+        }
+
+        .scan-product-spec-group {
+            min-width: 0;
+        }
+
+        .scan-product-spec-group strong {
+            display: block;
+            margin-bottom: 7px;
+            color: #53606a;
+            font-size: 13px;
+        }
+
+        .scan-product-spec-options {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .scan-product-spec-option-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 108px;
+            gap: 6px;
+            width: 100%;
+        }
+
+        .scan-product-spec-option-row .form-control {
+            height: 30px;
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        .scan-product-spec-option-row .input-group-addon {
+            padding: 4px 8px;
+            color: #676a6c;
+            font-size: 12px;
+        }
+
+        .scan-product-spec-add {
+            align-self: flex-start;
+            margin-top: 2px;
+            padding: 2px 8px;
+            font-size: 12px;
+        }
+
         .scan-product-edit-row .form-control {
             height: 34px;
             border-radius: 4px;
@@ -85,9 +138,19 @@
             resize: vertical;
         }
 
+        @media (min-width: 1600px) {
+            .scan-product-spec-editor.spec-count-5 {
+                grid-template-columns: repeat(5, minmax(0, 1fr));
+            }
+        }
+
         @media (max-width: 1200px) {
             .scan-product-edit-grid {
                 grid-template-columns: repeat(2, minmax(180px, 1fr));
+            }
+
+            .scan-product-spec-editor {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
 
@@ -103,6 +166,15 @@
 
             .scan-product-edit-field.is-wide {
                 grid-column: 1 / -1;
+            }
+
+            .scan-product-spec-group {
+                min-width: 0;
+            }
+
+            .scan-product-spec-editor,
+            .scan-product-spec-editor.spec-count-5 {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -577,6 +649,57 @@
         return html;
     }
 
+    function productTypeOptionHtml(productType) {
+        return '<option value="COFFEE"' + (productType === 'COFFEE' ? ' selected' : '') + '>咖啡</option>' +
+            '<option value="DRINK"' + (productType === 'DRINK' ? ' selected' : '') + '>普通饮料</option>' +
+            '<option value="FOOD"' + (productType === 'FOOD' ? ' selected' : '') + '>小食</option>';
+    }
+
+    function defaultProductSpecs(productType) {
+        if (productType === 'COFFEE') {
+            return [
+                { specName: '杯型', options: [{ optionName: '中杯', extraPrice: 0 }, { optionName: '大杯', extraPrice: 3 }] },
+                { specName: '温度', options: [{ optionName: '热', extraPrice: 0 }, { optionName: '冰', extraPrice: 0 }] },
+                { specName: '糖度', options: [{ optionName: '无糖', extraPrice: 0 }, { optionName: '少糖', extraPrice: 0 }, { optionName: '正常糖', extraPrice: 0 }] },
+                { specName: '咖啡豆', options: [{ optionName: '门店拼配豆', extraPrice: 0 }, { optionName: '埃塞俄比亚', extraPrice: 0 }, { optionName: '哥伦比亚', extraPrice: 0 }] },
+                { specName: '咖啡浓度', options: [{ optionName: '标准', extraPrice: 0 }, { optionName: '加一份浓缩', extraPrice: 5 }, { optionName: '加两份浓缩', extraPrice: 10 }] }
+            ];
+        }
+        if (productType === 'DRINK') {
+            return [
+                { specName: '杯型', options: [{ optionName: '中杯', extraPrice: 0 }, { optionName: '大杯', extraPrice: 3 }] },
+                { specName: '温度', options: [{ optionName: '热', extraPrice: 0 }, { optionName: '冰', extraPrice: 0 }] },
+                { specName: '糖度', options: [{ optionName: '无糖', extraPrice: 0 }, { optionName: '少糖', extraPrice: 0 }, { optionName: '正常糖', extraPrice: 0 }] }
+            ];
+        }
+        return [];
+    }
+
+    function productSpecEditorHtml(productType, specs) {
+        var groups = productType === 'FOOD' ? [] : (specs && specs.length ? specs : defaultProductSpecs(productType));
+        if (!groups.length) {
+            return '<span class="text-muted">小食无需饮品规格</span>';
+        }
+        return '<div class="scan-product-spec-editor spec-count-' + groups.length + '">' + groups.map(function(spec, specIndex) {
+            var options = spec.options || [];
+            return '<div class="scan-product-spec-group" data-spec-index="' + specIndex + '">' +
+                '<strong>' + escapeHtml(spec.specName) + '</strong>' +
+                '<input type="hidden" name="specs[' + specIndex + '].specName" value="' + escapeHtml(spec.specName) + '">' +
+                '<div class="scan-product-spec-options">' +
+                    options.map(function(option, optionIndex) {
+                        return '<div class="scan-product-spec-option-row">' +
+                            '<input class="form-control" name="specs[' + specIndex + '].options[' + optionIndex + '].optionName" value="' + escapeHtml(option.optionName) + '" placeholder="选项名称">' +
+                            '<div class="input-group input-group-sm"><span class="input-group-addon">+¥</span>' +
+                                '<input class="form-control" type="number" min="0" step="0.01" name="specs[' + specIndex + '].options[' + optionIndex + '].extraPrice" value="' + escapeHtml(option.extraPrice || 0) + '" aria-label="加价金额">' +
+                            '</div>' +
+                        '</div>';
+                    }).join('') +
+                    '<button type="button" class="btn btn-default btn-xs scan-product-spec-add" data-spec-index="' + specIndex + '">+ 添加选项</button>' +
+                '</div>' +
+            '</div>';
+        }).join('') + '</div>';
+    }
+
     function buildInlineScanProductForm(row) {
         var productId = escapeHtml(row.productId);
         var imageUrl = row.imageUrl || '';
@@ -600,7 +723,9 @@
                     '<div class="scan-product-edit-grid">',
                         '<label class="scan-product-edit-field is-wide"><span>商品名称</span><input class="form-control" name="productName" type="text" value="' + escapeHtml(row.productName) + '"></label>',
                         '<label class="scan-product-edit-field is-wide"><span>商品分类</span><select class="form-control" name="categoryId">' + categoryOptionHtml(row.categoryId) + '</select></label>',
+                        '<label class="scan-product-edit-field is-wide"><span>商品类型</span><select class="form-control" name="productType">' + productTypeOptionHtml(row.productType) + '</select></label>',
                         '<label class="scan-product-edit-field is-wide"><span>副标题</span><input class="form-control" name="subTitle" type="text" value="' + escapeHtml(row.subTitle) + '"></label>',
+                        '<div class="scan-product-edit-field is-full"><span>点单规格</span><div data-product-spec-editor="1" data-loaded="0"><span class="text-muted">规格加载中...</span></div></div>',
                         '<label class="scan-product-edit-field"><span>价格</span><input class="form-control" name="price" type="number" min="0" step="0.01" value="' + escapeHtml(row.price) + '"></label>',
                         '<label class="scan-product-edit-field"><span>月售</span><input class="form-control" name="monthSales" type="number" min="0" step="1" value="' + escapeHtml(row.monthSales || 0) + '"></label>',
                         '<label class="scan-product-edit-field"><span>标签</span><input class="form-control" name="tag" type="text" value="' + escapeHtml(row.tag) + '"></label>',
@@ -637,6 +762,7 @@
                                 '</div>',
                             '</div>',
                         '</div>',
+                        '<label class="scan-product-edit-field is-full"><span>详细描述</span><textarea class="form-control" name="description" rows="3">' + escapeHtml(row.description) + '</textarea></label>',
                         '<label class="scan-product-edit-field is-full"><span>备注</span><textarea class="form-control" name="remark" rows="3">' + escapeHtml(row.remark) + '</textarea></label>',
                     '</div>',
                 '</form>',
@@ -713,6 +839,47 @@
         $('#bootstrap-table').bootstrapTable('collapseRowByUniqueId', productId);
     }
 
+    function loadInlineScanProductSpecs(productId) {
+        var $form = $('#inline-scan-product-form-' + productId);
+        var $editor = $form.find('[data-product-spec-editor]');
+        if (!$form.length || !$editor.length) {
+            return;
+        }
+        $editor.attr('data-loaded', '0').html('<span class="text-muted">规格加载中...</span>');
+        $.get(prefix + '/detail/' + productId, function(result) {
+            if (result.code !== web_status.SUCCESS || !result.data) {
+                $editor.html('<span class="text-danger">规格加载失败，请点击编辑重试</span>');
+                return;
+            }
+            var product = result.data;
+            $form.find('[name="productType"]').val(product.productType || 'DRINK');
+            $editor.html(productSpecEditorHtml(product.productType, product.specs || []));
+            $editor.attr('data-loaded', '1');
+        });
+    }
+
+    $(document).on('change', '.inline-scan-product-form select[name="productType"]', function() {
+        var $editor = $(this).closest('.inline-scan-product-form').find('[data-product-spec-editor]');
+        $editor.html(productSpecEditorHtml($(this).val(), defaultProductSpecs($(this).val())));
+        $editor.attr('data-loaded', '1');
+    });
+
+    $(document).on('click', '.scan-product-spec-add', function() {
+        var $button = $(this);
+        var $group = $button.closest('.scan-product-spec-group');
+        var specIndex = $group.data('spec-index');
+        var optionIndex = $group.find('.scan-product-spec-option-row').length;
+        var namePrefix = 'specs[' + specIndex + '].options[' + optionIndex + ']';
+        $button.before(
+            '<div class="scan-product-spec-option-row">' +
+                '<input class="form-control" name="' + namePrefix + '.optionName" placeholder="选项名称">' +
+                '<div class="input-group input-group-sm"><span class="input-group-addon">+¥</span>' +
+                    '<input class="form-control" type="number" min="0" step="0.01" name="' + namePrefix + '.extraPrice" value="0" aria-label="加价金额">' +
+                '</div>' +
+            '</div>'
+        );
+    });
+
     function saveInlineScanProduct(productId) {
         var $form = $('#inline-scan-product-form-' + productId);
         var productName = $.trim($form.find('[name="productName"]').val());
@@ -723,6 +890,11 @@
 
         if (!productName) {
             $.modal.alertWarning("商品名称不能为空");
+            return;
+        }
+        var $specEditor = $form.find('[data-product-spec-editor]');
+        if (!$specEditor.length || String($specEditor.attr('data-loaded')) !== '1') {
+            $.modal.alertWarning("规格还在加载，请稍后再保存");
             return;
         }
         if (!categoryId) {
@@ -1454,6 +1626,7 @@
                 var $table = $('#bootstrap-table');
                 $table.find('tbody > tr.expanded-scan-product-row').removeClass('expanded-scan-product-row');
                 $table.find('tbody > tr[data-uniqueid="' + row.productId + '"]').addClass('expanded-scan-product-row');
+                loadInlineScanProductSpecs(row.productId);
             },
             onCollapseRow: function(index, row) {
                 $('#bootstrap-table')
@@ -1476,6 +1649,13 @@
                 title: '商品分类',
                 formatter: function(value) {
                     return getCategoryName(value);
+                }
+            },
+            {
+                field: 'productType',
+                title: '商品类型',
+                formatter: function(value) {
+                    return value === 'COFFEE' ? '咖啡' : (value === 'FOOD' ? '小食' : '普通饮料');
                 }
             },
             {

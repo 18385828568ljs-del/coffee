@@ -12,13 +12,13 @@ public interface IScanOrderService
     /**
      * 根据当前桌台购物车结算下单。
      */
-    ScanOrder createOrderFromCart(Long userId, String openid, Long shopId,
+    ScanOrder createOrderFromCart(Long userId, String openid,
                                   String tableNo, String remark, String payType);
 
     /**
      * 计算当前购物车应用营销活动 + 会员折扣后的金额拆分(不写库)
      */
-    MarketingPreviewResult previewOrderFromCart(Long userId, String openid, Long shopId, String tableNo);
+    MarketingPreviewResult previewOrderFromCart(Long userId, String openid, String tableNo);
 
     ScanOrder selectScanOrderById(Long orderId);
 

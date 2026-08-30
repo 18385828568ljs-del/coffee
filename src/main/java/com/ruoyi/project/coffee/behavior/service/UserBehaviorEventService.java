@@ -10,6 +10,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import com.ruoyi.project.coffee.behavior.domain.UserBehaviorEvent;
 import com.ruoyi.project.coffee.behavior.mapper.UserBehaviorEventMapper;
+import com.ruoyi.project.coffee.profile.service.UserProfileService;
 
 /**
  * 用户非交易行为证据记录服务。
@@ -31,6 +32,9 @@ public class UserBehaviorEventService
     @Autowired
     private UserBehaviorEventMapper userBehaviorEventMapper;
 
+    @Autowired(required = false)
+    private UserProfileService userProfileService;
+
     /** 记录商品详情查看，同一用户、场景、商品每天只形成一次证据。 */
     public boolean recordProductView(Long userId, String scene, Long productId, Long categoryId)
     {
@@ -45,7 +49,7 @@ public class UserBehaviorEventService
         }
         String dedupKey = buildDailyDedupKey(EVENT_PRODUCT_VIEW, scene, userId, String.valueOf(productId));
         return record(userId, EVENT_PRODUCT_VIEW, scene, productId, categoryId, null,
-            normalizeSource(source), dedupKey);
+            normalizeSource(source), dedupKey, null);
     }
 
     /**
@@ -59,13 +63,19 @@ public class UserBehaviorEventService
     public boolean recordFirstCartAdd(Long userId, String scene, Long productId, Long categoryId,
         Long cartId, String source)
     {
+        return recordFirstCartAdd(userId, scene, productId, categoryId, cartId, source, null);
+    }
+
+    public boolean recordFirstCartAdd(Long userId, String scene, Long productId, Long categoryId,
+        Long cartId, String source, String specJson)
+    {
         if (cartId == null)
         {
             return false;
         }
         String dedupKey = EVENT_CART_ADD + ":" + scene + ":" + cartId;
         return record(userId, EVENT_CART_ADD, scene, productId, categoryId, cartId,
-            normalizeSource(source), dedupKey);
+            normalizeSource(source), dedupKey, specJson);
     }
 
     /** 记录购物车行成功移出，按购物车行 ID 去重。 */
@@ -77,11 +87,11 @@ public class UserBehaviorEventService
         }
         String dedupKey = EVENT_CART_REMOVE + ":" + scene + ":" + cartId;
         return record(userId, EVENT_CART_REMOVE, scene, productId, categoryId, cartId,
-            SOURCE_DEFAULT_LIST, dedupKey);
+            SOURCE_DEFAULT_LIST, dedupKey, null);
     }
 
     private boolean record(Long userId, String eventType, String scene, Long productId,
-        Long categoryId, Long sourceId, String source, String dedupKey)
+        Long categoryId, Long sourceId, String source, String dedupKey, String specJson)
     {
         if (userId == null || !hasText(eventType) || !hasText(scene) || productId == null)
         {
@@ -95,13 +105,19 @@ public class UserBehaviorEventService
         event.setProductId(productId);
         event.setCategoryId(categoryId);
         event.setSourceId(sourceId);
+        event.setSpecJson(specJson);
         event.setSource(source);
         event.setDedupKey(dedupKey);
         event.setEventTime(new Date());
 
         try
         {
-            return userBehaviorEventMapper.insertUserBehaviorEvent(event) > 0;
+            boolean inserted = userBehaviorEventMapper.insertUserBehaviorEvent(event) > 0;
+            if (inserted && EVENT_CART_ADD.equals(eventType) && userProfileService != null)
+            {
+                userProfileService.recalculateAsync(userId);
+            }
+            return inserted;
         }
         catch (DuplicateKeyException e)
         {

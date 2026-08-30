@@ -30,6 +30,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         option_id asc
     </select>
 
+    <insert id="insertOption" parameterType="ScanProductSpecOption" useGeneratedKeys="true" keyProperty="optionId">
+        insert into t_scan_product_spec_option
+        (spec_id, product_id, option_name, extra_price, is_default, sort_order, create_time)
+        values
+        (#{specId}, #{productId}, #{optionName}, #{extraPrice}, #{isDefault}, #{sortOrder}, #{createTime})
+    </insert>
+
     <select id="selectOptionListBySpecId" parameterType="Long" resultMap="ScanProductSpecOptionResult">
         <include refid="selectScanProductSpecOptionVo"/>
         where spec_id = #{specId}

@@ -6,9 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -101,6 +103,54 @@ class ScanProductServiceImplTest
     }
 
     @Test
+    void calculatePriceBySpecJsonShouldUseCurrentLargeCupExtraPrice()
+    {
+        ScanProduct product = product(101L);
+        product.setPrice(new BigDecimal("12.00"));
+        ScanProductSpec cup = spec(2L, "杯型");
+        cup.setRequired(1);
+        cup.setSpecType("single");
+        ScanProductSpecOption medium = option(3L, 2L, "中杯");
+        medium.setProductId(101L);
+        medium.setExtraPrice(BigDecimal.ZERO);
+        ScanProductSpecOption large = option(4L, 2L, "大杯");
+        large.setProductId(101L);
+        large.setExtraPrice(new BigDecimal("3.00"));
+        when(scanProductMapper.selectScanProductById(101L)).thenReturn(product);
+        when(scanProductSpecMapper.selectSpecListByProductId(101L)).thenReturn(Arrays.asList(cup));
+        when(scanProductSpecOptionMapper.selectOptionListByProductId(101L))
+            .thenReturn(Arrays.asList(medium, large));
+
+        BigDecimal price = scanProductService.calculatePriceBySpecJson(
+            101L, "[{\"specId\":2,\"optionIds\":[4]}]");
+
+        assertEquals(new BigDecimal("15.00"), price);
+    }
+
+    @Test
+    void buildDefaultSpecJsonShouldSelectRequiredDefaultOption()
+    {
+        ScanProduct product = product(101L);
+        ScanProductSpec cup = spec(2L, "杯型");
+        cup.setRequired(1);
+        cup.setSpecType("single");
+        ScanProductSpecOption medium = option(3L, 2L, "中杯");
+        medium.setProductId(101L);
+        medium.setIsDefault(1);
+        medium.setExtraPrice(BigDecimal.ZERO);
+        cup.setOptions(Arrays.asList(medium));
+        product.setSpecs(Arrays.asList(cup));
+        when(scanProductMapper.selectScanProductById(101L)).thenReturn(product);
+        when(scanProductSpecMapper.selectSpecListByProductId(101L)).thenReturn(Arrays.asList(cup));
+        when(scanProductSpecOptionMapper.selectOptionListByProductId(101L))
+            .thenReturn(Arrays.asList(medium));
+
+        String specJson = scanProductService.buildDefaultSpecJson(101L);
+
+        org.junit.jupiter.api.Assertions.assertTrue(specJson.contains("\"optionIds\":[3]"));
+    }
+
+    @Test
     void insertScanProductShouldFillDefaultStatusSortAndMonthSales()
     {
         ScanProduct product = product(7L);
@@ -132,6 +182,140 @@ class ScanProductServiceImplTest
         assertEquals(9, product.getSortOrder());
         assertEquals(88, product.getMonthSales());
         assertNotNull(product.getCreateTime());
+    }
+
+    @Test
+    void insertCoffeeProductShouldCreateDefaultSpecsWhenNoSpecsExist()
+    {
+        ScanProduct product = product(7L);
+        product.setProductType(ScanProduct.PRODUCT_TYPE_COFFEE);
+        when(scanProductMapper.insertScanProduct(product)).thenReturn(1);
+        when(scanProductSpecMapper.selectSpecListByProductId(7L)).thenReturn(Collections.<ScanProductSpec>emptyList());
+
+        scanProductService.insertScanProduct(product);
+
+        ArgumentCaptor<ScanProductSpec> specCaptor = ArgumentCaptor.forClass(ScanProductSpec.class);
+        verify(scanProductSpecMapper, times(5)).insertSpec(specCaptor.capture());
+        assertEquals(Arrays.asList("杯型", "温度", "糖度", "咖啡豆", "咖啡浓度"),
+            specNames(specCaptor.getAllValues()));
+        verify(scanProductSpecOptionMapper, times(13)).insertOption(any(ScanProductSpecOption.class));
+    }
+
+    @Test
+    void insertDrinkProductShouldCreateOnlyDrinkSpecs()
+    {
+        ScanProduct product = product(8L);
+        product.setProductType(ScanProduct.PRODUCT_TYPE_DRINK);
+        when(scanProductMapper.insertScanProduct(product)).thenReturn(1);
+        when(scanProductSpecMapper.selectSpecListByProductId(8L)).thenReturn(Collections.<ScanProductSpec>emptyList());
+
+        scanProductService.insertScanProduct(product);
+
+        ArgumentCaptor<ScanProductSpec> specCaptor = ArgumentCaptor.forClass(ScanProductSpec.class);
+        verify(scanProductSpecMapper, times(3)).insertSpec(specCaptor.capture());
+        assertEquals(Arrays.asList("杯型", "温度", "糖度"), specNames(specCaptor.getAllValues()));
+        verify(scanProductSpecOptionMapper, times(7)).insertOption(any(ScanProductSpecOption.class));
+    }
+
+    @Test
+    void insertFoodProductShouldNotCreateDrinkSpecs()
+    {
+        ScanProduct product = product(9L);
+        product.setProductType(ScanProduct.PRODUCT_TYPE_FOOD);
+        when(scanProductMapper.insertScanProduct(product)).thenReturn(1);
+        when(scanProductSpecMapper.selectSpecListByProductId(9L)).thenReturn(Collections.<ScanProductSpec>emptyList());
+
+        scanProductService.insertScanProduct(product);
+
+        verify(scanProductSpecMapper, never()).insertSpec(any(ScanProductSpec.class));
+        verify(scanProductSpecOptionMapper, never()).insertOption(any(ScanProductSpecOption.class));
+    }
+
+    @Test
+    void updateProductShouldKeepExistingSpecs()
+    {
+        ScanProduct product = product(7L);
+        product.setProductType(ScanProduct.PRODUCT_TYPE_COFFEE);
+        when(scanProductMapper.updateScanProduct(product)).thenReturn(1);
+        when(scanProductSpecMapper.selectSpecListByProductId(7L))
+            .thenReturn(Arrays.asList(spec(11L, "杯型"), spec(12L, "温度"), spec(13L, "糖度"),
+                spec(14L, "咖啡豆"), spec(15L, "咖啡浓度")));
+
+        scanProductService.updateScanProduct(product);
+
+        verify(scanProductSpecMapper, never()).insertSpec(any(ScanProductSpec.class));
+        verify(scanProductSpecOptionMapper, never()).insertOption(any(ScanProductSpecOption.class));
+    }
+
+    @Test
+    void updateProductShouldSaveConfiguredOptionPriceAndDefault()
+    {
+        ScanProduct product = product(7L);
+        product.setProductType(ScanProduct.PRODUCT_TYPE_COFFEE);
+        ScanProductSpec cup = spec(11L, "杯型");
+        ScanProductSpecOption large = option(null, 11L, "超大杯");
+        large.setExtraPrice(new BigDecimal("5.00"));
+        large.setIsDefault(1);
+        cup.setOptions(Arrays.asList(large));
+        product.setSpecs(Arrays.asList(cup));
+        when(scanProductMapper.updateScanProduct(product)).thenReturn(1);
+        when(scanProductSpecMapper.selectSpecListByProductId(7L))
+            .thenReturn(Arrays.asList(spec(11L, "杯型"), spec(12L, "温度"), spec(13L, "糖度"),
+                spec(14L, "咖啡豆"), spec(15L, "咖啡浓度")));
+
+        scanProductService.updateScanProduct(product);
+
+        ArgumentCaptor<ScanProductSpecOption> optionCaptor = ArgumentCaptor.forClass(ScanProductSpecOption.class);
+        verify(scanProductSpecOptionMapper, times(12)).insertOption(optionCaptor.capture());
+        ScanProductSpecOption savedLarge = optionCaptor.getAllValues().get(0);
+        assertEquals("超大杯", savedLarge.getOptionName());
+        assertEquals(new BigDecimal("5.00"), savedLarge.getExtraPrice());
+        assertEquals(1, savedLarge.getIsDefault());
+    }
+
+    @Test
+    void updateProductShouldUseFirstConfiguredOptionAsDefault()
+    {
+        ScanProduct product = product(7L);
+        product.setProductType(ScanProduct.PRODUCT_TYPE_COFFEE);
+        ScanProductSpec cup = spec(11L, "杯型");
+        ScanProductSpecOption first = option(null, 11L, "中杯");
+        first.setIsDefault(0);
+        ScanProductSpecOption second = option(null, 11L, "大杯");
+        second.setIsDefault(1);
+        cup.setOptions(Arrays.asList(first, second));
+        product.setSpecs(Arrays.asList(cup));
+        when(scanProductMapper.updateScanProduct(product)).thenReturn(1);
+        when(scanProductSpecMapper.selectSpecListByProductId(7L))
+            .thenReturn(Arrays.asList(spec(11L, "杯型"), spec(12L, "温度"), spec(13L, "糖度"),
+                spec(14L, "咖啡豆"), spec(15L, "咖啡浓度")));
+
+        scanProductService.updateScanProduct(product);
+
+        ArgumentCaptor<ScanProductSpecOption> optionCaptor = ArgumentCaptor.forClass(ScanProductSpecOption.class);
+        verify(scanProductSpecOptionMapper, times(13)).insertOption(optionCaptor.capture());
+        assertEquals("中杯", optionCaptor.getAllValues().get(0).getOptionName());
+        assertEquals(1, optionCaptor.getAllValues().get(0).getIsDefault());
+        assertEquals("大杯", optionCaptor.getAllValues().get(1).getOptionName());
+        assertEquals(0, optionCaptor.getAllValues().get(1).getIsDefault());
+    }
+
+    @Test
+    void updateProductShouldReplaceCoffeeSpecsWhenTypeChangesToDrink()
+    {
+        ScanProduct product = product(7L);
+        product.setProductType(ScanProduct.PRODUCT_TYPE_DRINK);
+        when(scanProductMapper.updateScanProduct(product)).thenReturn(1);
+        when(scanProductSpecMapper.selectSpecListByProductId(7L))
+            .thenReturn(Arrays.asList(spec(11L, "杯型"), spec(12L, "温度"), spec(13L, "糖度"),
+                spec(14L, "咖啡豆"), spec(15L, "咖啡浓度")));
+
+        scanProductService.updateScanProduct(product);
+
+        verify(scanProductSpecOptionMapper).deleteOptionByProductIds(new String[] { "7" });
+        verify(scanProductSpecMapper).deleteSpecByProductIds(new String[] { "7" });
+        verify(scanProductSpecMapper, times(3)).insertSpec(any(ScanProductSpec.class));
+        verify(scanProductSpecOptionMapper, times(7)).insertOption(any(ScanProductSpecOption.class));
     }
 
     @Test
@@ -196,6 +380,16 @@ class ScanProductServiceImplTest
         for (ScanProductSpecOption option : options)
         {
             names.add(option.getOptionName());
+        }
+        return names;
+    }
+
+    private static List<String> specNames(List<ScanProductSpec> specs)
+    {
+        List<String> names = new ArrayList<String>();
+        for (ScanProductSpec spec : specs)
+        {
+            names.add(spec.getSpecName());
         }
         return names;
     }

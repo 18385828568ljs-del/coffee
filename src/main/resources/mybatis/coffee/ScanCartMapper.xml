@@ -8,7 +8,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="id"           column="id"            />
         <result property="userId"       column="user_id"       />
         <result property="openid"       column="openid"        />
-        <result property="shopId"       column="shop_id"       />
         <result property="tableNo"      column="table_no"      />
         <result property="productId"    column="product_id"    />
         <result property="productName"  column="product_name"  />
@@ -25,7 +24,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectScanCartVo">
-        select id, user_id, openid, shop_id, table_no,
+        select id, user_id, openid, table_no,
                product_id, product_name, product_image, price, quantity,
                spec_text, spec_json, selected, status,
                create_time, update_time, del_flag
@@ -43,7 +42,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             del_flag = 0
             <if test="userId != null"> and user_id = #{userId}</if>
             <if test="openid != null and openid != ''"> and openid = #{openid}</if>
-            <if test="shopId != null"> and shop_id = #{shopId}</if>
             <if test="tableNo != null and tableNo != ''"> and table_no = #{tableNo}</if>
             <if test="productId != null"> and product_id = #{productId}</if>
             <if test="status != null"> and status = #{status}</if>
@@ -55,7 +53,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </select>
 
     <!--
-        匹配同一加购键:同用户(userId 或 openid 任一命中)、同门店、同桌号、同商品、同规格JSON。
+        匹配同一加购键:同用户(userId 或 openid 任一命中)、同桌号、同商品、同规格JSON。
         userId 和 openid 至少一项非空,优先 userId。
     -->
     <select id="selectMatchingCart" parameterType="ScanCart" resultMap="ScanCartResult">
@@ -64,7 +62,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             del_flag = 0
             and status = 1
             and product_id = #{productId}
-            <if test="shopId != null"> and shop_id = #{shopId}</if>
             <if test="tableNo != null and tableNo != ''"> and table_no = #{tableNo}</if>
             <choose>
                 <when test="userId != null"> and user_id = #{userId}</when>
@@ -94,7 +91,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="userId != null">user_id,</if>
             <if test="openid != null and openid != ''">openid,</if>
-            <if test="shopId != null">shop_id,</if>
             <if test="tableNo != null and tableNo != ''">table_no,</if>
             <if test="productId != null">product_id,</if>
             <if test="productName != null and productName != ''">product_name,</if>
@@ -112,7 +108,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="userId != null">#{userId},</if>
             <if test="openid != null and openid != ''">#{openid},</if>
-            <if test="shopId != null">#{shopId},</if>
             <if test="tableNo != null and tableNo != ''">#{tableNo},</if>
             <if test="productId != null">#{productId},</if>
             <if test="productName != null and productName != ''">#{productName},</if>
@@ -134,7 +129,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <trim prefix="SET" suffixOverrides=",">
             <if test="userId != null">user_id = #{userId},</if>
             <if test="openid != null">openid = #{openid},</if>
-            <if test="shopId != null">shop_id = #{shopId},</if>
             <if test="tableNo != null">table_no = #{tableNo},</if>
             <if test="productId != null">product_id = #{productId},</if>
             <if test="productName != null">product_name = #{productName},</if>
@@ -163,7 +157,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         set del_flag = 1, update_time = now()
         <where>
             del_flag = 0
-            <if test="shopId != null"> and shop_id = #{shopId}</if>
             <if test="tableNo != null and tableNo != ''"> and table_no = #{tableNo}</if>
             <choose>
                 <when test="userId != null"> and user_id = #{userId}</when>

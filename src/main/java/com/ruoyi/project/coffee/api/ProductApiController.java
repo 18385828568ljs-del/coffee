@@ -15,11 +15,14 @@ import com.ruoyi.framework.web.page.TableDataInfo;
 import com.ruoyi.project.coffee.activity.service.MarketingActivityEngine;
 import com.ruoyi.project.coffee.auth.WxUserTokenService;
 import com.ruoyi.project.coffee.behavior.service.UserBehaviorEventService;
+import com.ruoyi.project.coffee.cart.domain.TCart;
+import com.ruoyi.project.coffee.cart.service.ITCartService;
 import com.ruoyi.project.coffee.category.domain.TCategory;
 import com.ruoyi.project.coffee.category.service.ITCategoryService;
 import com.ruoyi.project.coffee.product.domain.TProduct;
 import com.ruoyi.project.coffee.product.service.ITProductService;
 import com.ruoyi.project.coffee.profile.service.ProductRecommendationService;
+import com.ruoyi.project.coffee.profile.domain.RecommendationIntent;
 
 /**
  * Mini-program product APIs.
@@ -44,6 +47,9 @@ public class ProductApiController extends BaseController
     private UserBehaviorEventService userBehaviorEventService;
 
     @Autowired
+    private ITCartService cartService;
+
+    @Autowired
     private ProductRecommendationService productRecommendationService;
 
     @GetMapping("/categories")
@@ -59,8 +65,8 @@ public class ProductApiController extends BaseController
     {
         product.setStatus(1);
         Long userId = wxUserTokenService.resolveUserId(request);
-        List<TProduct> candidates = productService.selectTProductList(product);
-        List<TProduct> ranked = productRecommendationService.recommendMall(userId, candidates);
+        List<TProduct> candidates = availableProducts(productService.selectTProductList(product));
+        List<TProduct> ranked = recommendMall(userId, request, candidates);
         List<TProduct> page = paginate(ranked, request);
         marketingActivityEngine.enrichProducts(page, userId);
         return toTableDataInfo(page, ranked.size());
@@ -73,8 +79,8 @@ public class ProductApiController extends BaseController
         query.setCategoryId(categoryId);
         query.setStatus(1);
         Long userId = wxUserTokenService.resolveUserId(request);
-        List<TProduct> candidates = productService.selectTProductList(query);
-        List<TProduct> ranked = productRecommendationService.recommendMall(userId, candidates);
+        List<TProduct> candidates = availableProducts(productService.selectTProductList(query));
+        List<TProduct> ranked = recommendMall(userId, request, candidates);
         List<TProduct> page = paginate(ranked, request);
         marketingActivityEngine.enrichProducts(page, userId);
         return toTableDataInfo(page, ranked.size());
@@ -112,6 +118,74 @@ public class ProductApiController extends BaseController
         int from = (int) fromLong;
         int to = Math.min(values.size(), from + pageSize);
         return new ArrayList<>(values.subList(from, to));
+    }
+
+    private List<TProduct> recommendMall(Long userId, HttpServletRequest request, List<TProduct> candidates)
+    {
+        RecommendationIntent intent = new RecommendationIntent();
+        addRequestProduct(intent, request, "currentProductId", true);
+        if (userId != null && cartService != null)
+        {
+            try
+            {
+                TCart query = new TCart();
+                query.setUserId(userId);
+                List<TCart> cartItems = cartService.selectTCartList(query);
+                if (cartItems != null)
+                {
+                    for (TCart item : cartItems)
+                    {
+                        if (item != null) intent.addCartProduct(item.getProductId());
+                    }
+                }
+            }
+            catch (RuntimeException ignored) { }
+        }
+        return intent.hasSignals()
+            ? productRecommendationService.recommendMall(userId, intent, candidates)
+            : productRecommendationService.recommendMall(userId, candidates);
+    }
+
+    private void addRequestProduct(RecommendationIntent intent, HttpServletRequest request,
+        String parameter, boolean current)
+    {
+        Long productId = parseLongParameter(request, parameter);
+        if (productId != null)
+        {
+            if (current) intent.addCurrentProduct(productId);
+            else intent.addProduct(productId, 1D);
+        }
+    }
+
+    private Long parseLongParameter(HttpServletRequest request, String parameter)
+    {
+        if (request == null || request.getParameter(parameter) == null) return null;
+        try
+        {
+            Long value = Long.valueOf(request.getParameter(parameter));
+            return value > 0 ? value : null;
+        }
+        catch (NumberFormatException ignored)
+        {
+            return null;
+        }
+    }
+
+    private List<TProduct> availableProducts(List<TProduct> products)
+    {
+        List<TProduct> available = new ArrayList<>();
+        if (products == null)
+        {
+            return available;
+        }
+        for (TProduct product : products)
+        {
+            if (product != null && product.getStock() != null && product.getStock() > 0)
+            {
+                available.add(product);
+            }
+        }
+        return available;
     }
 
     private int positiveOrDefault(Integer value, int defaultValue)

@@ -187,7 +187,6 @@ const FALLBACK_CUPS = [
 export default {
 	name: 'ProductSpecSheet',
 	props: {
-		shopId: { type: [Number, String], default: 1 },
 		tableNo: { type: String, default: '' }
 	},
 	data() {
@@ -423,7 +422,6 @@ export default {
 		buildCartPayload() {
 			const source = this.detailProduct || this.product || {}
 			return {
-				shopId: Number(this.shopId) || 1,
 				tableNo: this.tableNo || '',
 				productId: source.productId,
 				productName: source.productName,

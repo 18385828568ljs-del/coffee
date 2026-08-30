@@ -181,7 +181,6 @@ export default {
 	name: 'ProductCardBack',
 	props: {
 		product: { type: Object, default: function () { return null } },
-		shopId: { type: [Number, String], default: 1 },
 		tableNo: { type: String, default: '' },
 		active: { type: Boolean, default: false },
 		imageOverride: { type: String, default: '' }
@@ -442,7 +441,6 @@ export default {
 		buildCartPayload: function () {
 			const source = this.detailProduct || this.product || {}
 			return {
-				shopId: Number(this.shopId) || 1,
 				tableNo: this.tableNo || '',
 				productId: source.productId,
 				productName: source.productName,

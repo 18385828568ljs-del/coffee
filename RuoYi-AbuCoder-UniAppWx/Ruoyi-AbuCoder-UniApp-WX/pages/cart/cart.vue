@@ -158,8 +158,6 @@ function toNumber(value) {
 export default {
 	data() {
 		return {
-			scanShopId: 1,
-			scanShopName: '咖啡门店',
 			cartList: [],
 			scanCartList: [],
 			pendingCartIds: {},
@@ -312,7 +310,6 @@ export default {
 				const res = await requestPromise({
 					url: scanCartApi.list,
 					method: 'GET',
-					data: { shopId: this.scanShopId },
 					header: this.authHeader()
 				})
 				if (isSuccessResponse(res)) {
@@ -605,7 +602,7 @@ export default {
 				showError('点单购物车为空')
 				return
 			}
-			const url = `/pages/scan/confirm?shopId=${this.scanShopId}&tableNo=${encodeURIComponent(this.scanTableNo || '')}&shopName=${encodeURIComponent(this.scanShopName || '')}`
+			const url = `/pages/scan/confirm?tableNo=${encodeURIComponent(this.scanTableNo || '')}`
 			uni.navigateTo({ url })
 		},
 

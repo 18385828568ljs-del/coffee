@@ -42,13 +42,12 @@ class UserProfileTaskTest
     }
 
     @Test
-    void fullRefreshCleansExpiredBehaviorBeforeCalibration()
+    void fullRefreshRecalculatesAllUsers()
     {
         when(userProfileService.selectAllUserIds()).thenReturn(Collections.singletonList(3L));
 
         task.refreshAllProfiles();
 
-        verify(userProfileService).deleteExpiredBehavior();
         verify(userProfileService).recalculateUser(3L);
     }
 }

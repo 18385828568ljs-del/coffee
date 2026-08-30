@@ -471,11 +471,6 @@ export default {
 				pageNum: 1,
 				pageSize: 1000
 			}
-			const userId = getLocalUserId()
-			if (userId) {
-				requestData.userId = userId
-			}
-
 			try {
 				const res = await requestPromise({
 					url: productApi.list,
@@ -953,8 +948,8 @@ export default {
 			return `/pages/product/detail${query.length ? `?${query.join('&')}` : ''}`
 		},
 
-		getBehaviorSource(item) {
-			return item && item.recommendationApplied ? 'PERSONALIZED_LIST' : 'DEFAULT_LIST'
+		getBehaviorSource() {
+			return 'DEFAULT_LIST'
 		},
 
 		goDetail(item) {

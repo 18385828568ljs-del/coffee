@@ -28,6 +28,9 @@ public class ScanOrderItem
     /** 规格字符串(如: 热/正常糖/中杯) */
     private String spec;
 
+    /** Structured selected specification snapshot. */
+    private String specJson;
+
     /** 下单时单价 */
     private BigDecimal price;
 
@@ -57,6 +60,9 @@ public class ScanOrderItem
 
     public String getSpec() { return spec; }
     public void setSpec(String spec) { this.spec = spec; }
+
+    public String getSpecJson() { return specJson; }
+    public void setSpecJson(String specJson) { this.specJson = specJson; }
 
     public BigDecimal getPrice() { return price; }
     public void setPrice(BigDecimal price) { this.price = price; }

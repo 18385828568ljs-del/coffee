@@ -68,9 +68,18 @@ public class ScanProductController extends BaseController
     @GetMapping("/edit/{productId}")
     public String edit(@PathVariable("productId") Long productId, ModelMap mmap)
     {
-        mmap.put("scanProduct", scanProductService.selectScanProductById(productId));
+        mmap.put("scanProduct", scanProductService.selectScanProductWithSpecs(productId));
         mmap.put("categories", getCategories());
         return prefix + "/edit";
+    }
+
+    @RequiresPermissions("coffee:scanProduct:edit")
+    @GetMapping("/detail/{productId}")
+    @ResponseBody
+    public AjaxResult detail(@PathVariable("productId") Long productId)
+    {
+        ScanProduct product = scanProductService.selectScanProductWithSpecs(productId);
+        return product == null ? AjaxResult.error("商品不存在") : AjaxResult.success(product);
     }
 
     @RequiresPermissions("coffee:scanProduct:edit")

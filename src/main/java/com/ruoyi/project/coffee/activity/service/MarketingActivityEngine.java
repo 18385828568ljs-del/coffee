@@ -338,8 +338,29 @@ public class MarketingActivityEngine
                 throw new IllegalArgumentException("点单商品不存在或已下架");
             }
 
-            BigDecimal unitPrice = cart.getPrice() != null ? cart.getPrice()
-                : (product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO);
+            String specJson = cart.getSpecJson();
+            if (specJson == null || specJson.trim().isEmpty())
+            {
+                String defaultSpecJson = scanProductService.buildDefaultSpecJson(cart.getProductId());
+                if (defaultSpecJson != null && !defaultSpecJson.trim().isEmpty())
+                {
+                    specJson = defaultSpecJson;
+                    cart.setSpecJson(defaultSpecJson);
+                }
+            }
+
+            BigDecimal unitPrice = scanProductService.calculatePriceBySpecJson(cart.getProductId(), specJson);
+            if (unitPrice == null)
+            {
+                unitPrice = cart.getPrice() != null ? cart.getPrice()
+                    : (product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO);
+            }
+            cart.setPrice(unitPrice);
+            String specText = scanProductService.buildSpecText(cart.getProductId(), specJson);
+            if (specText != null)
+            {
+                cart.setSpecText(specText);
+            }
 
             PricingItem pricingItem = new PricingItem();
             pricingItem.setProductId(product.getProductId());

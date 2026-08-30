@@ -175,6 +175,27 @@ class MarketingActivityEngineTest
     }
 
     @Test
+    void previewScanOrderShouldRecalculateCurrentSpecPrice()
+    {
+        ScanCart cart = scanCart(101L, 1, new BigDecimal("99.00"));
+        cart.setSpecJson("[{\"specId\":2,\"optionIds\":[4]}]");
+        when(scanProductService.selectScanProductById(101L)).thenReturn(
+            scanProduct(101L, 1L, new BigDecimal("12.00"))
+        );
+        when(scanProductService.calculatePriceBySpecJson(101L, cart.getSpecJson()))
+            .thenReturn(new BigDecimal("15.00"));
+        when(scanProductService.buildSpecText(101L, cart.getSpecJson())).thenReturn("大杯");
+        when(marketingActivityService.selectTMarketingActivityList(any())).thenReturn(Collections.emptyList());
+
+        MarketingPreviewResult result = engine.previewScanOrder(7L, Collections.singletonList(cart));
+
+        assertEquals(new BigDecimal("15.00"), result.getTotalAmount());
+        assertEquals(new BigDecimal("15.00"), result.getPayAmount());
+        assertEquals(new BigDecimal("15.00"), cart.getPrice());
+        assertEquals("大杯", cart.getSpecText());
+    }
+
+    @Test
     void applyOrderMarketingShouldWritePreviewAmountsBackToOrder()
     {
         when(productService.selectTProductByProductIds(any())).thenReturn(Arrays.asList(
